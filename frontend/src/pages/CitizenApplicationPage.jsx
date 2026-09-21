@@ -7,7 +7,7 @@ function CitizenApplicationPage() {
     <main>
       <header>
         <p>Citizen Dashboard / Applications</p>
-        <h1>Application submitted</h1>
+        <h1>Application created</h1>
         <p>Your application has been created successfully.</p>
       </header>
 

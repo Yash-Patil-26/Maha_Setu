@@ -25,9 +25,10 @@ export function createFixtureApplication(journeyId) {
   applications[applicationId] = {
     applicationId,
     journeyId,
-    status: 'SUBMITTED',
+    status: 'CREATED',
   }
 
   localStorage.setItem(APPLICATION_KEY, JSON.stringify(applications))
   return applicationId
 }
+
