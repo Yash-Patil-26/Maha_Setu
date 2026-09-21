@@ -3,7 +3,17 @@ const USER_KEY = "setu_auth_user"
 
 export function getAuthUser() {
   const rawUser = localStorage.getItem(USER_KEY)
-  return rawUser ? JSON.parse(rawUser) : null
+
+  if (!rawUser) {
+    return null
+  }
+
+  try {
+    return JSON.parse(rawUser)
+  } catch {
+    clearAuthSession()
+    return null
+  }
 }
 
 export function setAuthSession(token, user) {
