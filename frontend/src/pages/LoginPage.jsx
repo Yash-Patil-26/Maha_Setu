@@ -29,11 +29,11 @@ export default function LoginPage() {
   }
 
   return (
-    <main>
-      <h1>SETU</h1>
+    <main className="login-page">
+      <h1 className="login-title">SETU</h1>
       <p>Sign in to continue.</p>
 
-      <form onSubmit={handleSubmit}>
+      <form className="login-card" onSubmit={handleSubmit}>
         <label>
           Username
           <input
