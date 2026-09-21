@@ -1,3 +1,4 @@
+import CitizenDashboard from './pages/CitizenDashboard.jsx'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import LoginPage from './pages/LoginPage.jsx'
 import PlaceholderPage from './pages/PlaceholderPage.jsx'
@@ -10,8 +11,7 @@ function App() {
       <Route path="/login" element={<LoginPage />} />
 
       <Route element={<ProtectedRoute roles={['citizen']} />}>
-        <Route path="/citizen" element={<PlaceholderPage />} />
-        <Route path="/citizen/apply/:journeyId" element={<PlaceholderPage />} />
+        <Route path="/citizen" element={<CitizenDashboard />} />        <Route path="/citizen/apply/:journeyId" element={<PlaceholderPage />} />
         <Route path="/citizen/applications/:id" element={<PlaceholderPage />} />
         <Route path="/citizen/consents" element={<PlaceholderPage />} />
         <Route path="/citizen/profile" element={<PlaceholderPage />} />
