@@ -1,0 +1,216 @@
+{
+  "entities": {
+    "citizen": {
+      "fields": [
+        {
+          "name": "master_id",
+          "type": "string",
+          "required": true,
+          "rules": "`^SETU-CIT-[0-9]{6}$`"
+        },
+        {
+          "name": "full_name",
+          "type": "string",
+          "required": true,
+          "rules": "2–100 chars"
+        },
+        {
+          "name": "dob",
+          "type": "date",
+          "required": true,
+          "rules": "not in the future"
+        },
+        {
+          "name": "mobile",
+          "type": "mobile",
+          "required": true,
+          "rules": "see conventions"
+        }
+      ]
+    },
+    "income_certificate": {
+      "fields": [
+        {
+          "name": "cert_no",
+          "type": "string",
+          "required": true,
+          "rules": "1–40"
+        },
+        {
+          "name": "holder_name",
+          "type": "string",
+          "required": true,
+          "rules": "2–100"
+        },
+        {
+          "name": "annual_income_inr",
+          "type": "integer (money_inr)",
+          "required": true,
+          "rules": "0–100000000"
+        },
+        {
+          "name": "issue_date",
+          "type": "date",
+          "required": true,
+          "rules": "not in the future"
+        },
+        {
+          "name": "valid_until",
+          "type": "date",
+          "required": true,
+          "rules": "≥ issue_date; `not_expired` rule applies"
+        },
+        {
+          "name": "issuing_authority",
+          "type": "string",
+          "required": false,
+          "rules": "≤ 100"
+        }
+      ]
+    },
+    "caste_certificate": {
+      "fields": [
+        {
+          "name": "cert_no",
+          "type": "string",
+          "required": true,
+          "rules": "1–40"
+        },
+        {
+          "name": "holder_name",
+          "type": "string",
+          "required": true,
+          "rules": "2–100"
+        },
+        {
+          "name": "category_code",
+          "type": "enum",
+          "required": true,
+          "rules": "`SC, ST, OBC, VJNT, SBC, OPEN`"
+        },
+        {
+          "name": "issue_date",
+          "type": "date",
+          "required": true,
+          "rules": "not in the future"
+        },
+        {
+          "name": "valid_until",
+          "type": "date",
+          "required": false,
+          "rules": "`null` = no expiry; if present ≥ issue_date and `not_expired` applies"
+        }
+      ]
+    },
+    "enrolment": {
+      "fields": [
+        {
+          "name": "enrolment_id",
+          "type": "string",
+          "required": true,
+          "rules": "1–40"
+        },
+        {
+          "name": "student_name",
+          "type": "string",
+          "required": true,
+          "rules": "2–100"
+        },
+        {
+          "name": "dob",
+          "type": "date",
+          "required": true,
+          "rules": "not in the future"
+        },
+        {
+          "name": "institution_code",
+          "type": "string",
+          "required": true,
+          "rules": "1–20"
+        },
+        {
+          "name": "institution_name",
+          "type": "string",
+          "required": false,
+          "rules": "EDU has no name column, so usually `null`"
+        },
+        {
+          "name": "course_code",
+          "type": "string",
+          "required": true,
+          "rules": "1–20"
+        },
+        {
+          "name": "year_of_study",
+          "type": "integer",
+          "required": true,
+          "rules": "1–6"
+        },
+        {
+          "name": "status",
+          "type": "enum",
+          "required": true,
+          "rules": "`ACTIVE, TERMINATED, DROPPED`"
+        },
+        {
+          "name": "last_updated",
+          "type": "date",
+          "required": false,
+          "rules": ""
+        }
+      ]
+    },
+    "training_record": {
+      "fields": [
+        {
+          "name": "trainee_id",
+          "type": "string",
+          "required": true,
+          "rules": "1–40"
+        },
+        {
+          "name": "trainee_name",
+          "type": "string",
+          "required": true,
+          "rules": "2–100"
+        },
+        {
+          "name": "dob",
+          "type": "date",
+          "required": true,
+          "rules": "not in the future"
+        },
+        {
+          "name": "course_code",
+          "type": "string",
+          "required": true,
+          "rules": "1–20"
+        },
+        {
+          "name": "course_name",
+          "type": "string",
+          "required": false,
+          "rules": "≤ 100"
+        },
+        {
+          "name": "completion_status",
+          "type": "enum",
+          "required": true,
+          "rules": "`COMPLETED, IN_PROGRESS, DROPPED`"
+        },
+        {
+          "name": "certificate_no",
+          "type": "string",
+          "required": false,
+          "rules": "`null` unless completed; rule `youth_enterprise_v1` requires a value when `COMPLETED`"
+        },
+        {
+          "name": "certificate_date",
+          "type": "date",
+          "required": false,
+          "rules": ""
+        }
+      ]
+    }
+  }
+}
