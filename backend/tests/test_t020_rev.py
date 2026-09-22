@@ -1,7 +1,5 @@
 from fastapi.testclient import TestClient
-
 from mock_systems.rev.main import app
-
 
 client = TestClient(app)
 
