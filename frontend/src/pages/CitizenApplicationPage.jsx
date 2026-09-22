@@ -1,5 +1,7 @@
 import { useParams } from 'react-router-dom'
 import Timeline from './Timeline'
+import DataCard from './DataCard'
+import OnceOnlyMeter from './OnceOnlyMeter'
 import { CITIZEN_APPLICATION_DETAIL } from '../fixtures/applicationDetail'
 
 function CitizenApplicationPage() {
@@ -22,10 +24,14 @@ function CitizenApplicationPage() {
         <p>{application.id}</p>
       </section>
 
-      <section>
-        <h2>Timeline</h2>
-        <Timeline steps={application.steps} />
-      </section>
+      <Timeline steps={application.steps} />
+
+      <DataCard
+        canonical={application.canonical}
+        provenance={application.provenance}
+      />
+
+      <OnceOnlyMeter metrics={application.metrics} />
 
       <footer>Synthetic data — prototype</footer>
     </main>
