@@ -9,6 +9,7 @@ export default function LoginPage() {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+
   if (existingUser) {
     return <Navigate to={`/${existingUser.role}`} replace />
   }
@@ -26,39 +27,63 @@ export default function LoginPage() {
     }
 
     setError('')
-
     setAuthSession(`fixture-token-${user.username}`, user)
     navigate(`/${user.role}`, { replace: true })
   }
 
   return (
     <main className="login-page">
-      <h1 className="login-title">SETU</h1>
-      <p>Sign in to continue.</p>
-      {error && <p role="alert">{error}</p>}
+      <section className="login-panel">
+        <div className="login-brand">
+          <span className="login-brand-mark">S</span>
+          <div>
+            <strong>SETU</strong>
+            <span>Citizen Services</span>
+          </div>
+        </div>
 
-      <form className="login-card" onSubmit={handleSubmit}>
-        <label>
-          Username
-          <input
-            required
-            value={username}
-            onChange={(event) => setUsername(event.target.value)}
-          />
-        </label>
+        <div className="login-heading">
+          <h1>Welcome back</h1>
+          <p>Sign in to continue to your SETU services.</p>
+        </div>
 
-        <label>
-          Password
-          <input
-            required
-            type="password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-          />
-        </label>
+        {error && (
+          <p className="form-error" role="alert">
+            {error}
+          </p>
+        )}
 
-        <button type="submit">Sign in</button>
-      </form>
+        <form className="login-card" onSubmit={handleSubmit}>
+          <label>
+            Username
+            <input
+              required
+              value={username}
+              onChange={(event) => setUsername(event.target.value)}
+              autoComplete="username"
+              placeholder="Enter your username"
+            />
+          </label>
+
+          <label>
+            Password
+            <input
+              required
+              type="password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              autoComplete="current-password"
+              placeholder="Enter your password"
+            />
+          </label>
+
+          <button type="submit">Sign in to SETU</button>
+        </form>
+
+        <p className="login-note">
+          Prototype environment — use the provided fixture credentials.
+        </p>
+      </section>
     </main>
   )
 }

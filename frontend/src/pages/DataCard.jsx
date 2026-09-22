@@ -1,20 +1,24 @@
 function DataCard({ canonical, provenance }) {
   return (
-    <section>
+    <section className="card">
       <h2>Data used</h2>
 
       {Object.entries(canonical).map(([section, values]) => (
-        <div key={section}>
+        <div className="data-group" key={section}>
           <h3>{section}</h3>
+
           {Object.entries(values).map(([field, value]) => {
             const provenanceKey = `${section}.${field}`
             const source = provenance[provenanceKey]
 
             return (
-              <p key={field}>
-                <strong>{field}:</strong> {String(value)}
-                {source ? ` — source: ${source.source_system}` : ''}
-              </p>
+              <div className="data-row" key={field}>
+                <strong>{field}</strong>
+                <span>{String(value)}</span>
+                {source && (
+                  <small>Source: {source.source_system}</small>
+                )}
+              </div>
             )
           })}
         </div>

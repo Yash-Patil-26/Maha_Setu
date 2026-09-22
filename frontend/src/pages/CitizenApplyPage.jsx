@@ -10,21 +10,22 @@ import {
 function CitizenApplyPage() {
   const { journeyId } = useParams()
   const navigate = useNavigate()
-  const service = CITIZEN_SERVICES.find(
-    (item) => item.journeyId === journeyId,
-  )
+  const service = CITIZEN_SERVICES.find((item) => item.journeyId === journeyId)
 
-  const [consentGranted, setConsentGranted] = useState(
-    hasConsent(journeyId),
-  )
+  const [consentGranted, setConsentGranted] = useState(hasConsent(journeyId))
   const [error, setError] = useState('')
 
   if (!service) {
     return (
       <main>
-        <h1>Service not found</h1>
-        <p>The requested service is unavailable.</p>
-        <a href="/citizen">Back to dashboard</a>
+        <header className="page-header">
+          <h1>Service not found</h1>
+          <p>The requested service is not available.</p>
+        </header>
+
+        <a className="button button-secondary" href="/citizen">
+          Back to dashboard
+        </a>
       </main>
     )
   }
@@ -37,7 +38,7 @@ function CitizenApplyPage() {
 
   function handleApply() {
     if (!hasConsent(journeyId)) {
-      setError('Consent is required before applying.')
+      setError('Please grant consent before applying.')
       return
     }
 
@@ -47,20 +48,21 @@ function CitizenApplyPage() {
 
   return (
     <main>
-      <header>
+      <header className="page-header">
         <p>Citizen Dashboard / {service.title}</p>
         <h1>Apply for {service.title}</h1>
         <p>{service.description}</p>
       </header>
 
-      <section>
+      <section className="card">
         <h2>Consent</h2>
         <p>
-          I consent to SETU using the information required to process
-          this application.
+          I consent to SETU using the required system data to process this
+          application.
         </p>
 
         <button
+          className="button"
           type="button"
           onClick={handleConsent}
           disabled={consentGranted}
@@ -69,20 +71,31 @@ function CitizenApplyPage() {
         </button>
       </section>
 
-      <section>
+      <section className="card">
         <h2>Apply</h2>
+        <p>
+          Once consent is granted, you can create your application.
+        </p>
+
         <button
+          className="button"
           type="button"
           onClick={handleApply}
           disabled={!consentGranted}
         >
-          Apply
+          Create application
         </button>
       </section>
 
-      {error && <p role="alert">{error}</p>}
+      {error && (
+        <p className="form-error" role="alert">
+          {error}
+        </p>
+      )}
 
-      <footer>Synthetic data — prototype</footer>
+      <footer className="page-footer">
+        Synthetic data — prototype
+      </footer>
     </main>
   )
 }

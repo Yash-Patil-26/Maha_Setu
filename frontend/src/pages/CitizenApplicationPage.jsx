@@ -6,25 +6,28 @@ import { CITIZEN_APPLICATION_DETAIL } from '../fixtures/applicationDetail'
 
 function CitizenApplicationPage() {
   const { id } = useParams()
-  const application = {
-    ...CITIZEN_APPLICATION_DETAIL,
-    id,
-  }
+  const application = { ...CITIZEN_APPLICATION_DETAIL, id }
 
   return (
     <main>
-      <header>
+      <header className="page-header">
         <p>Citizen Dashboard / Applications</p>
         <h1>Application created</h1>
         <p>Your application has been created successfully.</p>
       </header>
 
-      <section>
-        <h2>Application ID</h2>
-        <p>{application.id}</p>
+      <section className="card application-summary">
+        <div>
+          <span className="status-badge">{application.status}</span>
+          <h2>Application ID</h2>
+          <p className="application-id">{application.id}</p>
+        </div>
       </section>
 
-      <Timeline steps={application.steps} />
+      <section className="card">
+        <h2>Application progress</h2>
+        <Timeline steps={application.steps} />
+      </section>
 
       <DataCard
         canonical={application.canonical}
@@ -33,7 +36,9 @@ function CitizenApplicationPage() {
 
       <OnceOnlyMeter metrics={application.metrics} />
 
-      <footer>Synthetic data — prototype</footer>
+      <footer className="page-footer">
+        Synthetic data — prototype
+      </footer>
     </main>
   )
 }
