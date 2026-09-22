@@ -106,3 +106,41 @@ p {
 .login-card button:hover {
   background: var(--setu-primary-dark);
 }
+.timeline {
+  display: grid;
+  gap: 12px;
+  padding: 0;
+  list-style: none;
+}
+
+.timeline-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px;
+  background: var(--setu-surface);
+  border: 1px solid var(--setu-border);
+  border-radius: 12px;
+}
+
+.timeline-item p {
+  margin: 6px 0 0;
+}
+
+.timeline-item span {
+  align-self: flex-start;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+main > section {
+  margin-top: 24px;
+  padding: 20px;
+  background: var(--setu-surface);
+  border: 1px solid var(--setu-border);
+  border-radius: 12px;
+}
+
+main > section h2 {
+  margin-top: 0;
+}
