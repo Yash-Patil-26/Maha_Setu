@@ -88,7 +88,7 @@ Enums: application `status` = `CREATED, IN_PROGRESS, BLOCKED_CONSENT, PAUSED_EXC
 | Method | Path | Roles | Request | Success | Errors |
 |---|---|---|---|---|---|
 | POST | `/api/auth/login` | public | `{username,password}` | 200 `{access_token,token_type:"bearer",expires_in,user:{id,username,role,display_name,master_id,locale}}` | 401 |
-| POST | `/api/auth/sso-token` | officer, admin | `{audience:"bss"}` | 200 `{url,expires_in}` (`http://localhost:8002/sso?token=…`) | 400, 403 |
+| POST | `/api/auth/sso-token` | officer, admin | `{audience:"bss"}` | 200 `{url,expires_in}` (`{BSS_BASE_URL}/sso?token=…`) | 400, 403 |
 | POST | `/api/consents` | citizen | `{purpose,journey_id}` (purpose must equal the journey's consent purpose) | 201 Consent (`expires_at` = now + `CONSENT_TTL_DAYS`, default 30) | 400, 404 |
 | POST | `/api/consents/{id}/revoke` | citizen (owner) | — | 200 Consent (`REVOKED`); emits event `consent.revoked` | 403, 404 |
 | POST | `/api/applications` | citizen | `{journey_id}` | 202 `{application_id,status:"CREATED",correlation_id}` | 403 `CONSENT_REQUIRED`, 404 |

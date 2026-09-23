@@ -1,5 +1,6 @@
 import os
 from datetime import datetime, timedelta, timezone
+from urllib.parse import urlparse
 
 import bcrypt
 import jwt
@@ -27,6 +28,20 @@ def get_db():
 
 def _jwt_secret() -> str:
     return os.getenv("SETU_SSO_SECRET", "change-me")
+
+
+def _bss_base_url() -> str:
+    value = os.getenv("BSS_BASE_URL")
+    if not value:
+        raise RuntimeError("BSS_BASE_URL is required")
+
+    parsed = urlparse(value)
+    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+        raise RuntimeError(
+            "BSS_BASE_URL must be an absolute HTTP(S) URL"
+        )
+
+    return value.rstrip("/")
 
 
 def _jwt_issuer() -> str:
@@ -242,6 +257,6 @@ def issue_sso_token(
     token, expires_in = _create_sso_token(user)
 
     return SsoTokenResponse(
-        url=f"http://localhost:8002/sso?token={token}",
+        url=f"{_bss_base_url()}/sso?token={token}",
         expires_in=expires_in,
     )

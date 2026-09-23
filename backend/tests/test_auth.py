@@ -1,5 +1,5 @@
-from pathlib import Path
 import sys
+from pathlib import Path
 
 import bcrypt
 from fastapi.testclient import TestClient
@@ -8,9 +8,11 @@ ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT / "backend") not in sys.path:
     sys.path.insert(0, str(ROOT / "backend"))
 
-from app.db import Base, SessionLocal, engine
-from app.main import app
-from app.models import User
+# isort: off
+from app.db import Base, SessionLocal, engine  # noqa: E402
+from app.main import app  # noqa: E402
+from app.models import User  # noqa: E402
+# isort: on
 
 
 DEMO_PASSWORD = "Demo@123"
@@ -115,7 +117,8 @@ def test_sso_token_requires_officer_or_admin():
     assert response.json()["detail"]["error"]["code"] == "FORBIDDEN"
 
 
-def test_officer_can_issue_bss_sso_token():
+def test_officer_can_issue_bss_sso_token(monkeypatch):
+    monkeypatch.setenv("BSS_BASE_URL", "https://bss.example.test")
     with TestClient(app) as client:
         login = client.post(
             "/api/auth/login",
@@ -138,8 +141,38 @@ def test_officer_can_issue_bss_sso_token():
     body = response.json()
     assert body["expires_in"] == 5 * 60
     assert body["url"].startswith(
-        "http://localhost:8002/sso?token="
+        "https://bss.example.test/sso?token="
     )
+
+
+
+def test_sso_token_requires_bss_base_url(monkeypatch):
+    monkeypatch.delenv("BSS_BASE_URL", raising=False)
+
+    with TestClient(app) as client:
+        login = client.post(
+            "/api/auth/login",
+            json={
+                "username": "officer1",
+                "password": DEMO_PASSWORD,
+            },
+        )
+
+        token = login.json()["access_token"]
+
+        try:
+            client.post(
+                "/api/auth/sso-token",
+                headers={"Authorization": f"Bearer {token}"},
+                json={"audience": "bss"},
+            )
+        except RuntimeError as exc:
+            assert str(exc) == "BSS_BASE_URL is required"
+        else:
+            raise AssertionError(
+                "Missing BSS_BASE_URL must fail explicitly"
+            )
+
 
 
 def test_sso_token_rejects_wrong_audience():
