@@ -88,39 +88,21 @@ Enums: application `status` = `CREATED, IN_PROGRESS, BLOCKED_CONSENT, PAUSED_EXC
 | Method | Path | Roles | Request | Success | Errors |
 |---|---|---|---|---|---|
 | POST | `/api/auth/login` | public | `{username,password}` | 200 `{access_token,token_type:"bearer",expires_in,user:{id,username,role,display_name,master_id,locale}}` | 401 |
-| GET | `/api/auth/me` | any | — | 200 user | 401 |
 | POST | `/api/auth/sso-token` | officer, admin | `{audience:"bss"}` | 200 `{url,expires_in}` (`http://localhost:8002/sso?token=…`) | 400, 403 |
-| GET | `/.well-known/jwks.json` | public | — | 200 `{keys:[{kty:"RSA",kid,use:"sig",alg:"RS256",n,e}]}` | — |
-| GET | `/api/me/profile` | citizen | — | 200 `{citizen,golden_record:{fields:{…provenance…}},links:[{system_code,external_id,method,confidence,status}],conflicts:[Conflict]}` | 401 |
-| GET | `/api/journeys`, `/api/journeys/{id}` | any | — | 200 JourneyDef list / one | 404 |
-| GET | `/api/consents` | citizen | — | 200 list of Consent | — |
 | POST | `/api/consents` | citizen | `{purpose,journey_id}` (purpose must equal the journey's consent purpose) | 201 Consent (`expires_at` = now + `CONSENT_TTL_DAYS`, default 30) | 400, 404 |
 | POST | `/api/consents/{id}/revoke` | citizen (owner) | — | 200 Consent (`REVOKED`); emits event `consent.revoked` | 403, 404 |
-| GET | `/api/access-log` | citizen | `limit,offset` | 200 list of AccessLogEntry (own) | — |
 | POST | `/api/applications` | citizen | `{journey_id}` | 202 `{application_id,status:"CREATED",correlation_id}` | 403 `CONSENT_REQUIRED`, 404 |
-| GET | `/api/applications` | citizen (own), officer/admin (all) | `status,journey_id,limit,offset` | 200 list of Application (beneficiaries = `status=APPROVED`) | — |
-| GET | `/api/applications/{id}` | owner, officer, admin | — | 200 ApplicationDetail | 403, 404 |
 | POST | `/api/applications/{id}/retry` | officer, admin; **citizen (own) only when `BLOCKED_CONSENT` (new)** | — | 202 `{application_id,status:"IN_PROGRESS"}` | 403, 409 `STATE_CONFLICT` |
 | POST | `/api/applications/{id}/grievances` | citizen (owner) | `{text}` 1–500 chars | 201 Grievance | 400, 403 |
-| GET | `/api/grievances` | officer, admin | `status,limit,offset` | 200 list | — |
-| GET | `/api/officer/queue` | officer, admin | — | 200 `{items:[{application:Application,reason: one of PAUSED_EXCEPTION, NEEDS_REVIEW, BLOCKED_CONSENT, AT_RISK,detail:"…"}],counts:{…}}` | — |
-| GET | `/api/conflicts` | officer, admin | `status` | 200 list of Conflict | — |
 | POST | `/api/conflicts/{id}/resolve` | officer | exactly one of `{chosen_source_system}` or `{value}` | 200 Conflict (`RESOLVED`); updates golden record + provenance; resumes the application | 400, 409 |
-| GET | `/api/notifications` | any | `limit,offset` | 200 list | — |
 | POST | `/api/notifications/{id}/read` | any (owner) | — | 200 Notification | 404 |
-| GET | `/api/systems` | officer, admin | — | 200 list of System | — |
 | POST | `/api/systems/{code}/simulate-outage` | admin | `{down:boolean}` (REV, EDU only) | 200 System | 400, 404 |
-| GET | `/api/connectors` | admin | — | 200 list of Connector | — |
 | POST | `/api/connectors` | admin | `{system_code,name,kind,entity,config,lookup,auth}` (starts an onboarding session) | 201 Connector (`DRAFT`) | 400 |
 | POST | `/api/connectors/{id}/sample` | admin | `{identity_sample?:{mobile,dob}}` (`dob` ISO; formatted per `lookup.dob_format`) | 200 `{raw,fields:[{path,sample,inferred_type}],duration_ms}` | 400, 502, 504 |
 | POST | `/api/connectors/{id}/suggest-mapping` | admin | — | 200 `{mapping}` (deterministic: name similarity + type inference; no AI) | 400 |
 | PUT | `/api/connectors/{id}/mapping` | admin | `{mapping,validators}` | 200 Connector (still `DRAFT`) | 400 |
 | POST | `/api/connectors/{id}/test` | admin | `{mapping?,identity_sample}` | 200 `{canonical,validation:[{field,rule,passed,message}],duration_ms}`; status → `TESTED` if all validators pass | 400, 422, 502, 504 |
 | POST | `/api/connectors/{id}/activate` | admin | `{journey_id,step_id}` (connector `name` must equal the step's `connector` reference) | 200 `{connector,onboarding_seconds,journey_version}` (status `ACTIVE`, session closed) | 400, 409 (must be `TESTED`) |
-| GET | `/api/metrics/summary` | admin | — | 200 `{once_only:{applications,fields_total,fields_autofilled,citizen_typed,documents_not_uploaded,autofill_pct},onboarding:{sessions,last_seconds,median_seconds,code_changes},sla:{live:{on_track,at_risk,breached,compliance_pct},simulated:{…}}}` | — |
-| GET | `/api/metrics/connectors` | admin | — | 200 `{items:[{connector_id,system_code,calls,success_rate,p50_ms,p95_ms}]}` | — |
-| GET | `/api/audit` | admin | `entity_type,entity_id,correlation_id,action,limit,offset` | 200 list of AuditEvent | — |
-| GET | `/api/health` | public | — | 200 `{status:"ok",version,time,systems:[{code,health}]}` | — |
 
 ## 4. Inbound webhook (BSS → hub)
 
