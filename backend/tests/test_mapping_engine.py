@@ -2,10 +2,7 @@ from datetime import date
 
 import pytest
 
-from app.mapping.engine import (
-    MappingRule,
-    apply_mapping,
-)
+from app.mapping.engine import MappingRule, apply_mapping
 
 
 def test_apply_mapping_transforms_fields() -> None:
@@ -60,9 +57,9 @@ def test_enum_mapping_normalizes_value() -> None:
         },
     )
 
-    result = apply_mapping([rule], {"category": " obc "})
-
-    assert result == {"category_code": "OBC"}
+    assert apply_mapping([rule], {"category": " obc "}) == {
+        "category_code": "OBC"
+    }
 
 
 def test_missing_source_field_becomes_none() -> None:
@@ -72,9 +69,9 @@ def test_missing_source_field_becomes_none() -> None:
         transform="to_int",
     )
 
-    result = apply_mapping([rule], {"name": "Rahul"})
-
-    assert result == {"annual_income_inr": None}
+    assert apply_mapping([rule], {"name": "Rahul"}) == {
+        "annual_income_inr": None
+    }
 
 
 def test_invalid_enum_fails() -> None:
@@ -93,11 +90,6 @@ def test_invalid_enum_fails() -> None:
 
     with pytest.raises(ValueError):
         apply_mapping([rule], {"category": "UNKNOWN"})
-from datetime import date
-
-import pytest
-
-from app.mapping.engine import MappingRule, apply_mapping
 
 
 def test_date_with_source_format() -> None:
@@ -118,10 +110,18 @@ def test_enum_maps_source_code_to_canonical_value() -> None:
         source_field="status",
         canonical_field="status",
         transform="enum",
-        options={"mapping": {"A": "ACTIVE", "T": "TERMINATED", "D": "DROPPED"}},
+        options={
+            "mapping": {
+                "A": "ACTIVE",
+                "T": "TERMINATED",
+                "D": "DROPPED",
+            }
+        },
     )
 
-    assert apply_mapping([rule], {"status": " a "}) == {"status": "ACTIVE"}
+    assert apply_mapping([rule], {"status": " a "}) == {
+        "status": "ACTIVE"
+    }
 
 
 def test_fractional_integer_fails() -> None:
@@ -143,4 +143,6 @@ def test_blank_date_becomes_none() -> None:
         options={"format": "%d/%m/%Y"},
     )
 
-    assert apply_mapping([rule], {"valid_until": ""}) == {"valid_until": None}
+    assert apply_mapping([rule], {"valid_until": ""}) == {
+        "valid_until": None
+    }
