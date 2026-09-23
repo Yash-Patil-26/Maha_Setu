@@ -47,6 +47,13 @@ def _bss_base_url() -> str:
     return value.rstrip("/")
 
 
+def _default_locale() -> str:
+    value = os.getenv("SETU_DEFAULT_LOCALE")
+    if not value:
+        raise RuntimeError("SETU_DEFAULT_LOCALE is required")
+    return value
+
+
 def _jwt_issuer() -> str:
     return os.getenv("JWT_ISSUER", "setu")
 
@@ -183,9 +190,7 @@ def login(
             role=user.role,
             display_name=user.display_name,
             master_id=user.master_id,
-            # The current User model has no locale column.
-            # Keep the frozen API shape without changing T-002 schema.
-            locale="en-IN",
+            locale=_default_locale(),
         ),
     )
 

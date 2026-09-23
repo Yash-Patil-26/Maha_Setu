@@ -24,6 +24,7 @@ TEST_SSO_SECRET = "test-sso-secret"
 def test_environment(monkeypatch):
     monkeypatch.setenv("SETU_SSO_SECRET", TEST_SSO_SECRET)
     monkeypatch.setenv("BSS_BASE_URL", "https://bss.example.test")
+    monkeypatch.setenv("SETU_DEFAULT_LOCALE", "en-IN")
 
 
 def setup_function():
@@ -152,6 +153,23 @@ def test_officer_can_issue_bss_sso_token(monkeypatch):
         "https://bss.example.test/sso?token="
     )
 
+
+
+def test_auth_requires_default_locale(monkeypatch):
+    monkeypatch.delenv("SETU_DEFAULT_LOCALE", raising=False)
+
+    with TestClient(app) as client:
+        with pytest.raises(
+            RuntimeError,
+            match="SETU_DEFAULT_LOCALE is required",
+        ):
+            client.post(
+                "/api/auth/login",
+                json={
+                    "username": "officer1",
+                    "password": DEMO_PASSWORD,
+                },
+            )
 
 
 def test_auth_requires_sso_secret(monkeypatch):
