@@ -175,6 +175,16 @@ python run_all.py
 * BSS synthetic system
 * React/Vite frontend
 
+### 6. Reset the demo state
+
+Before a fresh demo or after a demo has modified the data, stop the running services and run:
+
+    python scripts/seed.py --reset
+
+This recreates the SQLite demo database and synthetic seed data.
+
+The reset is expected to complete in under 30 seconds. A development-machine measurement completed the reset in approximately 2.12 seconds.
+
 ---
 
 ## Service URLs
