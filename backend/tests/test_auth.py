@@ -2,6 +2,7 @@ import sys
 from pathlib import Path
 
 import bcrypt
+import pytest
 from fastapi.testclient import TestClient
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -16,6 +17,13 @@ from app.models import User  # noqa: E402
 
 
 DEMO_PASSWORD = "Demo@123"
+TEST_SSO_SECRET = "test-sso-secret"
+
+
+@pytest.fixture(autouse=True)
+def test_environment(monkeypatch):
+    monkeypatch.setenv("SETU_SSO_SECRET", TEST_SSO_SECRET)
+    monkeypatch.setenv("BSS_BASE_URL", "https://bss.example.test")
 
 
 def setup_function():
@@ -144,6 +152,23 @@ def test_officer_can_issue_bss_sso_token(monkeypatch):
         "https://bss.example.test/sso?token="
     )
 
+
+
+def test_auth_requires_sso_secret(monkeypatch):
+    monkeypatch.delenv("SETU_SSO_SECRET", raising=False)
+
+    with TestClient(app) as client:
+        with pytest.raises(
+            RuntimeError,
+            match="SETU_SSO_SECRET is required",
+        ):
+            client.post(
+                "/api/auth/login",
+                json={
+                    "username": "officer1",
+                    "password": DEMO_PASSWORD,
+                },
+            )
 
 
 def test_sso_token_requires_bss_base_url(monkeypatch):

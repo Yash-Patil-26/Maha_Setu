@@ -27,7 +27,10 @@ def get_db():
 
 
 def _jwt_secret() -> str:
-    return os.getenv("SETU_SSO_SECRET", "change-me")
+    value = os.getenv("SETU_SSO_SECRET")
+    if not value:
+        raise RuntimeError("SETU_SSO_SECRET is required")
+    return value
 
 
 def _bss_base_url() -> str:
