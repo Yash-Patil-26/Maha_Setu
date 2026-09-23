@@ -18,12 +18,14 @@ import bcrypt  # noqa: E402
 from sqlalchemy import select  # noqa: E402
 
 from app.db import DB_PATH, SessionLocal, engine, init_db  # noqa: E402
+from app.journeys.loader import load_journey_definition  # noqa: E402
 from app.models import Connector, JourneyDef, System, User  # noqa: E402
 
 
 DEMO_PASSWORD = "Demo@123"
 SKL_PATH = PROJECT_ROOT / "data_drop" / "skills_registry.csv"
 EDU_DB_PATH = PROJECT_ROOT / "mock_systems" / "edu" / "edu_legacy.db"
+JOURNEYS_DIR = BACKEND_DIR / "app" / "journeys"
 
 
 def password_hash(password: str) -> str:
@@ -190,42 +192,19 @@ def seed_connectors(session) -> None:
 
 
 def seed_journeys(session) -> None:
+    scholarship_definition = load_journey_definition(
+        JOURNEYS_DIR / "scholarship_v1.json"
+    )
+    youth_enterprise_definition = load_journey_definition(
+        JOURNEYS_DIR / "youth_enterprise_v1.json"
+    )
+
     scholarship = JourneyDef(
         id="scholarship_v1",
         version=1,
         name="Post-Matric Scholarship",
         status="ACTIVE",
-        definition_json={
-            "consent_purpose": "scholarship_eligibility",
-            "steps": [
-                {
-                    "id": "fetch_income",
-                    "type": "fetch",
-                    "connector": "rev_income",
-                    "entity": "income_certificate",
-                    "configured": True,
-                },
-                {
-                    "id": "fetch_enrolment",
-                    "type": "fetch",
-                    "connector": "edu_enrolment",
-                    "entity": "enrolment",
-                    "configured": True,
-                },
-                {
-                    "id": "evaluate_eligibility",
-                    "type": "decision",
-                    "rule": "post_matric_income_250000",
-                    "configured": True,
-                },
-                {
-                    "id": "submit_bss",
-                    "type": "submit",
-                    "connector": "bss_scholarship",
-                    "configured": True,
-                },
-            ],
-        },
+        definition_json=scholarship_definition,
     )
 
     youth_enterprise = JourneyDef(
@@ -233,18 +212,7 @@ def seed_journeys(session) -> None:
         version=1,
         name="Youth Enterprise Support",
         status="ACTIVE",
-        definition_json={
-            "consent_purpose": "youth_enterprise_eligibility",
-            "steps": [
-                {
-                    "id": "fetch_training",
-                    "type": "fetch",
-                    "connector": "skl_training",
-                    "entity": "training_record",
-                    "configured": False,
-                },
-            ],
-        },
+        definition_json=youth_enterprise_definition,
     )
 
     session.add_all([scholarship, youth_enterprise])

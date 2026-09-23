@@ -1,0 +1,12 @@
+{
+  "consent_purpose": "youth_enterprise_eligibility",
+  "steps": [
+    {
+      "id": "fetch_training",
+      "type": "fetch",
+      "connector": "skl_training",
+      "entity": "training_record",
+      "configured": false
+    }
+  ]
+}

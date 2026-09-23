@@ -1,0 +1,31 @@
+{
+  "consent_purpose": "scholarship_eligibility",
+  "steps": [
+    {
+      "id": "fetch_income",
+      "type": "fetch",
+      "connector": "rev_income",
+      "entity": "income_certificate",
+      "configured": true
+    },
+    {
+      "id": "fetch_enrolment",
+      "type": "fetch",
+      "connector": "edu_enrolment",
+      "entity": "enrolment",
+      "configured": true
+    },
+    {
+      "id": "evaluate_eligibility",
+      "type": "decision",
+      "rule": "post_matric_income_250000",
+      "configured": true
+    },
+    {
+      "id": "submit_bss",
+      "type": "submit",
+      "connector": "bss_scholarship",
+      "configured": true
+    }
+  ]
+}
