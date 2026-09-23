@@ -5,7 +5,7 @@ Status: proposed by Claude under **CCN-001**, effective when Dev A approves and 
 ## 1. Conventions
 
 - Base URL `http://localhost:8000`. JSON only (except REV XML). CORS allows `http://localhost:5173`.
-- Auth: `Authorization: Bearer <token>`. Hub access token: HS256, 8 h, claims `sub, role, master_id, name, exp`. SSO token: RS256, ≤ 5 min, claims `iss:"setu-hub", sub, aud, role, name, iat, exp`.
+- Auth: `Authorization: Bearer <token>`. Hub access token: HS256, 8 h, claims `sub, role, master_id, name, exp`. SSO token: HS256, ≤ 5 min, signed with `SETU_SSO_SECRET`, claims `iss:"setu-hub", sub, aud, role, name, iat, exp`.
 - IDs: integers for auto-increment tables; strings for `master_id`, `system_code`, `journey_id`, `bss_ref`; `correlation_id` is a UUID string. Timestamps ISO-8601 UTC `Z`.
 - Lists: `?limit=50&offset=0` → `{"items":[…],"total":n,"limit":50,"offset":0}`.
 - Errors (all endpoints): `{"error":{"code":"…","message":"human readable","correlation_id":"…","details":[{"field":"…","issue":"…"}]}}` (`details` optional).
@@ -150,7 +150,7 @@ Connector query: `SELECT STUD_ID, STUD_NM, DOB_STR, INST_CD, COURSE_CD, YR_OF_ST
 ### 5.3 BSS — Benefit Scheme System (REST/JSON, port 8002)
 - `POST /api/schemes/{scheme_code}/applications` — header `Authorization: Bearer <BSS_API_TOKEN>`, header `Idempotency-Key: <application_id>:<step_id>`. Body `{"applicant":{"master_id","full_name","dob","mobile"},"scheme_code":"SCHOL-PM","data":{…consented canonical fields…},"correlation_id":"uuid"}` → 201 `{"bss_ref":"BSS-2026-000045","status":"RECEIVED"}`; same idempotency key → 200 with the same body; 401 bad token.
 - `GET /api/applications/{bss_ref}` → `{"bss_ref","status":"RECEIVED|APPROVED|REJECTED","remarks":null}`.
-- Own officer page `/officer` (local login form **and** `/sso?token=` accepted after verifying RS256 against the hub JWKS, `aud` must be `bss`). Approve/Reject sends the signed webhook in §4. Scheme codes: `SCHOL-PM` (J1), `STARTUP-YOUTH` (J2).
+- Own officer page `/officer` (local login form **and** `/sso?token=` accepted after verifying the HS256 token with `SETU_SSO_SECRET`; `aud` must be `bss`). Approve/Reject sends the signed webhook in §4. Scheme codes: `SCHOL-PM` (J1), `STARTUP-YOUTH` (J2).
 
 ### 5.4 SKL — Skills & Employment registry (CSV, no server)
 File `data_drop/skills_registry.csv`, UTF-8 with BOM (`utf-8-sig`), comma-delimited, header row:
