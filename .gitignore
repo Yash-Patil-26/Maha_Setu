@@ -31,3 +31,6 @@ dist/
 backend/setu.db
 backend/setu.db-wal
 backend/setu.db-shm
+
+# Generated EDU legacy source database
+mock_systems/edu/*.db*

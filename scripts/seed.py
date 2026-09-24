@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import sqlite3
 import sys
 from pathlib import Path
 
@@ -48,6 +49,60 @@ def reset_database() -> None:
     init_db()
 
 
+
+def write_edu_db() -> None:
+    """Create the reproducible synthetic legacy EDU SQLite source."""
+    EDU_DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+    EDU_DB_PATH.unlink(missing_ok=True)
+
+    row = (
+        "EDU/2022/00451",
+        "PATIL RAHUL S",
+        "04-03-2004",
+        "9876543210",
+        "PUN-ENG-014",
+        "BTECH-CSE",
+        3,
+        "A",
+        "10-07-2026",
+    )
+
+    with sqlite3.connect(EDU_DB_PATH) as connection:
+        connection.execute(
+            """
+            CREATE TABLE STUD_MST (
+                STUD_ID TEXT PRIMARY KEY,
+                STUD_NM TEXT NOT NULL,
+                DOB_STR TEXT NOT NULL,
+                MOB_NO TEXT NOT NULL,
+                INST_CD TEXT NOT NULL,
+                COURSE_CD TEXT NOT NULL,
+                YR_OF_STUDY INTEGER NOT NULL,
+                ADM_STATUS TEXT NOT NULL,
+                LAST_UPD TEXT
+            )
+            """
+        )
+        connection.execute(
+            """
+            INSERT INTO STUD_MST (
+                STUD_ID,
+                STUD_NM,
+                DOB_STR,
+                MOB_NO,
+                INST_CD,
+                COURSE_CD,
+                YR_OF_STUDY,
+                ADM_STATUS,
+                LAST_UPD
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            row,
+        )
+        connection.commit()
+
+
 def seed_users(session) -> None:
     users = [
         User(
@@ -58,7 +113,7 @@ def seed_users(session) -> None:
             display_name="Rahul Patil",
             full_name="Rahul Patil",
             dob="2004-03-04",
-            mobile="9822012345",
+            mobile="9876543210",
         ),
         User(
             username="suresh.pawar",
@@ -190,13 +245,58 @@ def seed_connectors(session) -> None:
             config_json={
                 "file": str(EDU_DB_PATH.relative_to(PROJECT_ROOT)),
                 "read_only": True,
+                "query": (
+                    "SELECT STUD_ID, STUD_NM, DOB_STR, INST_CD, "
+                    "COURSE_CD, YR_OF_STUDY, ADM_STATUS, LAST_UPD "
+                    "FROM STUD_MST "
+                    "WHERE MOB_NO = :mobile AND DOB_STR = :dob"
+                ),
             },
             lookup_json={
                 "mobile_field": "MOB_NO",
                 "dob_field": "DOB_STR",
                 "dob_format": "%d-%m-%Y",
             },
-            mapping_json={},
+            mapping_json={
+                "enrolment_id": {
+                    "source": "STUD_ID",
+                    "transform": "strip",
+                },
+                "student_name": {
+                    "source": "STUD_NM",
+                    "transform": "title_case",
+                },
+                "dob": {
+                    "source": "DOB_STR",
+                    "transform": {"date": "%d-%m-%Y"},
+                },
+                "institution_code": {
+                    "source": "INST_CD",
+                    "transform": "strip",
+                },
+                "course_code": {
+                    "source": "COURSE_CD",
+                    "transform": "strip",
+                },
+                "year_of_study": {
+                    "source": "YR_OF_STUDY",
+                    "transform": "to_int",
+                },
+                "status": {
+                    "source": "ADM_STATUS",
+                    "transform": {
+                        "enum": {
+                            "A": "ACTIVE",
+                            "T": "TERMINATED",
+                            "D": "DROPPED",
+                        }
+                    },
+                },
+                "last_updated": {
+                    "source": "LAST_UPD",
+                    "transform": {"date": "%d-%m-%Y"},
+                },
+            },
             status="ACTIVE",
             version=1,
         ),
@@ -288,6 +388,7 @@ def write_skl_csv() -> None:
 
 def seed() -> None:
     reset_database()
+    write_edu_db()
 
     with SessionLocal() as session:
         seed_users(session)

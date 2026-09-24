@@ -6,6 +6,7 @@ from .base import Connector
 from .errors import ConnectorConfigurationError
 from .rest_json import RestJsonConnector
 from .rest_xml import RestXmlConnector
+from .sql_view import SqlViewConnector
 
 
 def build_connector(
@@ -36,6 +37,9 @@ def build_connector(
 
     if kind == "REST_XML":
         return RestXmlConnector(**common)
+
+    if kind == "SQL_VIEW":
+        return SqlViewConnector(**common)
 
     raise ConnectorConfigurationError(
         f"Unsupported connector kind: {kind!r}"
