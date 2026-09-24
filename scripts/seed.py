@@ -142,15 +142,43 @@ def seed_connectors(session) -> None:
             kind="REST_XML",
             entity="income_certificate",
             config_json={
-                "base_url": "http://localhost:8001",
-                "path": "/api/certificates/income",
+                "base_url": "http://127.0.0.1:8001",
+                "path": "/certificates",
+                "auth": {
+                    "type": "api_key",
+                    "secret_ref": "REV_API_KEY",
+                },
+                "timeout_seconds": 10,
             },
             lookup_json={
-                "mobile_field": "mobile",
-                "dob_field": "dob",
-                "dob_format": "%Y-%m-%d",
+                "certificate_type": "INCOME",
             },
-            mapping_json={},
+            mapping_json={
+                "cert_no": {
+                    "source": "CertNo",
+                    "transform": "strip",
+                },
+                "holder_name": {
+                    "source": "Holder/Name",
+                    "transform": "title_case",
+                },
+                "annual_income_inr": {
+                    "source": "IncomeDetails/AnnualIncome",
+                    "transform": "to_int",
+                },
+                "issue_date": {
+                    "source": "IssueDate",
+                    "transform": {"date": "%d/%m/%Y"},
+                },
+                "valid_until": {
+                    "source": "ValidUntil",
+                    "transform": {"date": "%d/%m/%Y"},
+                },
+                "issuing_authority": {
+                    "source": "IssuingAuthority",
+                    "transform": "strip",
+                },
+            },
             status="ACTIVE",
             version=1,
         ),

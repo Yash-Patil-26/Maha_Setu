@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from datetime import datetime, timezone
 from typing import Any
 from urllib.parse import urljoin
@@ -32,17 +33,32 @@ class RestXmlConnector(Connector):
         return urljoin(f"{base_url.rstrip('/')}/", path.lstrip("/"))
 
     def _headers(self) -> dict[str, str]:
+        auth = self.config.get("auth", {})
+
+        if auth.get("type") == "api_key":
+            secret_ref = auth.get("secret_ref")
+            if not secret_ref:
+                raise ConnectorConfigurationError(
+                    "REST_XML connector is missing auth.secret_ref"
+                )
+
+            api_key = os.getenv(secret_ref)
+            if not api_key:
+                raise ConnectorConfigurationError(
+                    f"Environment variable {secret_ref!r} is not configured"
+                )
+
+            return {"X-API-Key": api_key}
+
         api_key = self.config.get("api_key")
+        if api_key:
+            return {"X-API-Key": api_key}
 
-        if not api_key:
-            raise ConnectorConfigurationError(
-                f"{self.name}: missing config.api_key"
-            )
+        raise ConnectorConfigurationError(
+            "REST_XML connector requires API-key authentication"
+        )
 
-        return {"X-API-Key": api_key}
-
-    @staticmethod
-    def _xml_to_source(root: Element) -> dict[str, Any]:
+    def _xml_to_source(self, root: Element) -> dict[str, Any]:
         status = root.findtext("./Status")
 
         if status != "FOUND":
