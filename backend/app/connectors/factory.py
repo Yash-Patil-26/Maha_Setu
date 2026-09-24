@@ -4,6 +4,7 @@ from typing import Any
 
 from .base import Connector
 from .errors import ConnectorConfigurationError
+from .rest_json import RestJsonConnector
 from .rest_xml import RestXmlConnector
 
 
@@ -29,6 +30,9 @@ def build_connector(
         "lookup": lookup,
         "mapping": mapping,
     }
+
+    if kind == "REST_JSON":
+        return RestJsonConnector(**common)
 
     if kind == "REST_XML":
         return RestXmlConnector(**common)

@@ -3,6 +3,8 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Any
 
+from .errors import ConnectorConfigurationError
+
 
 class Connector(ABC):
     """Minimal runtime interface shared by connector implementations."""
@@ -25,6 +27,21 @@ class Connector(ABC):
         self.config = config
         self.lookup = lookup
         self.mapping = mapping
+
+    def submit(
+        self,
+        *,
+        applicant: dict[str, Any],
+        scheme_code: str,
+        data: dict[str, Any],
+        application_id: int | str,
+        step_id: str,
+        correlation_id: str,
+    ) -> dict[str, Any]:
+        """Submit data to a destination system."""
+        raise ConnectorConfigurationError(
+            f"{self.name}: submit operation is not supported"
+        )
 
     @abstractmethod
     def fetch(

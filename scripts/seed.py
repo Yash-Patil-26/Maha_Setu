@@ -206,8 +206,13 @@ def seed_connectors(session) -> None:
             kind="REST_JSON",
             entity="application",
             config_json={
-                "base_url": "http://localhost:8002",
+                "base_url": "http://127.0.0.1:8002",
                 "path_template": "/api/schemes/{scheme_code}/applications",
+                "auth": {
+                    "type": "bearer",
+                    "secret_ref": "BSS_API_TOKEN",
+                },
+                "timeout_seconds": 10,
             },
             lookup_json={},
             mapping_json={},
