@@ -25,9 +25,17 @@ function App() {
 
 
       <Route element={<ProtectedRoute roles={['officer']} />}>
-        <Route path="/officer" element={<PlaceholderPage />} />
-        <Route path="/officer/applications/:id" element={<PlaceholderPage />} />
-        <Route path="/officer/conflicts" element={<PlaceholderPage />} />
+        <Route element={<DashboardLayout />}>
+          <Route path="/officer" element={<OfficerDashboard />} />
+          <Route
+            path="/officer/applications/:id"
+            element={<OfficerApplicationPage />}
+          />
+          <Route
+            path="/officer/conflicts"
+            element={<PlaceholderPage />}
+          />
+        </Route>
       </Route>
 
       <Route element={<ProtectedRoute roles={['admin']} />}>
