@@ -39,12 +39,33 @@ function App() {
       </Route>
 
       <Route element={<ProtectedRoute roles={['admin']} />}>
-        <Route path="/admin" element={<PlaceholderPage />} />
-        <Route path="/admin/systems" element={<PlaceholderPage />} />
-        <Route path="/admin/studio" element={<PlaceholderPage />} />
-        <Route path="/admin/studio/:connectorId" element={<PlaceholderPage />} />
-        <Route path="/admin/audit" element={<PlaceholderPage />} />
-        <Route path="/admin/journeys" element={<PlaceholderPage />} />
+        <Route element={<DashboardLayout />}>
+          <Route
+            path="/admin" element={<AdminDashboard />}
+          />
+
+          <Route
+            path="/admin/systems"
+            element={<AdminSystemsPage />}
+          />
+
+          <Route
+            path="/admin/studio"
+            element={<AdminStudioPage />}
+          />
+          <Route
+            path="/admin/studio/:connectorId"
+            element={<PlaceholderPage />}
+          />
+          <Route
+            path="/admin/audit"
+            element={<AdminAuditPage />}
+          />
+          <Route
+            path="/admin/journeys"
+            element={<AdminJourneysPage />}
+          />
+        </Route>
       </Route>
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
