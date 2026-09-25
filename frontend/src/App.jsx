@@ -15,6 +15,7 @@ import LoginPage from './pages/LoginPage.jsx'
 import PlaceholderPage from './pages/PlaceholderPage.jsx'
 import ProtectedRoute from './auth/ProtectedRoute.jsx'
 import './App.css'
+import './ui-polish.css'
 
 function App() {
   return (
