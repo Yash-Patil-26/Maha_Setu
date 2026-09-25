@@ -1,13 +1,19 @@
 import sys
 from pathlib import Path
 
+import pytest
 from fastapi.testclient import TestClient
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from mock_systems.rev.main import app
+from mock_systems.rev import main as rev_main
 
-client = TestClient(app)
+client = TestClient(rev_main.app)
+
+
+@pytest.fixture(autouse=True)
+def mock_rev_api_key(monkeypatch):
+    monkeypatch.setattr(rev_main, "REV_API_KEY", "change-me")
 
 
 def test_rev_income_certificate():

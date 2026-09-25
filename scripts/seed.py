@@ -207,6 +207,7 @@ def seed_connectors(session) -> None:
             },
             lookup_json={
                 "certificate_type": "INCOME",
+                "dob_format": "%d/%m/%Y",
             },
             mapping_json={
                 "cert_no": {

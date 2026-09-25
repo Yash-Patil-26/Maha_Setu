@@ -3,6 +3,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+import pytest
 from fastapi.testclient import TestClient
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -10,9 +11,14 @@ ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from mock_systems.bss.main import app  # noqa: E402
+from mock_systems.bss import main as bss_main  # noqa: E402
 
-client = TestClient(app)
+client = TestClient(bss_main.app)
+
+
+@pytest.fixture(autouse=True)
+def mock_bss_api_token(monkeypatch):
+    monkeypatch.setattr(bss_main, "BSS_API_TOKEN", "change-me")
 
 
 def test_bss_health():

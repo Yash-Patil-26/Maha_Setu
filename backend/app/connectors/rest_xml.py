@@ -26,9 +26,7 @@ class RestXmlConnector(Connector):
         path = self.config.get("path", "/certificates")
 
         if not base_url:
-            raise ConnectorConfigurationError(
-                f"{self.name}: missing config.base_url"
-            )
+            raise ConnectorConfigurationError(f"{self.name}: missing config.base_url")
 
         return urljoin(f"{base_url.rstrip('/')}/", path.lstrip("/"))
 
@@ -58,13 +56,35 @@ class RestXmlConnector(Connector):
             "REST_XML connector requires API-key authentication"
         )
 
+    def _format_dob(self, dob: str) -> str:
+        dob_format = self.lookup.get("dob_format")
+
+        if not dob_format:
+            return dob
+
+        if not isinstance(dob, str) or not dob.strip():
+            raise ConnectorResponseError(f"{self.name}: dob is required")
+
+        value = dob.strip()
+
+        try:
+            datetime.strptime(value, dob_format)
+            return value
+        except ValueError:
+            pass
+
+        try:
+            return datetime.fromisoformat(value).strftime(dob_format)
+        except ValueError as exc:
+            raise ConnectorResponseError(
+                f"{self.name}: invalid DOB {dob!r}; expected ISO date or {dob_format!r}"
+            ) from exc
+
     def _xml_to_source(self, root: Element) -> dict[str, Any]:
         status = root.findtext("./Status")
 
         if status != "FOUND":
-            raise ConnectorResponseError(
-                f"REV returned unexpected status: {status!r}"
-            )
+            raise ConnectorResponseError(f"REV returned unexpected status: {status!r}")
 
         certificate = root.find("./IncomeCertificate")
         certificate_type = "INCOME"
@@ -74,9 +94,7 @@ class RestXmlConnector(Connector):
             certificate_type = "CASTE"
 
         if certificate is None:
-            raise ConnectorResponseError(
-                "REV response does not contain a certificate"
-            )
+            raise ConnectorResponseError("REV response does not contain a certificate")
 
         source: dict[str, Any] = {
             "certificate_type": certificate_type,
@@ -86,18 +104,12 @@ class RestXmlConnector(Connector):
             },
             "IssueDate": certificate.findtext("./IssueDate"),
             "ValidUntil": certificate.findtext("./ValidUntil"),
-            "IssuingAuthority": certificate.findtext(
-                "./IssuingAuthority"
-            ),
+            "IssuingAuthority": certificate.findtext("./IssuingAuthority"),
             "IncomeDetails": {
-                "AnnualIncome": certificate.findtext(
-                    "./IncomeDetails/AnnualIncome"
-                ),
+                "AnnualIncome": certificate.findtext("./IncomeDetails/AnnualIncome"),
             },
             "CasteDetails": {
-                "Category": certificate.findtext(
-                    "./CasteDetails/Category"
-                ),
+                "Category": certificate.findtext("./CasteDetails/Category"),
             },
         }
 
@@ -115,7 +127,7 @@ class RestXmlConnector(Connector):
         params = {
             "type": self.lookup.get("certificate_type", "INCOME"),
             "mobile": mobile,
-            "dob": dob,
+            "dob": self._format_dob(dob),
         }
 
         timeout = float(self.config.get("timeout_seconds", 10))
@@ -133,30 +145,24 @@ class RestXmlConnector(Connector):
             ) from exc
 
         if response.status_code == 404:
-            raise ConnectorResponseError(
-                f"{self.name}: record not found"
-            )
+            raise ConnectorResponseError(f"{self.name}: record not found")
 
         if response.status_code >= 400:
             raise ConnectorResponseError(
-                f"{self.name}: REV returned HTTP "
-                f"{response.status_code}"
+                f"{self.name}: REV returned HTTP {response.status_code}"
             )
 
         content_type = response.headers.get("content-type", "")
 
         if "xml" not in content_type.lower():
             raise ConnectorResponseError(
-                f"{self.name}: expected XML response, "
-                f"got {content_type!r}"
+                f"{self.name}: expected XML response, got {content_type!r}"
             )
 
         try:
             root = ElementTree.fromstring(response.content)
         except ElementTree.ParseError as exc:
-            raise ConnectorResponseError(
-                f"{self.name}: invalid XML response"
-            ) from exc
+            raise ConnectorResponseError(f"{self.name}: invalid XML response") from exc
 
         source = self._xml_to_source(root)
         record = apply_mapping(source, self.mapping)

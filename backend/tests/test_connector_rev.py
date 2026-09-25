@@ -28,6 +28,7 @@ def make_income_connector(base_url: str) -> RestXmlConnector:
         },
         lookup={
             "certificate_type": "INCOME",
+            "dob_format": "%d/%m/%Y",
         },
         mapping={
             "cert_no": {
@@ -58,11 +59,56 @@ def make_income_connector(base_url: str) -> RestXmlConnector:
     )
 
 
+def test_rev_income_connector_formats_iso_dob_for_legacy_api(
+    monkeypatch,
+) -> None:
+    captured = {}
+
+    class FakeResponse:
+        status_code = 200
+        headers = {"content-type": "application/xml"}
+        content = b"""
+        <CertificateResponse>
+          <Status>FOUND</Status>
+          <IncomeCertificate>
+            <CertNo>MH-INC-2026-000123</CertNo>
+            <Holder><Name>Patil Rahul Suresh</Name></Holder>
+            <IncomeDetails><AnnualIncome>2,10,000</AnnualIncome></IncomeDetails>
+            <IssueDate>15/04/2026</IssueDate>
+            <ValidUntil>14/04/2027</ValidUntil>
+            <IssuingAuthority>Tahsildar, Haveli</IssuingAuthority>
+          </IncomeCertificate>
+        </CertificateResponse>
+        """
+
+    def fake_get(url, **kwargs):
+        captured["params"] = kwargs["params"]
+        return FakeResponse()
+
+    monkeypatch.setattr("httpx.get", fake_get)
+
+    connector = make_income_connector("http://testserver")
+    connector.lookup["dob_format"] = "%d/%m/%Y"
+
+    result = connector.fetch(
+        mobile="9876543210",
+        dob="2004-03-04",
+        correlation_id=str(uuid4()),
+    )
+
+    assert captured["params"]["dob"] == "04/03/2004"
+    assert result["record"]["cert_no"] == "MH-INC-2026-000123"
+
+
 def test_rev_income_connector_fetches_canonical_record(
     monkeypatch,
 ) -> None:
-    with TestClient(rev_app) as client:
+    monkeypatch.setattr(
+        "mock_systems.rev.main.REV_API_KEY",
+        "change-me",
+    )
 
+    with TestClient(rev_app) as client:
         connector = make_income_connector(
             "http://testserver",
         )
