@@ -308,6 +308,7 @@ def seed_connectors(session) -> None:
             config_json={
                 "base_url": "http://127.0.0.1:8002",
                 "path_template": "/api/schemes/{scheme_code}/applications",
+                "scheme_code": "SCHOL-PM",
                 "auth": {
                     "type": "bearer",
                     "secret_ref": "BSS_API_TOKEN",

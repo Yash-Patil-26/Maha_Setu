@@ -1,0 +1,13 @@
+{
+  "post_matric_income_250000": {
+    "conditions": [
+      {
+        "code": "INCOME_LIMIT",
+        "path": "income_certificate.annual_income_inr",
+        "operator": "lte",
+        "threshold": 250000,
+        "message": "Income {value:,} <= {threshold:,}"
+      }
+    ]
+  }
+}
