@@ -1,3 +1,12 @@
+import DashboardLayout from './pages/DashboardLayout.jsx'
+import OfficerDashboard from './pages/OfficerDashboard.jsx'
+import OfficerApplicationPage from './pages/OfficerApplicationPage.jsx'
+import AdminDashboard from './pages/AdminDashboard.jsx'
+import AdminSystemsPage from './pages/AdminSystemsPage.jsx'
+import AdminStudioPage from './pages/AdminStudioPage.jsx'
+import AdminAuditPage from './pages/AdminAuditPage.jsx'
+import AdminJourneysPage from './pages/AdminJourneysPage.jsx'
+
 import CitizenDashboard from './pages/CitizenDashboard.jsx'
 import CitizenApplyPage from './pages/CitizenApplyPage.jsx'
 import CitizenApplicationPage from './pages/CitizenApplicationPage.jsx'

@@ -1,22 +1,54 @@
 import { useState } from 'react'
 
 const steps = [
-  'System Information',
-  'API Configuration',
-  'Data Mapping',
-  'Authentication',
-  'Review & Connect',
+  'Select System',
+  'Sample Data',
+  'Suggested Mapping',
+  'Test Mapping',
+  'Activate Connector',
+]
+
+const sampleRecords = [
+  {
+    candidate_id: 'SKL-1001',
+    full_name: 'Amit Patil',
+    mobile_number: '9876543210',
+    skill_category: 'Electrician',
+    employment_status: 'Seeking Employment',
+  },
+  {
+    candidate_id: 'SKL-1002',
+    full_name: 'Priya More',
+    mobile_number: '9876543211',
+    skill_category: 'Healthcare',
+    employment_status: 'Employed',
+  },
+]
+
+const mappings = [
+  ['candidate_id', 'master_id'],
+  ['full_name', 'name'],
+  ['mobile_number', 'contact.mobile'],
+  ['skill_category', 'skills.category'],
+  ['employment_status', 'employment.status'],
 ]
 
 function AdminStudioPage() {
   const [currentStep, setCurrentStep] = useState(0)
-  const [systemName, setSystemName] = useState('')
-  const [systemType, setSystemType] = useState('Government System')
-  const [apiUrl, setApiUrl] = useState('')
-  const [authType, setAuthType] = useState('API Key')
-  const [connected, setConnected] = useState(false)
+  const [system, setSystem] = useState('SKL')
+  const [sampled, setSampled] = useState(false)
+  const [tested, setTested] = useState(false)
+  const [activated, setActivated] = useState(false)
 
   function nextStep() {
+    if (currentStep === 1) {
+      setSampled(true)
+    }
+
+    if (currentStep === 3) {
+      setTested(true)
+    }
+
     if (currentStep < steps.length - 1) {
       setCurrentStep((step) => step + 1)
     }
@@ -28,8 +60,8 @@ function AdminStudioPage() {
     }
   }
 
-  function handleConnect() {
-    setConnected(true)
+  function activateConnector() {
+    setActivated(true)
   }
 
   return (
@@ -43,7 +75,7 @@ function AdminStudioPage() {
           <h1>Onboarding Studio</h1>
 
           <p>
-            Configure and connect a new government system to MahaSetu.
+            Connect and configure a government system without writing code.
           </p>
         </div>
       </div>
@@ -51,8 +83,11 @@ function AdminStudioPage() {
       <section className="setu-content-card">
         <div className="setu-card-heading">
           <div>
-            <h2>New System Integration</h2>
-            <p>Complete the steps below to configure the integration.</p>
+            <h2>Connector Onboarding</h2>
+            <p>
+              Sample data, review suggested mappings, test the connection, and
+              activate the connector.
+            </p>
           </div>
         </div>
 
@@ -73,143 +108,165 @@ function AdminStudioPage() {
         <div className="setu-studio-form">
           {currentStep === 0 && (
             <>
-              <h3>System Information</h3>
+              <h3>Select System</h3>
+
+              <p className="setu-form-help">
+                Select the system you want to onboard into MahaSetu.
+              </p>
 
               <label>
-                System Name
-                <input
-                  type="text"
-                  value={systemName}
-                  onChange={(event) => setSystemName(event.target.value)}
-                  placeholder="e.g. Education Department"
-                />
-              </label>
-
-              <label>
-                System Type
+                Government System
                 <select
-                  value={systemType}
-                  onChange={(event) => setSystemType(event.target.value)}
+                  value={system}
+                  onChange={(event) => setSystem(event.target.value)}
                 >
-                  <option>Government System</option>
-                  <option>Department Portal</option>
-                  <option>Legacy Database</option>
-                  <option>External Service</option>
+                  <option value="SKL">SKL — Skills & Employment</option>
+                  <option value="REV">REV — Revenue Department</option>
+                  <option value="EDU">EDU — Education Department</option>
+                  <option value="BSS">BSS — Benefit Scheme System</option>
                 </select>
               </label>
+
+              <div className="setu-review-box">
+                <div>
+                  <span>System Code</span>
+                  <strong>{system}</strong>
+                </div>
+
+                <div>
+                  <span>Integration Type</span>
+                  <strong>Government Connector</strong>
+                </div>
+
+                <div>
+                  <span>Configuration</span>
+                  <strong>No code required</strong>
+                </div>
+              </div>
             </>
           )}
 
           {currentStep === 1 && (
             <>
-              <h3>API Configuration</h3>
+              <h3>Sample Data</h3>
 
-              <label>
-                API Base URL
-                <input
-                  type="url"
-                  value={apiUrl}
-                  onChange={(event) => setApiUrl(event.target.value)}
-                  placeholder="https://example.gov.in/api"
-                />
-              </label>
+              <p className="setu-form-help">
+                Preview sample records received from the selected system.
+              </p>
 
-              <label>
-                API Version
-                <input type="text" defaultValue="v1" />
-              </label>
+              <div className="setu-review-box">
+                {sampleRecords.map((record) => (
+                  <div key={record.candidate_id}>
+                    <span>{record.candidate_id}</span>
+                    <strong>{record.full_name}</strong>
+                    <small>
+                      {record.skill_category} · {record.employment_status}
+                    </small>
+                  </div>
+                ))}
+              </div>
+
+              {sampled && (
+                <div className="setu-success-message">
+                  ✓ Sample loaded successfully.
+                </div>
+              )}
             </>
           )}
 
           {currentStep === 2 && (
             <>
-              <h3>Data Mapping</h3>
+              <h3>Suggested Mapping</h3>
 
               <p className="setu-form-help">
-                Configure how external system fields map to the MahaSetu
-                common data model.
+                Review the suggested mapping between the external system and
+                the MahaSetu common data model.
               </p>
 
               <div className="setu-mapping-list">
-                <div>
-                  <strong>citizen_id</strong>
-                  <span>→ master_id</span>
-                </div>
+                {mappings.map(([source, target]) => (
+                  <div key={source}>
+                    <strong>{source}</strong>
+                    <span>→ {target}</span>
+                  </div>
+                ))}
+              </div>
 
-                <div>
-                  <strong>full_name</strong>
-                  <span>→ name</span>
-                </div>
-
-                <div>
-                  <strong>mobile_number</strong>
-                  <span>→ contact.mobile</span>
-                </div>
-
-                <div>
-                  <strong>address</strong>
-                  <span>→ address.full</span>
-                </div>
+              <div className="setu-success-message">
+                ✓ Mapping suggestions generated automatically.
               </div>
             </>
           )}
 
           {currentStep === 3 && (
             <>
-              <h3>Authentication</h3>
+              <h3>Test Mapping</h3>
 
-              <label>
-                Authentication Method
-                <select
-                  value={authType}
-                  onChange={(event) => setAuthType(event.target.value)}
-                >
-                  <option>API Key</option>
-                  <option>OAuth 2.0</option>
-                  <option>JWT</option>
-                  <option>Mutual TLS</option>
-                </select>
-              </label>
+              <p className="setu-form-help">
+                Validate the suggested mapping against the sampled records
+                before activation.
+              </p>
 
-              <label>
-                Credential
-                <input
-                  type="password"
-                  placeholder="Enter prototype credential"
-                />
-              </label>
+              <div className="setu-review-box">
+                <div>
+                  <span>Source records</span>
+                  <strong>{sampleRecords.length}</strong>
+                </div>
+
+                <div>
+                  <span>Mapped fields</span>
+                  <strong>{mappings.length}</strong>
+                </div>
+
+                <div>
+                  <span>Validation</span>
+                  <strong>Ready to test</strong>
+                </div>
+              </div>
+
+              {tested && (
+                <div className="setu-success-message">
+                  ✓ Mapping test passed. All required fields are compatible.
+                </div>
+              )}
             </>
           )}
 
           {currentStep === 4 && (
             <>
-              <h3>Review & Connect</h3>
+              <h3>Activate Connector</h3>
+
+              <p className="setu-form-help">
+                Review the configuration and activate the connector for
+                journey execution.
+              </p>
 
               <div className="setu-review-box">
                 <div>
-                  <span>System Name</span>
-                  <strong>{systemName || 'Not provided'}</strong>
+                  <span>System</span>
+                  <strong>{system}</strong>
                 </div>
 
                 <div>
-                  <span>System Type</span>
-                  <strong>{systemType}</strong>
+                  <span>Sample</span>
+                  <strong>Loaded</strong>
                 </div>
 
                 <div>
-                  <span>API URL</span>
-                  <strong>{apiUrl || 'Not provided'}</strong>
+                  <span>Mapping</span>
+                  <strong>Validated</strong>
                 </div>
 
                 <div>
-                  <span>Authentication</span>
-                  <strong>{authType}</strong>
+                  <span>Test</span>
+                  <strong>Passed</strong>
                 </div>
               </div>
 
-              {connected && (
+              {activated && (
                 <div className="setu-success-message">
-                  ✓ System connected successfully — prototype action.
+                  ✓ Connector activated successfully. {system} is ready for
+                  journey execution.
                 </div>
               )}
             </>
@@ -231,15 +288,20 @@ function AdminStudioPage() {
                 type="button"
                 onClick={nextStep}
               >
-                Continue
+                {currentStep === 1
+                  ? 'Load Sample'
+                  : currentStep === 3
+                    ? 'Run Test'
+                    : 'Continue'}
               </button>
             ) : (
               <button
                 className="setu-primary-button"
                 type="button"
-                onClick={handleConnect}
+                onClick={activateConnector}
+                disabled={activated}
               >
-                Connect System
+                {activated ? 'Connector Activated' : 'Activate Connector'}
               </button>
             )}
           </div>
@@ -247,7 +309,7 @@ function AdminStudioPage() {
       </section>
 
       <footer className="setu-page-footer">
-        Synthetic configuration — SETU prototype
+        Connector onboarding — SETU prototype
       </footer>
     </div>
   )
