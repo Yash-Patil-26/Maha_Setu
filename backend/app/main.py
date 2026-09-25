@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from .api.auth import router as auth_router
+from .api.webhook import router as webhook_router
 from .db import init_db
 
 
@@ -30,3 +31,4 @@ def api_health() -> dict[str, str]:
 
 
 app.include_router(auth_router)
+app.include_router(webhook_router)
