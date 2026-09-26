@@ -1218,3 +1218,49 @@ main.mahasetu-login-page {
   color: #475569;
   font-size: 11px;
 }
+
+.consent-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.consent-card {
+  padding: 1.25rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.consent-card h2 {
+  margin-bottom: 0.5rem;
+}
+
+.consent-card-header p {
+  margin: 0;
+}
+
+.consent-details {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  margin: 1rem 0;
+}
+
+.consent-details h3 {
+  margin-bottom: 0.35rem;
+}
+
+.consent-details ul {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.consent-card button {
+  margin-top: 0.5rem;
+}
+
+@media (max-width: 700px) {
+  .consent-details {
+    grid-template-columns: 1fr;
+  }
+}
