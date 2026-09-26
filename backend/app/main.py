@@ -784,7 +784,7 @@ def get_application(
     application_id: int,
     authorization: str | None = Header(default=None),
 ):
-    get_current_user(authorization, required_role='officer')
+    user = get_current_user(authorization, required_role="citizen")
 
     db = get_db()
 
@@ -813,8 +813,13 @@ def get_application(
             detail="APPLICATION_NOT_FOUND",
         )
 
-    return dict(application)
+    if application["user_id"] != user["id"]:
+        raise HTTPException(
+            status_code=403,
+            detail="You can only view your own application",
+        )
 
+    return dict(application)
 
 
 # ---------------------------------------------------------
