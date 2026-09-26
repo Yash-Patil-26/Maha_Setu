@@ -3,6 +3,7 @@ from __future__ import annotations
 from sqlalchemy.orm import Session
 
 from ..models import Connector as ConnectorModel
+from ..models import System
 from .base import Connector
 from .errors import ConnectorConfigurationError
 from .factory import build_connector
@@ -30,6 +31,21 @@ def get_connector(
     if status != "ACTIVE":
         raise ConnectorConfigurationError(
             f"Connector is not ACTIVE: {name}"
+        )
+
+    system = db.get(
+        System,
+        row.system_code,
+    )
+
+    if system is not None and (
+        system.simulate_down
+        or system.health == "DOWN"
+    ):
+        from .errors import ConnectorTransportError
+
+        raise ConnectorTransportError(
+            f"{row.system_code}: source system is DOWN (simulated)"
         )
 
     return build_connector(

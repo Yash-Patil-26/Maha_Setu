@@ -1,87 +1,142 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { CITIZEN_SERVICES } from '../fixtures/citizen'
-import {
-  createFixtureApplication,
-  hasConsent,
-  saveConsent,
-} from '../fixtures/citizenFlow'
+import { apiRequest } from '../api/client.js'
+
+function consentPurpose(journeyId) {
+  if (journeyId === 'scholarship_v1') {
+    return 'scholarship_eligibility'
+  }
+
+  if (journeyId === 'youth_enterprise_v1') {
+    return 'youth_enterprise_eligibility'
+  }
+
+  return null
+}
 
 function CitizenApplyPage() {
   const { journeyId } = useParams()
   const navigate = useNavigate()
-  const service = CITIZEN_SERVICES.find((item) => item.journeyId === journeyId)
 
-  const [consentGranted, setConsentGranted] = useState(hasConsent(journeyId))
+  const service = CITIZEN_SERVICES.find(
+    (item) => item.journeyId === journeyId,
+  )
+
+  const [consentId, setConsentId] = useState(null)
   const [error, setError] = useState('')
+  const [busy, setBusy] = useState(false)
 
   if (!service) {
     return (
       <main>
-        <header className="page-header">
-          <h1>Service not found</h1>
-          <p>The requested service is not available.</p>
-        </header>
-
-        <a className="button button-secondary" href="/citizen">
-          Back to dashboard
-        </a>
+        <h1>Service not found</h1>
       </main>
     )
   }
 
-  function handleConsent() {
-    saveConsent(journeyId)
-    setConsentGranted(true)
-    setError('')
-  }
+  async function grantConsent() {
+    const purpose = consentPurpose(journeyId)
 
-  function handleApply() {
-    if (!hasConsent(journeyId)) {
-      setError('Please grant consent before applying.')
+    if (!purpose) {
+      setError('Unsupported journey consent purpose.')
       return
     }
 
-    const applicationId = createFixtureApplication(journeyId)
-    navigate(`/citizen/applications/${applicationId}`)
+    setError('')
+    setBusy(true)
+
+    try {
+      const result = await apiRequest('/api/consents', {
+        method: 'POST',
+        body: JSON.stringify({
+          journey_id: journeyId,
+          purpose,
+        }),
+      })
+
+      setConsentId(result.id)
+    } catch (err) {
+      setError(
+        err.message ||
+          'Consent service is not available yet.',
+      )
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function createApplication() {
+    setError('')
+    setBusy(true)
+
+    try {
+      const result = await apiRequest('/api/applications', {
+        method: 'POST',
+        body: JSON.stringify({
+          journey_id: journeyId,
+        }),
+      })
+
+      navigate(
+        `/citizen/applications/${result.application_id}`,
+      )
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setBusy(false)
+    }
   }
 
   return (
     <main>
       <header className="page-header">
-        <p>Citizen Dashboard / {service.title}</p>
-        <h1>Apply for {service.title}</h1>
-        <p>{service.description}</p>
+        <p>
+          Citizen Dashboard / {service.title}
+        </p>
+
+        <h1>
+          Apply for {service.title}
+        </h1>
+
+        <p>
+          {service.description}
+        </p>
       </header>
 
       <section className="card">
         <h2>Consent</h2>
+
         <p>
-          I consent to SETU using the required system data to process this
-          application.
+          Grant consent through the real SETU consent service
+          before applying.
         </p>
 
         <button
           className="button"
           type="button"
-          onClick={handleConsent}
-          disabled={consentGranted}
+          onClick={grantConsent}
+          disabled={busy || Boolean(consentId)}
         >
-          {consentGranted ? 'Consent granted' : 'Grant consent'}
+          {consentId
+            ? 'Consent granted'
+            : 'Grant consent'}
         </button>
       </section>
 
       <section className="card">
-        <h2>Apply</h2>
+        <h2>Application</h2>
+
         <p>
-          Once consent is granted, you can create your application.
+          The application will be created by the real FastAPI
+          journey endpoint.
         </p>
 
         <button
           className="button"
           type="button"
-          onClick={handleApply}
-          disabled={!consentGranted}
+          onClick={createApplication}
+          disabled={busy || !consentId}
         >
           Create application
         </button>
@@ -94,7 +149,7 @@ function CitizenApplyPage() {
       )}
 
       <footer className="page-footer">
-        Synthetic data — prototype
+        Synthetic data — SETU prototype
       </footer>
     </main>
   )

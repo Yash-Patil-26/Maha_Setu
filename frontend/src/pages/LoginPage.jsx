@@ -1,89 +1,102 @@
 import { useState } from 'react'
-import { Navigate, useNavigate } from 'react-router-dom'
-import { AUTH_FIXTURES } from '../auth/fixtures.js'
-import { getAuthUser, setAuthSession } from '../auth/storage.js'
+import { useNavigate } from 'react-router-dom'
+import { apiRequest } from '../api/client.js'
+import { setAuthSession } from '../auth/storage.js'
 
-export default function LoginPage() {
+function rolePath(role) {
+  if (role === 'officer') return '/officer'
+  if (role === 'admin') return '/admin'
+  return '/citizen'
+}
+
+function LoginPage() {
   const navigate = useNavigate()
-  const existingUser = getAuthUser()
-  const [username, setUsername] = useState('')
+
+  const [username, setUsername] = useState('rahul.patil')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [busy, setBusy] = useState(false)
 
-  if (existingUser) {
-    return <Navigate to={`/${existingUser.role}`} replace />
-  }
-
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault()
-
-    const user = Object.values(AUTH_FIXTURES).find(
-      (fixture) => fixture.username === username,
-    )
-
-    if (!user || !password) {
-      setError('Enter a valid fixture username and password.')
-      return
-    }
-
     setError('')
-    setAuthSession(`fixture-token-${user.username}`, user)
-    navigate(`/${user.role}`, { replace: true })
+    setBusy(true)
+
+    try {
+      const result = await apiRequest('/api/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({
+          username,
+          password,
+        }),
+      })
+
+      setAuthSession(result.access_token, result.user)
+
+      navigate(rolePath(result.user.role), {
+        replace: true,
+      })
+    } catch (err) {
+      setError(err.message || 'Login failed')
+    } finally {
+      setBusy(false)
+    }
   }
 
   return (
     <main className="login-page">
-      <section className="login-panel">
-        <div className="login-brand">
-          <span className="login-brand-mark">S</span>
-          <div>
-            <strong>SETU</strong>
-            <span>Citizen Services</span>
-          </div>
-        </div>
+      <section className="login-card">
+        <p className="eyebrow">
+          SETU · Unified Government Services
+        </p>
 
-        <div className="login-heading">
-          <h1>Welcome back</h1>
-          <p>Sign in to continue to your SETU services.</p>
-        </div>
+        <h1>Sign in</h1>
 
-        {error && (
-          <p className="form-error" role="alert">
-            {error}
-          </p>
-        )}
+        <p>
+          Sign in using a seeded SETU account.
+        </p>
 
-        <form className="login-card" onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit}>
           <label>
             Username
             <input
-              required
               value={username}
               onChange={(event) => setUsername(event.target.value)}
               autoComplete="username"
-              placeholder="Enter your username"
             />
           </label>
 
           <label>
             Password
             <input
-              required
               type="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               autoComplete="current-password"
-              placeholder="Enter your password"
             />
           </label>
 
-          <button type="submit">Sign in to SETU</button>
+          {error && (
+            <p className="form-error" role="alert">
+              {error}
+            </p>
+          )}
+
+          <button
+            className="button"
+            type="submit"
+            disabled={busy}
+          >
+            {busy ? 'Signing in…' : 'Sign in'}
+          </button>
         </form>
 
-        <p className="login-note">
-          Prototype environment — use the provided fixture credentials.
-        </p>
+        <footer className="page-footer">
+          Synthetic data — SETU prototype
+        </footer>
       </section>
     </main>
   )
 }
+
+export default LoginPage

@@ -4,7 +4,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -37,6 +37,18 @@ class ApplicationResponse(BaseModel):
     application_id: int
     status: str
     correlation_id: str
+
+
+class ApplicationSummaryResponse(BaseModel):
+    id: int
+    journey_id: str
+    master_id: str
+    status: str
+    current_step: str | None
+    correlation_id: str
+    created_at: datetime
+    updated_at: datetime
+    outcome: str | None
 
 
 class ApplicationStepResponse(BaseModel):
@@ -302,6 +314,69 @@ def create_application(
         status=application.status,
         correlation_id=application.correlation_id,
     )
+
+
+@router.get(
+    "",
+    response_model=list[ApplicationSummaryResponse],
+)
+def list_applications(
+    status_filter: str | None = Query(
+        default=None,
+        alias="status",
+    ),
+    journey_id: str | None = None,
+    limit: int = Query(
+        default=50,
+        ge=1,
+        le=100,
+    ),
+    offset: int = Query(
+        default=0,
+        ge=0,
+    ),
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> list[ApplicationSummaryResponse]:
+    query = (
+        select(Application)
+        .order_by(Application.updated_at.desc())
+        .offset(offset)
+        .limit(limit)
+    )
+
+    if user.role == "citizen":
+        query = query.where(
+            Application.master_id == user.master_id
+        )
+
+    if status_filter:
+        query = query.where(
+            Application.status ==
+            status_filter.upper()
+        )
+
+    if journey_id:
+        query = query.where(
+            Application.journey_id == journey_id
+        )
+
+    rows = db.scalars(query).all()
+
+    return [
+        ApplicationSummaryResponse(
+            id=row.id,
+            journey_id=row.journey_id,
+            master_id=row.master_id,
+            status=row.status,
+            current_step=row.current_step,
+            correlation_id=row.correlation_id,
+            created_at=row.created_at,
+            updated_at=row.updated_at,
+            outcome=row.outcome,
+        )
+        for row in rows
+    ]
 
 
 @router.get(
