@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sys
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from sqlalchemy import create_engine
@@ -21,6 +22,7 @@ from app.models import (  # noqa: E402
     Application,
     ApplicationStep,
     Connector,
+    Consent,
     JourneyDef,
     System,
     User,
@@ -38,6 +40,26 @@ class FakeConnector:
     ):
         self.name = name
         self.entity = entity
+        self.system_code = (
+            "REV"
+            if name == "rev_income"
+            else "EDU"
+            if name == "edu_enrolment"
+            else "BSS"
+        )
+        self.mapping = (
+            {
+                "annual_income_inr": {},
+                "cert_no": {},
+            }
+            if name == "rev_income"
+            else {
+                "status": {},
+                "enrolment_id": {},
+            }
+            if name == "edu_enrolment"
+            else {}
+        )
         self.config = (
             {"scheme_code": "SCHOL-PM"}
             if name == "bss_scholarship"
@@ -246,6 +268,24 @@ def seed_application(session: Session) -> Application:
     )
 
     session.flush()
+
+    session.add(
+        Consent(
+            master_id="SETU-CIT-000001",
+            purpose="scholarship_eligibility",
+            journey_id="scholarship_v1",
+            fields_json=[
+                "annual_income_inr",
+                "cert_no",
+                "status",
+                "enrolment_id",
+            ],
+            source_systems_json=["REV", "EDU"],
+            granted_at=datetime.now(timezone.utc),
+            expires_at=datetime.now(timezone.utc) + timedelta(days=30),
+            status="ACTIVE",
+        )
+    )
 
     application = Application(
         journey_id="scholarship_v1",

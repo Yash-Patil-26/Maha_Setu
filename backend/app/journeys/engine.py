@@ -16,6 +16,14 @@ from ..connectors.errors import (
 from ..connectors.repository import get_connector
 from ..decisions.rules import DecisionError, evaluate_rule
 from ..models import Application, ApplicationStep, JourneyDef, User
+from ..services.consent import (
+    ConsentError,
+    ConsentRequiredError,
+    ConsentRevokedError,
+    filter_consented_fields,
+    get_active_consent,
+    record_access,
+)
 from .loader import JourneyDefinition, JourneyDefinitionError
 
 MAX_ATTEMPTS = 2
@@ -46,6 +54,12 @@ def _error_code(exc: Exception) -> str:
 
     if isinstance(exc, ConnectorConfigurationError):
         return "CONNECTOR_ERROR"
+
+    if isinstance(exc, ConsentRevokedError):
+        return "CONSENT_REVOKED"
+
+    if isinstance(exc, ConsentRequiredError):
+        return "CONSENT_REQUIRED"
 
     if isinstance(exc, DecisionError):
         return "DECISION_ERROR"
@@ -227,6 +241,32 @@ def _execute_step(
                 definition_step.connector,
             )
 
+            purpose = None
+            journey_row = db.scalar(
+                select(JourneyDef).where(
+                    JourneyDef.id == application.journey_id,
+                    JourneyDef.version == application.journey_version,
+                )
+            )
+
+            if journey_row is not None:
+                purpose = (journey_row.definition_json or {}).get(
+                    "consent_purpose"
+                )
+
+            if not isinstance(purpose, str) or not purpose:
+                raise JourneyExecutionError(
+                    "Journey is missing consent_purpose"
+                )
+
+            consent = get_active_consent(
+                db=db,
+                master_id=user.master_id,
+                purpose=purpose,
+                source_system=connector.system_code,
+                journey_id=application.journey_id,
+            )
+
             mobile = user.mobile
             dob = user.dob
 
@@ -246,6 +286,30 @@ def _execute_step(
                     "Connector entity mismatch for step "
                     f"{definition_step.id}"
                 )
+
+            raw_record = result.get("record")
+            if not isinstance(raw_record, dict):
+                raise JourneyExecutionError(
+                    "Connector fetch result has invalid record"
+                )
+
+            filtered_record = filter_consented_fields(
+                consent,
+                raw_record,
+            )
+
+            result = dict(result)
+            result["record"] = filtered_record
+
+            record_access(
+                db,
+                master_id=user.master_id,
+                system_code=connector.system_code,
+                purpose=purpose,
+                fields=sorted(filtered_record),
+                outcome="ALLOWED",
+                application_id=application.id,
+            )
 
             _merge_fetch_result(
                 application,
@@ -342,6 +406,7 @@ def _execute_step(
 
     except (
         ConnectorError,
+        ConsentError,
         DecisionError,
         JourneyExecutionError,
         JourneyDefinitionError,
@@ -353,6 +418,37 @@ def _execute_step(
 
         application.status = "PAUSED_EXCEPTION"
         application.current_step = definition_step.id
+
+        if isinstance(exc, ConsentError):
+            journey_row = db.scalar(
+                select(JourneyDef).where(
+                    JourneyDef.id == application.journey_id,
+                    JourneyDef.version == application.journey_version,
+                )
+            )
+            purpose = (
+                (journey_row.definition_json or {}).get("consent_purpose")
+                if journey_row is not None
+                else None
+            )
+
+            if isinstance(purpose, str) and purpose:
+                connector = connector_loader(
+                    db,
+                    definition_step.connector,
+                )
+                record_access(
+                    db,
+                    master_id=user.master_id,
+                    system_code=connector.system_code,
+                    purpose=purpose,
+                    fields=sorted(
+                        str(field)
+                        for field in (connector.mapping or {})
+                    ),
+                    outcome="DENIED",
+                    application_id=application.id,
+                )
 
         db.commit()
         return False
