@@ -1,7 +1,11 @@
+import runpy
 import sqlite3
 from pathlib import Path
 
 DB_PATH = Path(__file__).resolve().parents[2] / "mock_systems" / "edu" / "edu_legacy.db"
+SEED_PATH = Path(__file__).resolve().parents[2] / "mock_systems" / "edu" / "seed.py"
+
+runpy.run_path(str(SEED_PATH), run_name="__main__")
 
 
 def test_edu_schema():
