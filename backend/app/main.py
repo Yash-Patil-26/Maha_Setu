@@ -117,6 +117,21 @@ def init_db():
         """
     )
 
+    db.execute(
+        """
+        CREATE TABLE IF NOT EXISTS audit_logs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
+            username TEXT,
+            role TEXT,
+            action TEXT NOT NULL,
+            resource TEXT,
+            status TEXT NOT NULL,
+            created_at TEXT NOT NULL
+        )
+        """
+    )
+
     systems = [
         ("REV", "Revenue Department", "Revenue", "XML", "REV", "api_key"),
         ("EDU", "Education Department", "Education", "JSON", "EDU", "api_key"),
@@ -398,6 +413,45 @@ def get_current_user(authorization: str | None, required_role: str = 'citizen'):
         )
 
     return user
+
+
+def create_audit_log(
+    user: dict | None,
+    action: str,
+    resource: str,
+    status: str = "Success",
+):
+    db = get_db()
+
+    try:
+        db.execute(
+            """
+            INSERT INTO audit_logs (
+                user_id,
+                username,
+                role,
+                action,
+                resource,
+                status,
+                created_at
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                user["id"] if user else None,
+                user["username"] if user else "System",
+                user["role"] if user else "System",
+                action,
+                resource,
+                status,
+                datetime.now().isoformat(timespec="seconds"),
+            ),
+        )
+
+        db.commit()
+    finally:
+        db.close()
+
 # ---------------------------------------------------------
 # Schemas
 # ---------------------------------------------------------
@@ -482,6 +536,56 @@ def list_systems(
     finally:
         db.close()
 
+@app.get("/api/admin/audit")
+def list_admin_audit(
+    authorization: str | None = Header(default=None),
+):
+    get_current_user(authorization, required_role="admin")
+
+    db = get_db()
+
+    try:
+        rows = db.execute(
+            """
+            SELECT
+                id,
+                username,
+                role,
+                action,
+                resource,
+                status,
+                created_at
+            FROM audit_logs
+            ORDER BY id DESC
+            LIMIT 200
+            """
+        ).fetchall()
+
+        return [
+            {
+                "id": row["id"],
+                "user": row["username"],
+                "role": (
+                    "Administrator"
+                    if row["role"] == "admin"
+                    else "Government Official"
+                    if row["role"] == "officer"
+                    else "Recruiter"
+                    if row["role"] == "recruiter"
+                    else "Citizen"
+                    if row["role"] == "citizen"
+                    else row["role"]
+                ),
+                "action": row["action"],
+                "resource": row["resource"],
+                "status": row["status"],
+                "time": row["created_at"],
+            }
+            for row in rows
+        ]
+    finally:
+        db.close()
+
 
 @app.post("/api/systems/{code}/simulate-outage")
 def simulate_system_outage(
@@ -489,7 +593,7 @@ def simulate_system_outage(
     request: SystemOutageRequest,
     authorization: str | None = Header(default=None),
 ):
-    get_current_user(authorization, required_role="admin")
+    user= get_current_user(authorization, required_role="admin")
 
     code = code.upper()
 
@@ -525,6 +629,13 @@ def simulate_system_outage(
         )
 
         db.commit()
+
+        create_audit_log(
+            user=user,
+            action="System Outage Simulation" if request.down else "System Restore",
+            resource=code,
+            status="Success",
+        )
 
         updated = db.execute(
             """
