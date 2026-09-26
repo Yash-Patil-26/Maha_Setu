@@ -543,3 +543,191 @@ main > section h2 {
 .card .button {
   margin-top: 8px;
 }
+
+/* Citizen consent management */
+.dashboard-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.consent-back-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.5rem;
+  padding: 0.55rem 0.9rem;
+  border-radius: 0.65rem;
+  text-decoration: none;
+}
+
+.consent-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.consent-card {
+  display: grid;
+  gap: 1rem;
+}
+
+.consent-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.consent-eyebrow {
+  margin: 0 0 0.25rem;
+  font-size: 0.8rem;
+  opacity: 0.7;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.consent-card-header h2 {
+  margin: 0;
+}
+
+.consent-status {
+  flex-shrink: 0;
+}
+
+.consent-status.active {
+  border-color: #16a34a;
+}
+
+.consent-status.revoked,
+.consent-status.expired {
+  border-color: #dc2626;
+}
+
+.consent-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: 0.75rem;
+}
+
+.consent-meta-grid > div {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.8rem;
+  border-radius: 0.7rem;
+  background: rgba(127, 127, 127, 0.08);
+}
+
+.consent-meta-grid span,
+.consent-field-list span {
+  font-size: 0.82rem;
+  opacity: 0.7;
+}
+
+.consent-section {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.consent-section h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.consent-chip-list,
+.consent-field-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.consent-chip,
+.consent-field-list span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2rem;
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  background: rgba(127, 127, 127, 0.1);
+}
+
+.consent-field-list span {
+  font-size: 0.88rem;
+}
+
+.consent-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+}
+
+.secondary-button,
+.danger-button {
+  min-height: 2.5rem;
+  padding: 0.55rem 0.9rem;
+  border-radius: 0.65rem;
+  cursor: pointer;
+}
+
+.secondary-button:disabled,
+.danger-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.danger-button {
+  border: 1px solid #dc2626;
+}
+
+.consent-access-panel {
+  display: grid;
+  gap: 0.8rem;
+  padding: 1rem;
+  border-radius: 0.8rem;
+  background: rgba(127, 127, 127, 0.07);
+}
+
+.consent-access-panel h3,
+.consent-access-panel p {
+  margin-top: 0;
+}
+
+.access-log-list {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.access-log-item {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.8rem;
+  border-radius: 0.7rem;
+  background: rgba(127, 127, 127, 0.07);
+}
+
+.access-log-item > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.access-log-item p,
+.access-log-item small {
+  margin: 0;
+}
+
+.consent-empty-state {
+  display: grid;
+  gap: 0.6rem;
+}
+
+@media (max-width: 700px) {
+  .dashboard-actions,
+  .consent-card-header,
+  .access-log-item > div {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .dashboard-actions {
+    display: flex;
+  }
+}

@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { CITIZEN_SERVICES } from '../fixtures/citizen'
 import { clearAuthSession } from '../auth/storage'
 
@@ -18,13 +18,19 @@ function CitizenDashboard() {
           <p>Select a service to begin your application.</p>
         </div>
 
-        <button
-          className="dashboard-logout"
-          type="button"
-          onClick={handleLogout}
-        >
-          Logout
-        </button>
+        <div className="dashboard-actions">
+          <Link className="consent-back-link" to="/citizen/consents">
+            My Consents
+          </Link>
+
+          <button
+            className="dashboard-logout"
+            type="button"
+            onClick={handleLogout}
+          >
+            Logout
+          </button>
+        </div>
       </header>
 
       <section className="service-grid" aria-label="Available services">
