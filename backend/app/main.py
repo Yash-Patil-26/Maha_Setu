@@ -102,6 +102,37 @@ def init_db():
         """
     )
 
+    db.execute(
+        """
+        CREATE TABLE IF NOT EXISTS systems (
+            code TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            owner_department TEXT NOT NULL,
+            protocol TEXT NOT NULL,
+            id_scheme TEXT NOT NULL,
+            auth_type TEXT NOT NULL,
+            health TEXT NOT NULL DEFAULT 'UP',
+            simulate_down INTEGER NOT NULL DEFAULT 0
+        )
+        """
+    )
+
+    systems = [
+        ("REV", "Revenue Department", "Revenue", "XML", "REV", "api_key"),
+        ("EDU", "Education Department", "Education", "JSON", "EDU", "api_key"),
+        ("SKL", "Skills & Employment", "Skills & Employment", "JSON", "SKL", "api_key"),
+        ("BSS", "Benefit Scheme System", "Benefits", "JSON", "BSS", "api_key"),
+    ]
+
+    db.executemany(
+        """
+        INSERT OR IGNORE INTO systems
+        (code, name, owner_department, protocol, id_scheme, auth_type)
+        VALUES (?, ?, ?, ?, ?, ?)
+        """,
+        systems,
+    )
+
     db.commit()
     db.close()
 
@@ -407,6 +438,107 @@ class BSSDecisionRequest(BaseModel):
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+
+# ---------------------------------------------------------
+# T-092 Admin System Registry + Outage Simulation
+# ---------------------------------------------------------
+
+class SystemOutageRequest(BaseModel):
+    down: bool
+
+
+def serialize_system(row: sqlite3.Row) -> dict:
+    return {
+        "code": row["code"],
+        "name": row["name"],
+        "owner_department": row["owner_department"],
+        "protocol": row["protocol"],
+        "id_scheme": row["id_scheme"],
+        "auth_type": row["auth_type"],
+        "health": row["health"],
+        "simulate_down": bool(row["simulate_down"]),
+    }
+
+
+@app.get("/api/systems")
+def list_systems(
+    authorization: str | None = Header(default=None),
+):
+    get_current_user(authorization, required_role="admin")
+
+    db = get_db()
+    try:
+        rows = db.execute(
+            """
+            SELECT code, name, owner_department, protocol,
+                   id_scheme, auth_type, health, simulate_down
+            FROM systems
+            ORDER BY code
+            """
+        ).fetchall()
+
+        return [serialize_system(row) for row in rows]
+    finally:
+        db.close()
+
+
+@app.post("/api/systems/{code}/simulate-outage")
+def simulate_system_outage(
+    code: str,
+    request: SystemOutageRequest,
+    authorization: str | None = Header(default=None),
+):
+    get_current_user(authorization, required_role="admin")
+
+    code = code.upper()
+
+    if code not in {"REV", "EDU"}:
+        raise HTTPException(
+            status_code=400,
+            detail="Outage simulation is supported only for REV and EDU",
+        )
+
+    db = get_db()
+
+    try:
+        row = db.execute(
+            "SELECT * FROM systems WHERE code = ?",
+            (code,),
+        ).fetchone()
+
+        if row is None:
+            raise HTTPException(
+                status_code=404,
+                detail="System not found",
+            )
+
+        health = "DOWN" if request.down else "UP"
+
+        db.execute(
+            """
+            UPDATE systems
+            SET health = ?, simulate_down = ?
+            WHERE code = ?
+            """,
+            (health, int(request.down), code),
+        )
+
+        db.commit()
+
+        updated = db.execute(
+            """
+            SELECT code, name, owner_department, protocol,
+                   id_scheme, auth_type, health, simulate_down
+            FROM systems
+            WHERE code = ?
+            """,
+            (code,),
+        ).fetchone()
+
+        return serialize_system(updated)
+    finally:
+        db.close()
 
 
 # ---------------------------------------------------------

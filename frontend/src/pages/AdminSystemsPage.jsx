@@ -1,56 +1,64 @@
-import { useState } from 'react'
+﻿import { useEffect, useState } from 'react'
+import { getAccessToken } from '../auth/storage.js'
 
-const initialSystems = [
-  {
-    code: 'REV',
-    name: 'Revenue Department',
-    type: 'Government System',
-    records: '12.4K',
-    status: 'Connected',
-    lastSync: '2 minutes ago',
-  },
-  {
-    code: 'EDU',
-    name: 'Education Department',
-    type: 'Government System',
-    records: '8.7K',
-    status: 'Connected',
-    lastSync: '5 minutes ago',
-  },
-  {
-    code: 'SKL',
-    name: 'Skills & Employment',
-    type: 'Employment System',
-    records: '5.2K',
-    status: 'Connected',
-    lastSync: '8 minutes ago',
-  },
-  {
-    code: 'BSS',
-    name: 'Benefit Scheme System',
-    type: 'Scheme System',
-    records: '3.1K',
-    status: 'Pending',
-    lastSync: 'Not synced',
-  },
-]
+const API_BASE_URL = 'http://127.0.0.1:8000'
 
-function AdminSystemsPage() {
-  const [systems, setSystems] = useState(initialSystems)
+async function apiRequest(path, options = {}) {
+  const token = getAccessToken()
 
-  function handleConnect(code) {
-    setSystems((current) =>
-      current.map((system) =>
-        system.code === code
-          ? {
-              ...system,
-              status: 'Connected',
-              lastSync: 'Just now',
-            }
-          : system,
-      ),
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(options.headers || {}),
+    },
+  })
+
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok) {
+    throw new Error(
+      data.detail || `Request failed with HTTP ${response.status}`,
     )
   }
+
+  return data
+}
+
+function AdminSystemsPage() {
+  const [systems, setSystems] = useState([])
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(true)
+
+  async function load() {
+    try {
+      setLoading(true)
+      const data = await apiRequest('/api/systems')
+      setSystems(data)
+      setError('')
+    } catch (err) {
+      setError(err.message || 'Failed to load systems')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function toggle(code, down) {
+    try {
+      await apiRequest(`/api/systems/${code}/simulate-outage`, {
+        method: 'POST',
+        body: JSON.stringify({ down }),
+      })
+      await load()
+    } catch (err) {
+      setError(err.message || 'Failed to update system')
+    }
+  }
+
+  useEffect(() => {
+    load()
+  }, [])
 
   return (
     <div className="setu-dashboard-page">
@@ -62,112 +70,93 @@ function AdminSystemsPage() {
 
           <h1>Manage Systems</h1>
 
-          <p>
-            Connect and monitor government systems integrated with MahaSetu.
-          </p>
+          <p>Live system registry and outage simulation.</p>
         </div>
 
         <button
           className="setu-primary-button"
           type="button"
-          onClick={() => alert('Add System — prototype action')}
+          onClick={load}
+          disabled={loading}
         >
-          + Add System
+          Refresh
         </button>
       </div>
 
-      <section className="setu-stat-grid">
-        <article className="setu-stat-card">
-          <span>Total Systems</span>
-          <strong>{systems.length}</strong>
-          <small>Registered systems</small>
-        </article>
+      {error && (
+        <p className="form-error" role="alert">
+          {error}
+        </p>
+      )}
 
-        <article className="setu-stat-card">
-          <span>Connected</span>
-          <strong>
-            {systems.filter((system) => system.status === 'Connected').length}
-          </strong>
-          <small>Active connections</small>
-        </article>
-
-        <article className="setu-stat-card">
-          <span>Pending</span>
-          <strong>
-            {systems.filter((system) => system.status === 'Pending').length}
-          </strong>
-          <small>Requires configuration</small>
-        </article>
-
-        <article className="setu-stat-card">
-          <span>Data Records</span>
-          <strong>29.4K</strong>
-          <small>Across connected systems</small>
-        </article>
-      </section>
-
-      <section className="setu-content-card">
-        <div className="setu-card-heading">
-          <div>
-            <h2>Connected Systems</h2>
-            <p>
-              View integration status and synchronization information.
-            </p>
+      {loading ? (
+        <section className="setu-content-card">
+          <p>Loading systems...</p>
+        </section>
+      ) : (
+        <section className="setu-content-card">
+          <div className="setu-card-heading">
+            <div>
+              <h2>Connected Systems</h2>
+              <p>Live registry and system health status.</p>
+            </div>
           </div>
-        </div>
 
-        <div className="setu-system-grid">
-          {systems.map((system) => (
-            <article className="setu-system-card" key={system.code}>
-              <div className="setu-system-card-top">
-                <div className="setu-system-icon">{system.code}</div>
+          <div className="setu-system-grid">
+            {systems.map((system) => {
+              const isDown =
+                system.health === 'DOWN' || system.simulate_down
 
-                <span
-                  className={`setu-status ${
-                    system.status === 'Connected' ? 'success' : 'pending'
-                  }`}
+              return (
+                <article
+                  className="setu-system-card"
+                  key={system.code}
                 >
-                  {system.status}
-                </span>
-              </div>
+                  <div className="setu-system-card-top">
+                    <div className="setu-system-icon">
+                      {system.code}
+                    </div>
 
-              <h3>{system.name}</h3>
+                    <span
+                      className={`setu-status ${
+                        isDown ? 'pending' : 'success'
+                      }`}
+                    >
+                      {system.health}
+                    </span>
+                  </div>
 
-              <p>{system.type}</p>
+                  <h3>{system.name}</h3>
 
-              <div className="setu-system-details">
-                <div>
-                  <span>Records</span>
-                  <strong>{system.records}</strong>
-                </div>
+                  <p>
+                    {system.protocol} · {system.auth_type}
+                  </p>
 
-                <div>
-                  <span>Last Sync</span>
-                  <strong>{system.lastSync}</strong>
-                </div>
-              </div>
+                  <p>
+                    Owner: {system.owner_department}
+                  </p>
 
-              {system.status === 'Pending' ? (
-                <button
-                  className="setu-primary-button"
-                  type="button"
-                  onClick={() => handleConnect(system.code)}
-                >
-                  Connect System
-                </button>
-              ) : (
-                <button
-                  className="setu-secondary-button"
-                  type="button"
-                  onClick={() => alert(`${system.name} details — prototype`)}
-                >
-                  View Details
-                </button>
-              )}
-            </article>
-          ))}
-        </div>
-      </section>
+                  <p>
+                    ID scheme: {system.id_scheme}
+                  </p>
+
+                  <button
+                    className={
+                      isDown
+                        ? 'setu-primary-button'
+                        : 'setu-secondary-button'
+                    }
+                    type="button"
+                    onClick={() => toggle(system.code, !isDown)}
+                  >
+                    {isDown ? 'Restore system' : 'Simulate outage'}
+                  </button>
+                </article>
+              )
+            })}
+          </div>
+        </section>
+      )}
 
       <footer className="setu-page-footer">
         Synthetic data — SETU prototype
