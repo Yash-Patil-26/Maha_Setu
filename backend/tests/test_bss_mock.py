@@ -26,7 +26,6 @@ def reset_bss_state(monkeypatch):
     )
     bss_main.applications.clear()
     bss_main.idempotency_store.clear()
-    bss_main.next_bss_number = 1
 
 
 def test_bss_health():
@@ -79,6 +78,58 @@ def test_bss_submit_and_idempotency():
 
     assert second.status_code == 200
     assert second.json() == first_body
+
+
+
+def test_bss_reference_is_restart_safe():
+    first_payload = {
+        "applicant": {
+            "master_id": "MID-2026-0001",
+            "full_name": "Rahul Patil",
+            "dob": "2004-03-04",
+            "mobile": "9876543210",
+        },
+        "scheme_code": "SCHOL-PM",
+        "data": {"annual_income_inr": 210000},
+        "correlation_id": "corr-restart-safe-001",
+    }
+
+    first = client.post(
+        "/api/schemes/SCHOL-PM/applications",
+        json=first_payload,
+        headers={
+            "Authorization": "Bearer change-me",
+            "Idempotency-Key": "restart-safe:1",
+        },
+    )
+
+    assert first.status_code == 201
+    first_ref = first.json()["bss_ref"]
+
+    # Simulate a BSS process restart by clearing all in-memory state.
+    bss_main.applications.clear()
+    bss_main.idempotency_store.clear()
+
+    second_payload = {
+        **first_payload,
+        "correlation_id": "corr-restart-safe-002",
+    }
+
+    second = client.post(
+        "/api/schemes/SCHOL-PM/applications",
+        json=second_payload,
+        headers={
+            "Authorization": "Bearer change-me",
+            "Idempotency-Key": "restart-safe:2",
+        },
+    )
+
+    assert second.status_code == 201
+    second_ref = second.json()["bss_ref"]
+
+    assert first_ref.startswith("BSS-2026-")
+    assert second_ref.startswith("BSS-2026-")
+    assert first_ref != second_ref
 
 
 def test_bss_rejects_bad_token():

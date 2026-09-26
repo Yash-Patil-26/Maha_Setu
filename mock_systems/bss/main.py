@@ -77,7 +77,6 @@ def send_decision_webhook(
 applications: dict[str, dict[str, Any]] = {}
 idempotency_store: dict[str, dict[str, Any]] = {}
 
-next_bss_number = 1
 
 
 class Applicant(BaseModel):
@@ -127,10 +126,17 @@ def submit_application(
         response.status_code = status.HTTP_200_OK
         return idempotency_store[idempotency_key]
 
-    global next_bss_number
+    correlation_id = request.correlation_id.strip()
+    if not correlation_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="CORRELATION_ID_REQUIRED",
+        )
 
-    bss_ref = f"BSS-2026-{next_bss_number:06d}"
-    next_bss_number += 1
+    bss_ref = (
+        "BSS-2026-"
+        + hashlib.sha256(correlation_id.encode("utf-8")).hexdigest()[:12].upper()
+    )
 
     response = {
         "bss_ref": bss_ref,
