@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Header
+﻿from fastapi import FastAPI, HTTPException, Header
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import sqlite3
@@ -157,6 +157,118 @@ def verify_password(password: str, stored_hash: str) -> bool:
 TOKEN_SECRET = secrets.token_hex(32)
 
 
+# ---------------------------------------------------------
+# T-093 BSS Integration
+# ---------------------------------------------------------
+
+BSS_SSO_SECRET = secrets.token_hex(32)
+BSS_WEBHOOK_SECRET = secrets.token_hex(32)
+
+
+def create_bss_sso_token(application_id: int, officer_user_id: int) -> str:
+    payload = {
+        "iss": "SETU",
+        "aud": "BSS",
+        "sub": officer_user_id,
+        "application_id": application_id,
+        "jti": str(uuid4()),
+        "exp": int(time.time()) + 15 * 60,
+    }
+
+    encoded_payload = base64.urlsafe_b64encode(
+        json.dumps(
+            payload,
+            separators=(",", ":"),
+        ).encode()
+    ).decode()
+
+    signature = hmac.new(
+        BSS_SSO_SECRET.encode(),
+        encoded_payload.encode(),
+        hashlib.sha256,
+    ).hexdigest()
+
+    return f"{encoded_payload}.{signature}"
+
+
+def verify_bss_sso_token(token: str) -> dict:
+    if not token or "." not in token:
+        raise HTTPException(
+            status_code=401,
+            detail="INVALID_BSS_SSO_TOKEN",
+        )
+
+    encoded_payload, signature = token.rsplit(".", 1)
+
+    expected_signature = hmac.new(
+        BSS_SSO_SECRET.encode(),
+        encoded_payload.encode(),
+        hashlib.sha256,
+    ).hexdigest()
+
+    if not hmac.compare_digest(signature, expected_signature):
+        raise HTTPException(
+            status_code=401,
+            detail="INVALID_BSS_SSO_TOKEN",
+        )
+
+    try:
+        payload = json.loads(
+            base64.urlsafe_b64decode(
+                encoded_payload
+                + "=" * (-len(encoded_payload) % 4)
+            ).decode()
+        )
+    except Exception:
+        raise HTTPException(
+            status_code=401,
+            detail="INVALID_BSS_SSO_TOKEN",
+        )
+
+    if payload.get("iss") != "SETU":
+        raise HTTPException(
+            status_code=401,
+            detail="INVALID_BSS_SSO_ISSUER",
+        )
+
+    if payload.get("aud") != "BSS":
+        raise HTTPException(
+            status_code=401,
+            detail="INVALID_BSS_SSO_AUDIENCE",
+        )
+
+    if payload.get("exp", 0) < int(time.time()):
+        raise HTTPException(
+            status_code=401,
+            detail="BSS_SSO_TOKEN_EXPIRED",
+        )
+
+    return payload
+
+
+def create_bss_webhook_signature(payload: str) -> str:
+    return hmac.new(
+        BSS_WEBHOOK_SECRET.encode(),
+        payload.encode(),
+        hashlib.sha256,
+    ).hexdigest()
+
+
+def verify_bss_webhook_signature(
+    payload: str,
+    signature: str | None,
+) -> bool:
+    if not signature:
+        return False
+
+    expected = create_bss_webhook_signature(payload)
+
+    return hmac.compare_digest(
+        signature,
+        expected,
+    )
+
+
 def create_token(user: sqlite3.Row) -> str:
     payload = {
         "sub": user["id"],
@@ -182,7 +294,7 @@ def create_token(user: sqlite3.Row) -> str:
 
     return f"{encoded_payload}.{signature}"
 
-def get_current_user(authorization: str | None):
+def get_current_user(authorization: str | None, required_role: str = 'citizen'):
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(
             status_code=401,
@@ -248,10 +360,10 @@ def get_current_user(authorization: str | None):
             detail="User not found",
         )
 
-    if user["role"] != "citizen":
+    if user["role"] != required_role:
         raise HTTPException(
             status_code=403,
-            detail="Citizen access required",
+            detail=f"{required_role.capitalize()} access required",
         )
 
     return user
@@ -282,6 +394,12 @@ class ConsentRequest(BaseModel):
 class ApplicationRequest(BaseModel):
     journey_id: str
 
+
+
+class BSSDecisionRequest(BaseModel):
+    sso_token: str
+    decision: str
+    reason: str | None = None
 # ---------------------------------------------------------
 # Health
 # ---------------------------------------------------------
@@ -622,4 +740,390 @@ def create_application(
         "application_id": application_id,
         "status": "CREATED",
         "correlation_id": correlation_id,
+    }
+# ---------------------------------------------------------
+# Officer Application APIs
+# ---------------------------------------------------------
+
+@app.get("/api/applications")
+def list_applications(
+    authorization: str | None = Header(default=None),
+    limit: int = 50,
+):
+    get_current_user(authorization, required_role='officer')
+
+    limit = max(1, min(limit, 100))
+
+    db = get_db()
+
+    applications = db.execute(
+        """
+        SELECT
+            id,
+            user_id,
+            master_id,
+            journey_id,
+            status,
+            correlation_id,
+            created_at,
+            updated_at
+        FROM applications
+        ORDER BY id DESC
+        LIMIT ?
+        """,
+        (limit,),
+    ).fetchall()
+
+    db.close()
+
+    return [dict(application) for application in applications]
+
+
+@app.get("/api/applications/{application_id}")
+def get_application(
+    application_id: int,
+    authorization: str | None = Header(default=None),
+):
+    get_current_user(authorization, required_role='officer')
+
+    db = get_db()
+
+    application = db.execute(
+        """
+        SELECT
+            id,
+            user_id,
+            master_id,
+            journey_id,
+            status,
+            correlation_id,
+            created_at,
+            updated_at
+        FROM applications
+        WHERE id = ?
+        """,
+        (application_id,),
+    ).fetchone()
+
+    db.close()
+
+    if not application:
+        raise HTTPException(
+            status_code=404,
+            detail="APPLICATION_NOT_FOUND",
+        )
+
+    return dict(application)
+
+
+
+# ---------------------------------------------------------
+# T-093 BSS SSO / Decision / Webhook / Retry
+# ---------------------------------------------------------
+
+@app.post("/api/officer/applications/{application_id}/bss-sso-token")
+def create_bss_sso_session(
+    application_id: int,
+    authorization: str | None = Header(default=None),
+):
+    officer = get_current_user(
+        authorization,
+        required_role="officer",
+    )
+
+    db = get_db()
+
+    application = db.execute(
+        """
+        SELECT
+            id,
+            user_id,
+            master_id,
+            journey_id,
+            status,
+            correlation_id,
+            created_at,
+            updated_at
+        FROM applications
+        WHERE id = ?
+        """,
+        (application_id,),
+    ).fetchone()
+
+    db.close()
+
+    if not application:
+        raise HTTPException(
+            status_code=404,
+            detail="APPLICATION_NOT_FOUND",
+        )
+
+    if application["status"] in {
+        "APPROVED",
+        "REJECTED",
+    }:
+        raise HTTPException(
+            status_code=409,
+            detail="APPLICATION_ALREADY_DECIDED",
+        )
+
+    token = create_bss_sso_token(
+        application_id=application_id,
+        officer_user_id=officer["id"],
+    )
+
+    return {
+        "application_id": application_id,
+        "bss_reference": f"BSS-{application_id:06d}",
+        "sso_token": token,
+        "expires_in": 900,
+        "status": application["status"],
+    }
+
+
+def process_bss_decision_webhook(
+    payload: dict,
+    signature: str | None,
+):
+    raw_payload = json.dumps(
+        payload,
+        separators=(",", ":"),
+        sort_keys=True,
+    )
+
+    if not verify_bss_webhook_signature(
+        raw_payload,
+        signature,
+    ):
+        raise HTTPException(
+            status_code=401,
+            detail="INVALID_BSS_WEBHOOK_SIGNATURE",
+        )
+
+    application_id = payload.get("application_id")
+    decision = payload.get("decision")
+
+    if not application_id:
+        raise HTTPException(
+            status_code=400,
+            detail="APPLICATION_ID_REQUIRED",
+        )
+
+    allowed_decisions = {
+        "APPROVED",
+        "REJECTED",
+        "REVIEW",
+        "PAUSED_EXCEPTION",
+    }
+
+    if decision not in allowed_decisions:
+        raise HTTPException(
+            status_code=400,
+            detail="INVALID_BSS_DECISION",
+        )
+
+    status_map = {
+        "APPROVED": "APPROVED",
+        "REJECTED": "REJECTED",
+        "REVIEW": "IN_REVIEW",
+        "PAUSED_EXCEPTION": "PAUSED_EXCEPTION",
+    }
+
+    new_status = status_map[decision]
+    now = datetime.now(timezone.utc).isoformat()
+
+    db = get_db()
+
+    application = db.execute(
+        """
+        SELECT id
+        FROM applications
+        WHERE id = ?
+        """,
+        (application_id,),
+    ).fetchone()
+
+    if not application:
+        db.close()
+
+        raise HTTPException(
+            status_code=404,
+            detail="APPLICATION_NOT_FOUND",
+        )
+
+    db.execute(
+        """
+        UPDATE applications
+        SET
+            status = ?,
+            updated_at = ?
+        WHERE id = ?
+        """,
+        (
+            new_status,
+            now,
+            application_id,
+        ),
+    )
+
+    db.commit()
+    db.close()
+
+    return {
+        "application_id": application_id,
+        "status": new_status,
+        "decision": decision,
+        "updated_at": now,
+    }
+
+
+@app.post("/api/webhooks/bss/decision")
+def receive_bss_decision_webhook(
+    payload: BSSDecisionRequest,
+    x_bss_signature: str | None = Header(default=None),
+):
+    webhook_payload = {
+        "application_id": None,
+        "decision": payload.decision,
+        "reason": payload.reason,
+    }
+
+    try:
+        sso_payload = verify_bss_sso_token(
+            payload.sso_token
+        )
+    except HTTPException:
+        raise
+
+    webhook_payload["application_id"] = sso_payload[
+        "application_id"
+    ]
+
+    raw_payload = json.dumps(
+        webhook_payload,
+        separators=(",", ":"),
+        sort_keys=True,
+    )
+
+    return process_bss_decision_webhook(
+        webhook_payload,
+        x_bss_signature,
+    )
+
+
+@app.post("/api/bss/decisions")
+def bss_decision(
+    request: BSSDecisionRequest,
+):
+    """
+    Prototype BSS boundary.
+
+    In production this endpoint represents the external
+    BSS service. It validates the SETU SSO token and then
+    sends a signed webhook back to SETU.
+    """
+
+    sso_payload = verify_bss_sso_token(
+        request.sso_token
+    )
+
+    application_id = sso_payload["application_id"]
+
+    webhook_payload = {
+        "application_id": application_id,
+        "decision": request.decision,
+        "reason": request.reason,
+    }
+
+    raw_payload = json.dumps(
+        webhook_payload,
+        separators=(",", ":"),
+        sort_keys=True,
+    )
+
+    signature = create_bss_webhook_signature(
+        raw_payload
+    )
+
+    result = process_bss_decision_webhook(
+        webhook_payload,
+        signature,
+    )
+
+    return {
+        "bss_reference": f"BSS-{application_id:06d}",
+        "webhook_delivered": True,
+        "result": result,
+    }
+
+
+@app.post("/api/officer/applications/{application_id}/retry")
+def retry_paused_application(
+    application_id: int,
+    authorization: str | None = Header(default=None),
+):
+    officer = get_current_user(
+        authorization,
+        required_role="officer",
+    )
+
+    db = get_db()
+
+    application = db.execute(
+        """
+        SELECT
+            id,
+            status
+        FROM applications
+        WHERE id = ?
+        """,
+        (application_id,),
+    ).fetchone()
+
+    if not application:
+        db.close()
+
+        raise HTTPException(
+            status_code=404,
+            detail="APPLICATION_NOT_FOUND",
+        )
+
+    if application["status"] != "PAUSED_EXCEPTION":
+        db.close()
+
+        raise HTTPException(
+            status_code=409,
+            detail="APPLICATION_NOT_PAUSED",
+        )
+
+    now = datetime.now(timezone.utc).isoformat()
+
+    db.execute(
+        """
+        UPDATE applications
+        SET
+            status = 'SUBMITTED',
+            updated_at = ?
+        WHERE id = ?
+        """,
+        (
+            now,
+            application_id,
+        ),
+    )
+
+    db.commit()
+    db.close()
+
+    token = create_bss_sso_token(
+        application_id=application_id,
+        officer_user_id=officer["id"],
+    )
+
+    return {
+        "application_id": application_id,
+        "status": "SUBMITTED",
+        "message": "Application journey resumed",
+        "sso_token": token,
+        "expires_in": 900,
     }

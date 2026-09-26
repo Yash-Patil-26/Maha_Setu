@@ -1,63 +1,5 @@
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-
-const applications = [
-  {
-    id: 'APP256001',
-    name: 'Rahul Patil',
-    scheme: 'Post Matric Scholarship',
-    status: 'In Review',
-    priority: 'High',
-    date: '02 Oct 2026',
-  },
-  {
-    id: 'APP256002',
-    name: 'Sneha Sharma',
-    scheme: 'Skill Development',
-    status: 'Pending',
-    priority: 'Medium',
-    date: '02 Oct 2026',
-  },
-  {
-    id: 'APP256003',
-    name: 'Amit Shinde',
-    scheme: 'Youth Enterprise',
-    status: 'Pending',
-    priority: 'High',
-    date: '01 Oct 2026',
-  },
-  {
-    id: 'APP256004',
-    name: 'Pooja More',
-    scheme: 'Post Matric Scholarship',
-    status: 'Approved',
-    priority: 'Low',
-    date: '01 Oct 2026',
-  },
-]
-
-const attentionItems = [
-  {
-    id: 'APP256003',
-    title: 'Application requires verification',
-    description: 'Eligibility document needs officer review.',
-    type: 'Verification',
-    priority: 'High',
-  },
-  {
-    id: 'APP256001',
-    title: 'Application approaching SLA',
-    description: 'Review required before the SLA deadline.',
-    type: 'SLA',
-    priority: 'High',
-  },
-  {
-    id: 'APP256005',
-    title: 'Data conflict detected',
-    description: 'Citizen information differs across connected systems.',
-    type: 'Conflict',
-    priority: 'Medium',
-  },
-]
 
 const grievances = [
   {
@@ -103,9 +45,70 @@ const outcomes = [
   },
 ]
 
+const formatApplication = (application) => ({
+  id: application.id,
+  name: `Citizen ${application.user_id}`,
+  scheme: application.journey_id,
+  status: application.status,
+  priority: application.status === 'CREATED' ? 'High' : 'Medium',
+  date: new Date(application.created_at).toLocaleDateString('en-GB', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  }),
+})
 function OfficerDashboard() {
   const navigate = useNavigate()
+  const [applications, setApplications] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
+  useEffect(() => {
+    const loadApplications = async () => {
+      try {
+        setLoading(true)
+        setError('')
+
+        const token = localStorage.getItem('setu_access_token')
+
+        const response = await fetch(
+          'http://127.0.0.1:8000/api/applications?limit=50',
+          {
+            headers: token
+              ? {
+                Authorization: `Bearer ${token}`,
+              }
+              : {},
+          },
+        )
+
+        if (!response.ok) {
+          throw new Error(`Failed to load applications (${response.status})`)
+        }
+
+        const data = await response.json()
+
+        setApplications(data.map(formatApplication))
+      } catch (err) {
+        setError(err.message || 'Failed to load applications')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadApplications()
+  }, [])
+
+  const attentionItems = applications
+    .filter((application) => application.status === 'CREATED')
+    .slice(0, 3)
+    .map((application) => ({
+      id: application.id,
+      priority: application.priority,
+      type: 'Application',
+      title: `${application.name} — ${application.scheme}`,
+      description: `Status: ${application.status}`,
+    }))
   return (
     <main className="setu-dashboard-page">
       <div className="setu-page-heading">
@@ -127,25 +130,25 @@ function OfficerDashboard() {
       <section className="setu-stat-grid">
         <article className="setu-stat-card">
           <span>Total Applications</span>
-          <strong>12</strong>
+          <strong>{applications.length}</strong>
           <small>All applications</small>
         </article>
 
         <article className="setu-stat-card">
           <span>Pending</span>
-          <strong>5</strong>
+          <strong>{applications.filter((application) => application.status === 'CREATED').length}</strong>
           <small>Need action</small>
         </article>
 
         <article className="setu-stat-card">
           <span>In Review</span>
-          <strong>4</strong>
+          <strong>{applications.filter((application) => application.status === 'IN_REVIEW').length}</strong>
           <small>Currently processing</small>
         </article>
 
         <article className="setu-stat-card">
           <span>Approved</span>
-          <strong>3</strong>
+          <strong>{applications.filter((application) => application.status === 'APPROVED').length}</strong>
           <small>Completed decisions</small>
         </article>
       </section>
@@ -236,52 +239,63 @@ function OfficerDashboard() {
             </thead>
 
             <tbody>
-              {applications.map((application) => (
-                <tr key={application.id}>
-                  <td>
-                    <strong>{application.id}</strong>
-                  </td>
-
-                  <td>{application.name}</td>
-
-                  <td>{application.scheme}</td>
-
-                  <td>
-                    <span
-                      className={`setu-priority ${application.priority.toLowerCase()}`}
-                    >
-                      {application.priority}
-                    </span>
-                  </td>
-
-                  <td>
-                    <span
-                      className={`setu-status ${application.status
-                          .toLowerCase()
-                          .replaceAll(' ', '-')
-                        }`}
-                    >
-                      {application.status}
-                    </span>
-                  </td>
-
-                  <td>{application.date}</td>
-
-                  <td>
-                    <button
-                      className="setu-view-button"
-                      type="button"
-                      onClick={() =>
-                        navigate(
-                          `/officer/applications/${application.id}`,
-                        )
-                      }
-                    >
-                      View
-                    </button>
-                  </td>
+              {loading ? (
+                <tr>
+                  <td colSpan="7">Loading applications...</td>
                 </tr>
-              ))}
+              ) : error ? (
+                <tr>
+                  <td colSpan="7">{error}</td>
+                </tr>
+              ) : applications.length === 0 ? (
+                <tr>
+                  <td colSpan="7">No applications found.</td>
+                </tr>
+              ) : (
+                applications.map((application) => (
+                  <tr key={application.id}>
+                    <td>
+                      <strong>APP-{String(application.id).padStart(6, '0')}</strong>
+                    </td>
+
+                    <td>{application.name}</td>
+
+                    <td>{application.scheme}</td>
+
+                    <td>
+                      <span
+                        className={`setu-priority ${application.priority.toLowerCase()}`}
+                      >
+                        {application.priority}
+                      </span>
+                    </td>
+
+                    <td>
+                      <span
+                        className={`setu-status ${application.status
+                          .toLowerCase()
+                          .replaceAll(' ', '-')}`}
+                      >
+                        {application.status}
+                      </span>
+                    </td>
+
+                    <td>{application.date}</td>
+
+                    <td>
+                      <button
+                        className="setu-view-button"
+                        type="button"
+                        onClick={() =>
+                          navigate(`/officer/applications/${application.id}`)
+                        }
+                      >
+                        View
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -362,7 +376,7 @@ function OfficerDashboard() {
         <div className="setu-conflict-summary">
           <div>
             <span>Open Conflicts</span>
-            <strong>3</strong>
+            <strong>{applications.filter((application) => application.status === 'APPROVED').length}</strong>
           </div>
 
           <div>

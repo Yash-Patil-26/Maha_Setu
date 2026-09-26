@@ -1,65 +1,270 @@
+﻿import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-
-const applicationData = {
-  APP256001: {
-    name: 'Rahul Patil',
-    scheme: 'Post Matric Scholarship',
-    status: 'In Review',
-    submitted: '02 Oct 2026',
-    category: 'OBC',
-    income: '₹2,40,000',
-    education: 'B.Tech',
-    district: 'Chhatrapati Sambhajinagar',
-  },
-  APP256002: {
-    name: 'Sneha Sharma',
-    scheme: 'Skill Development',
-    status: 'Pending',
-    submitted: '02 Oct 2026',
-    category: 'General',
-    income: '₹3,10,000',
-    education: 'B.Sc',
-    district: 'Pune',
-  },
-  APP256003: {
-    name: 'Amit Shinde',
-    scheme: 'Youth Enterprise',
-    status: 'Pending',
-    submitted: '01 Oct 2026',
-    category: 'OBC',
-    income: '₹2,80,000',
-    education: 'Diploma',
-    district: 'Nashik',
-  },
-  APP256004: {
-    name: 'Pooja More',
-    scheme: 'Post Matric Scholarship',
-    status: 'Approved',
-    submitted: '01 Oct 2026',
-    category: 'SC',
-    income: '₹1,90,000',
-    education: 'B.Tech',
-    district: 'Nagpur',
-  },
-}
 
 function OfficerApplicationPage() {
   const { id } = useParams()
   const navigate = useNavigate()
 
-  const application = applicationData[id] || {
-    name: 'Citizen',
-    scheme: 'Government Scheme',
-    status: 'Pending',
-    submitted: 'Not available',
-    category: 'Not available',
-    income: 'Not available',
-    education: 'Not available',
-    district: 'Not available',
+  const [application, setApplication] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [actionLoading, setActionLoading] = useState(false)
+  const [actionError, setActionError] = useState('')
+
+  useEffect(() => {
+    const loadApplication = async () => {
+      try {
+        setLoading(true)
+        setError('')
+
+        const token = localStorage.getItem('setu_access_token')
+
+        const response = await fetch(
+          `http://127.0.0.1:8000/api/applications/${id}`,
+          {
+            headers: token
+              ? {
+                Authorization: `Bearer ${token}`,
+              }
+              : {},
+          },
+        )
+
+        if (!response.ok) {
+          throw new Error(
+            response.status === 404
+              ? 'Application not found'
+              : `Failed to load application (${response.status})`,
+          )
+        }
+
+        const data = await response.json()
+
+        setApplication({
+          ...data,
+          name: `Citizen ${data.user_id}`,
+          scheme: data.journey_id,
+          submitted: new Date(data.created_at).toLocaleDateString(
+            'en-GB',
+            {
+              day: '2-digit',
+              month: 'short',
+              year: 'numeric',
+            },
+          ),
+          category: 'Not available',
+          income: 'Not available',
+          education: 'Not available',
+          district: 'Not available',
+        })
+      } catch (err) {
+        setError(err.message || 'Failed to load application')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadApplication()
+  }, [id])
+
+  async function handleDecision(decision) {
+    try {
+      setActionLoading(true)
+      setActionError('')
+
+      const token = localStorage.getItem('setu_access_token')
+
+      if (!token) {
+        throw new Error('Officer authentication token is missing')
+      }
+
+      // Step 1: SETU generates an SSO token for BSS
+      const ssoResponse = await fetch(
+        `http://127.0.0.1:8000/api/officer/applications/${id}/bss-sso-token`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      )
+
+      if (!ssoResponse.ok) {
+        const data = await ssoResponse.json().catch(() => ({}))
+        throw new Error(
+          data.detail || `Failed to create BSS SSO session (${ssoResponse.status})`,
+        )
+      }
+
+      const ssoData = await ssoResponse.json()
+
+      // Step 2: BSS makes the decision
+      const bssResponse = await fetch(
+        'http://127.0.0.1:8000/api/bss/decisions',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            sso_token: ssoData.sso_token,
+            decision,
+            reason: `Officer decision: ${decision}`,
+          }),
+        },
+      )
+
+      if (!bssResponse.ok) {
+        const data = await bssResponse.json().catch(() => ({}))
+        throw new Error(
+          data.detail || `BSS decision failed (${bssResponse.status})`,
+        )
+      }
+
+      // Step 3: Reload the application from SETU
+      const applicationResponse = await fetch(
+        `http://127.0.0.1:8000/api/applications/${id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      )
+
+      if (!applicationResponse.ok) {
+        throw new Error(
+          `Failed to refresh application (${applicationResponse.status})`,
+        )
+      }
+
+      const data = await applicationResponse.json()
+
+      setApplication({
+        ...data,
+        name: `Citizen ${data.user_id}`,
+        scheme: data.journey_id,
+        submitted: new Date(data.created_at).toLocaleDateString(
+          'en-GB',
+          {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric',
+          },
+        ),
+        category: 'Not available',
+        income: 'Not available',
+        education: 'Not available',
+        district: 'Not available',
+      })
+    } catch (err) {
+      setActionError(
+        err.message || 'Failed to process officer decision',
+      )
+    } finally {
+      setActionLoading(false)
+    }
   }
 
-  function handleDecision(decision) {
-    alert(`Application ${id} marked as ${decision}.`)
+  async function handleRetry() {
+    try {
+      setActionLoading(true)
+      setActionError('')
+
+      const token = localStorage.getItem('setu_access_token')
+
+      if (!token) {
+        throw new Error('Officer authentication token is missing')
+      }
+
+      const response = await fetch(
+        `http://127.0.0.1:8000/api/officer/applications/${id}/retry`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      )
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}))
+        throw new Error(
+          data.detail || `Retry failed (${response.status})`,
+        )
+      }
+
+      // Refresh application after retry
+      const applicationResponse = await fetch(
+        `http://127.0.0.1:8000/api/applications/${id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      )
+
+      if (!applicationResponse.ok) {
+        throw new Error(
+          `Failed to refresh application (${applicationResponse.status})`,
+        )
+      }
+
+      const data = await applicationResponse.json()
+
+      setApplication({
+        ...data,
+        name: `Citizen ${data.user_id}`,
+        scheme: data.journey_id,
+        submitted: new Date(data.created_at).toLocaleDateString(
+          'en-GB',
+          {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric',
+          },
+        ),
+        category: 'Not available',
+        income: 'Not available',
+        education: 'Not available',
+        district: 'Not available',
+      })
+    } catch (err) {
+      setActionError(
+        err.message || 'Failed to retry application',
+      )
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <main className="setu-dashboard-page">
+        <div className="setu-page-heading">
+          <h1>Loading Application...</h1>
+          <p>Fetching application details from MahaSetu.</p>
+        </div>
+      </main>
+    )
+  }
+
+  if (error || !application) {
+    return (
+      <main className="setu-dashboard-page">
+        <div className="setu-page-heading">
+          <h1>Application Not Found</h1>
+          <p>{error || 'Application details are unavailable.'}</p>
+
+          <button
+            className="button button-secondary"
+            type="button"
+            onClick={() => navigate('/officer')}
+          >
+            Back to Officer Dashboard
+          </button>
+        </div>
+      </main>
+    )
   }
 
   return (
@@ -90,13 +295,13 @@ function OfficerApplicationPage() {
         <div className="setu-application-heading">
           <div>
             <span className="setu-label">Application ID</span>
-            <h2>{id}</h2>
+            <h2>APP-{String(application.id).padStart(6, '0')}</h2>
           </div>
 
           <span
-            className={`setu-status ${
-              application.status.toLowerCase().replaceAll(' ', '-')
-            }`}
+            className={`setu-status ${application.status
+              .toLowerCase()
+              .replaceAll(' ', '-')}`}
           >
             {application.status}
           </span>
@@ -200,31 +405,67 @@ function OfficerApplicationPage() {
           </div>
         </div>
 
+
+        {actionError && (
+          <div className="setu-error-message">
+            {actionError}
+          </div>
+        )}
+
         <div className="setu-decision-actions">
-          <button
-            className="setu-approve-button"
-            type="button"
-            onClick={() => handleDecision('Approved')}
-          >
-            ✓ Approve Application
-          </button>
+          {application.status === 'PAUSED_EXCEPTION' ? (
+            <button
+              className="setu-review-button"
+              type="button"
+              onClick={handleRetry}
+              disabled={actionLoading}
+            >
+              {actionLoading ? 'Retrying...' : '↻ Retry Application'}
+            </button>
+          ) : (
+            <>
+              <button
+                className="setu-approve-button"
+                type="button"
+                onClick={() => handleDecision('APPROVED')}
+                disabled={
+                  actionLoading ||
+                  application.status === 'APPROVED' ||
+                  application.status === 'REJECTED'
+                }
+              >
+                {actionLoading ? 'Processing...' : '✓ Approve Application'}
+              </button>
 
-          <button
-            className="setu-review-button"
-            type="button"
-            onClick={() => handleDecision('Request Review')}
-          >
-            ↻ Request Review
-          </button>
+              <button
+                className="setu-review-button"
+                type="button"
+                onClick={() => handleDecision('REVIEW')}
+                disabled={
+                  actionLoading ||
+                  application.status === 'APPROVED' ||
+                  application.status === 'REJECTED'
+                }
+              >
+                {actionLoading ? 'Processing...' : '↻ Request Review'}
+              </button>
 
-          <button
-            className="setu-reject-button"
-            type="button"
-            onClick={() => handleDecision('Rejected')}
-          >
-            ✕ Reject Application
-          </button>
+              <button
+                className="setu-reject-button"
+                type="button"
+                onClick={() => handleDecision('REJECTED')}
+                disabled={
+                  actionLoading ||
+                  application.status === 'APPROVED' ||
+                  application.status === 'REJECTED'
+                }
+              >
+                {actionLoading ? 'Processing...' : '✕ Reject Application'}
+              </button>
+            </>
+          )}
         </div>
+
       </section>
 
       <footer className="page-footer">
