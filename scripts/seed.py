@@ -1,29 +1,13 @@
 import argparse
 import json
-from datetime import datetime
-from pathlib import Path
 
-from sqlalchemy import delete
 
 from backend.app.db import Base, engine, SessionLocal
 from backend.app.models import (
     User,
     MasterCitizen,
-    IdentityLink,
-    DataConflict,
     System,
-    Connector,
-    ConnectorCall,
-    OnboardingSession,
     JourneyDef,
-    Application,
-    ApplicationStep,
-    Consent,
-    AccessLog,
-    Event,
-    Notification,
-    AuditEvent,
-    Grievance,
 )
 
 

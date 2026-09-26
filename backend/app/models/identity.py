@@ -1,9 +1,8 @@
 from datetime import datetime
 
+from backend.app.db import Base
 from sqlalchemy import DateTime, Float, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
-
-from backend.app.db import Base
 
 
 class MasterCitizen(Base):

@@ -1,9 +1,9 @@
-from backend.app.models.consent import AccessLog, Consent
 from backend.app.models.connectors import (
     Connector,
     ConnectorCall,
     OnboardingSession,
 )
+from backend.app.models.consent import AccessLog, Consent
 from backend.app.models.core import DataConflict, System, User
 from backend.app.models.events import AuditEvent, Event, Notification
 from backend.app.models.grievances import Grievance

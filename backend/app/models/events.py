@@ -1,9 +1,8 @@
 from datetime import datetime
 
+from backend.app.db import Base
 from sqlalchemy import Boolean, DateTime, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
-
-from backend.app.db import Base
 
 
 class Event(Base):
