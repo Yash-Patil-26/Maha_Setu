@@ -10,7 +10,12 @@ if str(ROOT / "backend") not in sys.path:
     sys.path.insert(0, str(ROOT / "backend"))
 
 # isort: off
-from app.db import Base, SessionLocal, engine  # noqa: E402
+from sqlalchemy import create_engine  # noqa: E402
+from sqlalchemy.orm import sessionmaker  # noqa: E402
+from sqlalchemy.pool import StaticPool  # noqa: E402
+
+from app.api import auth as auth_api  # noqa: E402
+from app.db import Base  # noqa: E402
 from app.main import app  # noqa: E402
 from app.models import User  # noqa: E402
 # isort: on
@@ -19,19 +24,37 @@ from app.models import User  # noqa: E402
 DEMO_PASSWORD = "Demo@123"
 TEST_SSO_SECRET = "test-sso-secret"
 
+TEST_ENGINE = create_engine(
+    "sqlite:///:memory:",
+    connect_args={"check_same_thread": False},
+    poolclass=StaticPool,
+)
+
+TestSessionLocal = sessionmaker(
+    bind=TEST_ENGINE,
+    autoflush=False,
+    autocommit=False,
+    expire_on_commit=False,
+)
+
 
 @pytest.fixture(autouse=True)
 def test_environment(monkeypatch):
     monkeypatch.setenv("SETU_SSO_SECRET", TEST_SSO_SECRET)
     monkeypatch.setenv("BSS_BASE_URL", "https://bss.example.test")
     monkeypatch.setenv("SETU_DEFAULT_LOCALE", "en-IN")
+    monkeypatch.setattr(
+        auth_api,
+        "SessionLocal",
+        TestSessionLocal,
+    )
 
 
 def setup_function():
-    Base.metadata.drop_all(bind=engine)
-    Base.metadata.create_all(bind=engine)
+    Base.metadata.drop_all(bind=TEST_ENGINE)
+    Base.metadata.create_all(bind=TEST_ENGINE)
 
-    db = SessionLocal()
+    db = TestSessionLocal()
     try:
         users = [
             User(

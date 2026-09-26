@@ -14,11 +14,29 @@ ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT / "backend") not in sys.path:
     sys.path.insert(0, str(ROOT / "backend"))
 
-from app.db import Base, SessionLocal, engine  # noqa: E402
+from sqlalchemy import create_engine  # noqa: E402
+from sqlalchemy.orm import sessionmaker  # noqa: E402
+from sqlalchemy.pool import StaticPool  # noqa: E402
+
+from app.api import webhook as webhook_api  # noqa: E402
+from app.db import Base  # noqa: E402
 from app.main import app  # noqa: E402
 from app.models import Application, ApplicationStep  # noqa: E402
 
 WEBHOOK_SECRET = "test-webhook-secret"
+
+TEST_ENGINE = create_engine(
+    "sqlite:///:memory:",
+    connect_args={"check_same_thread": False},
+    poolclass=StaticPool,
+)
+
+TestSessionLocal = sessionmaker(
+    bind=TEST_ENGINE,
+    autoflush=False,
+    autocommit=False,
+    expire_on_commit=False,
+)
 
 
 @pytest.fixture(autouse=True)
@@ -27,13 +45,18 @@ def webhook_environment(monkeypatch):
         "WEBHOOK_HMAC_SECRET_BSS",
         WEBHOOK_SECRET,
     )
+    monkeypatch.setattr(
+        webhook_api,
+        "SessionLocal",
+        TestSessionLocal,
+    )
 
 
 def setup_function():
-    Base.metadata.drop_all(bind=engine)
-    Base.metadata.create_all(bind=engine)
+    Base.metadata.drop_all(bind=TEST_ENGINE)
+    Base.metadata.create_all(bind=TEST_ENGINE)
 
-    db = SessionLocal()
+    db = TestSessionLocal()
     try:
         application = Application(
             journey_id="scholarship_v1",
@@ -103,7 +126,7 @@ def _signed_headers(body: bytes) -> dict[str, str]:
 
 
 def _read_application() -> Application:
-    db = SessionLocal()
+    db = TestSessionLocal()
     try:
         application = (
             db.query(Application)
@@ -139,7 +162,7 @@ def test_webhook_accepts_approved_event_and_resumes_waiting_step():
     assert metrics["last_webhook"]["decision"] == "APPROVED"
     assert metrics["last_webhook_notification"]["event_id"] == "evt-7f3a"
 
-    db = SessionLocal()
+    db = TestSessionLocal()
     try:
         step = (
             db.query(ApplicationStep)
