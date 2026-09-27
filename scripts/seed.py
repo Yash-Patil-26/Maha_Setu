@@ -55,17 +55,30 @@ def write_edu_db() -> None:
     EDU_DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     EDU_DB_PATH.unlink(missing_ok=True)
 
-    row = (
-        "EDU/2022/00451",
-        "PATIL RAHUL S",
-        "04-03-2004",
-        "9876543210",
-        "PUN-ENG-014",
-        "BTECH-CSE",
-        3,
-        "A",
-        "10-07-2026",
-    )
+    rows = [
+        (
+            "EDU/2022/00451",
+            "PATIL RAHUL S",
+            "04-03-2004",
+            "9876543210",
+            "PUN-ENG-014",
+            "BTECH-CSE",
+            3,
+            "A",
+            "10-07-2026",
+        ),
+        (
+            "EDU/2022/00452",
+            "PAWAR SURESH A",
+            "12-11-2002",
+            "9822012346",
+            "PUN-ENG-015",
+            "BTECH-CSE",
+            3,
+            "A",
+            "10-07-2026",
+        ),
+    ]
 
     with sqlite3.connect(EDU_DB_PATH) as connection:
         connection.execute(
@@ -98,7 +111,24 @@ def write_edu_db() -> None:
             )
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
-            row,
+            rows[0],
+        )
+        connection.execute(
+            """
+            INSERT INTO STUD_MST (
+                STUD_ID,
+                STUD_NM,
+                DOB_STR,
+                MOB_NO,
+                INST_CD,
+                COURSE_CD,
+                YR_OF_STUDY,
+                ADM_STATUS,
+                LAST_UPD
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            rows[1],
         )
         connection.commit()
 
