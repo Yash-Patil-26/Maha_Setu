@@ -416,10 +416,17 @@ def _execute_step(
         step_row.error_code = _error_code(exc)
         step_row.error_detail = str(exc)
 
-        application.status = "PAUSED_EXCEPTION"
+        application.status = (
+            "BLOCKED_CONSENT"
+            if isinstance(exc, ConsentError)
+            else "PAUSED_EXCEPTION"
+        )
         application.current_step = definition_step.id
 
         if isinstance(exc, ConsentError):
+            # Consent denial is a recoverable authorization state, not
+            # a connector retry failure. Do not consume the retry budget.
+            step_row.attempts = max(0, step_row.attempts - 1)
             journey_row = db.scalar(
                 select(JourneyDef).where(
                     JourneyDef.id == application.journey_id,
@@ -583,10 +590,13 @@ def retry_application(
             f"Application not found: {application_id}"
         )
 
-    if application.status != "PAUSED_EXCEPTION":
+    if application.status not in {
+        "PAUSED_EXCEPTION",
+        "BLOCKED_CONSENT",
+    }:
         raise JourneyExecutionError(
-            "Retry is allowed only for PAUSED_EXCEPTION, "
-            f"got {application.status}"
+            "Retry is allowed only for PAUSED_EXCEPTION or "
+            f"BLOCKED_CONSENT, got {application.status}"
         )
 
     if not application.current_step:

@@ -237,7 +237,7 @@ def test_allow_then_revoke_then_deny() -> None:
             connector_loader=loader,
         )
 
-        assert result.status == "PAUSED_EXCEPTION"
+        assert result.status == "BLOCKED_CONSENT"
         assert result.current_step == "fetch_income"
 
         denied = session.scalars(

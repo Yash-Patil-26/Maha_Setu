@@ -59,23 +59,21 @@ def get_active_consent(
         if source_system in _as_string_list(consent.source_systems_json)
     ]
 
-    if not matching:
-        raise ConsentRequiredError("Consent is required.")
-
-    latest = matching[0]
-
-    if latest.status == "REVOKED":
-        raise ConsentRevokedError("Consent has been revoked.")
-
-    if latest.status != "ACTIVE":
-        raise ConsentRequiredError("Consent is required.")
-
     now = datetime.now(timezone.utc)
 
-    if _utc(latest.expires_at) <= now:
-        raise ConsentRequiredError("Consent is required.")
+    for consent in matching:
+        if consent.status == "REVOKED":
+            raise ConsentRevokedError("Consent has been revoked.")
 
-    return latest
+        if consent.status != "ACTIVE":
+            continue
+
+        if _utc(consent.expires_at) <= now:
+            continue
+
+        return consent
+
+    raise ConsentRequiredError("Consent is required.")
 
 
 def filter_consented_fields(
