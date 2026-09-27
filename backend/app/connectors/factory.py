@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from .base import Connector
+from .csv import CsvConnector
 from .errors import ConnectorConfigurationError
 from .rest_json import RestJsonConnector
 from .rest_xml import RestXmlConnector
@@ -40,6 +41,9 @@ def build_connector(
 
     if kind == "SQL_VIEW":
         return SqlViewConnector(**common)
+
+    if kind == "CSV":
+        return CsvConnector(**common)
 
     raise ConnectorConfigurationError(
         f"Unsupported connector kind: {kind!r}"
