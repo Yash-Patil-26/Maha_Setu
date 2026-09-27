@@ -163,11 +163,6 @@ export default function LoginPage() {
                 <i className="partner-icon digi-icon" aria-hidden="true" />
                 DigiLocker
               </span>
-
-              <span>
-                <i className="partner-icon maha-icon" aria-hidden="true" />
-                Maharashtra.gov.in
-              </span>
             </div>
           </div>
         </section>
