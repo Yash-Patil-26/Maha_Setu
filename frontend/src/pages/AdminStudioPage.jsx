@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useEffect, useRef, useState } from 'react'
 
 const steps = [
   'Select System',
@@ -8,60 +8,341 @@ const steps = [
   'Activate Connector',
 ]
 
-const sampleRecords = [
-  {
-    candidate_id: 'SKL-1001',
-    full_name: 'Amit Patil',
-    mobile_number: '9876543210',
-    skill_category: 'Electrician',
-    employment_status: 'Seeking Employment',
-  },
-  {
-    candidate_id: 'SKL-1002',
-    full_name: 'Priya More',
-    mobile_number: '9876543211',
-    skill_category: 'Healthcare',
-    employment_status: 'Employed',
-  },
-]
+const API_BASE = 'http://127.0.0.1:8000'
 
-const mappings = [
-  ['candidate_id', 'master_id'],
-  ['full_name', 'name'],
-  ['mobile_number', 'contact.mobile'],
-  ['skill_category', 'skills.category'],
-  ['employment_status', 'employment.status'],
-]
+async function apiRequest(path, options = {}) {
+  const response = await fetch(`${API_BASE}${path}`, {
+    headers: {
+      'Content-Type': 'application/json',
+      ...(options.headers || {}),
+    },
+    ...options,
+  })
+
+  const text = await response.text()
+
+  let data = {}
+  try {
+    data = text ? JSON.parse(text) : {}
+  } catch {
+    data = { detail: text }
+  }
+
+  if (!response.ok) {
+    throw new Error(
+      data.detail ||
+      data.message ||
+      `Request failed with status ${response.status}`,
+    )
+  }
+
+  return data
+}
 
 function AdminStudioPage() {
   const [currentStep, setCurrentStep] = useState(0)
   const [system, setSystem] = useState('SKL')
+
+  const [connectorId, setConnectorId] = useState(null)
+  const [sampleRecords, setSampleRecords] = useState([])
+  const [fields, setFields] = useState([])
+  const [mappings, setMappings] = useState([])
+  const [validators, setValidators] = useState([])
+
   const [sampled, setSampled] = useState(false)
   const [tested, setTested] = useState(false)
   const [activated, setActivated] = useState(false)
 
-  function nextStep() {
-    if (currentStep === 1) {
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [activationResult, setActivationResult] = useState(null)
+
+  const startedAt = useRef(null)
+
+  useEffect(() => {
+    startedAt.current = Date.now()
+  }, [])
+
+  function changeSystem(event) {
+    setSystem(event.target.value)
+    setConnectorId(null)
+    setSampleRecords([])
+    setFields([])
+    setMappings([])
+    setValidators([])
+    setSampled(false)
+    setTested(false)
+    setActivated(false)
+    setActivationResult(null)
+    setError('')
+    setCurrentStep(0)
+    startedAt.current = Date.now()
+  }
+
+  async function createConnector() {
+    setLoading(true)
+    setError('')
+
+    try {
+      const data = await apiRequest('/api/connectors', {
+        method: 'POST',
+        body: JSON.stringify({
+          system_code: system,
+          name: `${system.toLowerCase()}_registry`,
+          kind: 'CSV',
+          entity: 'trainee',
+          config: {
+            path: 'data_drop/skills_registry.csv',
+            encoding: 'utf-8-sig',
+            delimiter: ',',
+          },
+          lookup: {
+            dob_format: 'DD-MM-YYYY',
+          },
+          auth: {},
+        }),
+      })
+
+      const id = data.id ?? data.connector?.id
+
+      if (!id) {
+        throw new Error('Connector was created but no connector ID was returned.')
+      }
+
+      setConnectorId(id)
+      setCurrentStep(1)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function loadSample() {
+    if (!connectorId) {
+      setError('Create the connector first.')
+      return
+    }
+
+    setLoading(true)
+    setError('')
+
+    try {
+      const data = await apiRequest(
+        `/api/connectors/${connectorId}/sample`,
+        {
+          method: 'POST',
+          body: JSON.stringify({}),
+        },
+      )
+
+      setFields(data.fields || [])
+
+      const raw = data.raw
+
+      if (Array.isArray(raw)) {
+        setSampleRecords(raw)
+      } else if (raw && Array.isArray(raw.records)) {
+        setSampleRecords(raw.records)
+      } else {
+        setSampleRecords([])
+      }
+
       setSampled(true)
+      setCurrentStep(2)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function suggestMapping() {
+    if (!connectorId) {
+      setError('Create the connector first.')
+      return
+    }
+
+    setLoading(true)
+    setError('')
+
+    try {
+      const data = await apiRequest(
+        `/api/connectors/${connectorId}/suggest-mapping`,
+        {
+          method: 'POST',
+        },
+      )
+
+      const mappingObject = data.mapping || {}
+
+      const mappingList = Array.isArray(mappingObject)
+        ? mappingObject
+        : Object.entries(mappingObject)
+
+      setMappings(mappingList)
+      setCurrentStep(3)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function saveMappingAndContinue() {
+    if (!connectorId) {
+      setError('Create the connector first.')
+      return
+    }
+
+    setLoading(true)
+    setError('')
+
+    try {
+      const mappingObject = Object.fromEntries(
+        mappings.map(([source, target]) => [source, target]),
+      )
+
+      const data = await apiRequest(
+        `/api/connectors/${connectorId}/mapping`,
+        {
+          method: 'PUT',
+          body: JSON.stringify({
+            mapping: mappingObject,
+            validators,
+          }),
+        },
+      )
+
+      if (data.mapping) {
+        const nextMapping = Array.isArray(data.mapping)
+          ? data.mapping
+          : Object.entries(data.mapping)
+
+        setMappings(nextMapping)
+      }
+
+      setCurrentStep(3)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function testConnector() {
+    if (!connectorId) {
+      setError('Create the connector first.')
+      return
+    }
+
+    setLoading(true)
+    setError('')
+
+    try {
+      const mappingObject = Object.fromEntries(
+        mappings.map(([source, target]) => [source, target]),
+      )
+
+      const data = await apiRequest(
+        `/api/connectors/${connectorId}/test`,
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            mapping: mappingObject,
+            identity_sample: {},
+          }),
+        },
+      )
+
+      const validation = data.validation || []
+      setValidators(validation)
+
+      const passed =
+        validation.length === 0 ||
+        validation.every((item) => item.passed === true)
+
+      if (!passed) {
+        throw new Error('Connector validation failed. Review the validation results.')
+      }
+
+      setTested(true)
+      setCurrentStep(4)
+    } catch (err) {
+      setTested(false)
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function activateConnector() {
+    if (!connectorId || !tested) {
+      return
+    }
+
+    setLoading(true)
+    setError('')
+
+    try {
+      const onboardingSeconds = Math.max(
+        1,
+        Math.round((Date.now() - startedAt.current) / 1000),
+      )
+
+      const data = await apiRequest(
+        `/api/connectors/${connectorId}/activate`,
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            journey_id: 'J2',
+            step_id: 'J2-S1',
+          }),
+        },
+      )
+
+      setActivationResult({
+        ...data,
+        onboarding_seconds:
+          data.onboarding_seconds ?? onboardingSeconds,
+      })
+
+      setActivated(true)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  function nextStep() {
+    if (currentStep === 0) {
+      createConnector()
+      return
+    }
+
+    if (currentStep === 1) {
+      loadSample()
+      return
+    }
+
+    if (currentStep === 2) {
+      suggestMapping()
+      return
     }
 
     if (currentStep === 3) {
-      setTested(true)
-    }
-
-    if (currentStep < steps.length - 1) {
-      setCurrentStep((step) => step + 1)
+      testConnector()
     }
   }
 
   function previousStep() {
+    if (loading) return
+
     if (currentStep > 0) {
+      setError('')
       setCurrentStep((step) => step - 1)
     }
-  }
-
-  function activateConnector() {
-    setActivated(true)
   }
 
   return (
@@ -106,6 +387,12 @@ function AdminStudioPage() {
         </div>
 
         <div className="setu-studio-form">
+          {error && (
+            <div className="setu-error-message">
+              {error}
+            </div>
+          )}
+
           {currentStep === 0 && (
             <>
               <h3>Select System</h3>
@@ -114,22 +401,9 @@ function AdminStudioPage() {
                 Select the system you want to onboard into MahaSetu.
               </p>
 
-              <label>
-                Government System
-                <select
-                  value={system}
-                  onChange={(event) => setSystem(event.target.value)}
-                >
-                  <option value="SKL">SKL — Skills & Employment</option>
-                  <option value="REV">REV — Revenue Department</option>
-                  <option value="EDU">EDU — Education Department</option>
-                  <option value="BSS">BSS — Benefit Scheme System</option>
-                </select>
-              </label>
-
               <div className="setu-review-box">
                 <div>
-                  <span>System Code</span>
+                  <span>System</span>
                   <strong>{system}</strong>
                 </div>
 
@@ -143,6 +417,21 @@ function AdminStudioPage() {
                   <strong>No code required</strong>
                 </div>
               </div>
+
+              <div className="setu-studio-form">
+                <label htmlFor="studio-system">
+                  System
+                </label>
+
+                <select
+                  id="studio-system"
+                  value={system}
+                  onChange={changeSystem}
+                  disabled={loading}
+                >
+                  <option value="SKL">SKL — Skills & Employment</option>
+                </select>
+              </div>
             </>
           )}
 
@@ -155,20 +444,36 @@ function AdminStudioPage() {
               </p>
 
               <div className="setu-review-box">
-                {sampleRecords.map((record) => (
-                  <div key={record.candidate_id}>
-                    <span>{record.candidate_id}</span>
-                    <strong>{record.full_name}</strong>
-                    <small>
-                      {record.skill_category} · {record.employment_status}
-                    </small>
+                {sampleRecords.length > 0 ? (
+                  sampleRecords.map((record, index) => (
+                    <div key={record.TRAINEE_ID || record.candidate_id || index}>
+                      <span>
+                        {record.TRAINEE_ID || record.candidate_id || 'Record'}
+                      </span>
+
+                      <strong>
+                        {record.TRAINEE_NAME || record.full_name || 'Unknown'}
+                      </strong>
+
+                      <small>
+                        {record.COURSE_NAME ||
+                          record.skill_category ||
+                          'SKL record'}
+                      </small>
+                    </div>
+                  ))
+                ) : (
+                  <div>
+                    <span>Connector</span>
+                    <strong>Ready to sample</strong>
                   </div>
-                ))}
+                )}
               </div>
 
               {sampled && (
                 <div className="setu-success-message">
                   ✓ Sample loaded successfully.
+                  {fields.length > 0 && ` ${fields.length} fields detected.`}
                 </div>
               )}
             </>
@@ -192,9 +497,11 @@ function AdminStudioPage() {
                 ))}
               </div>
 
-              <div className="setu-success-message">
-                ✓ Mapping suggestions generated automatically.
-              </div>
+              {mappings.length > 0 && (
+                <div className="setu-success-message">
+                  ✓ Mapping suggestions received from the backend.
+                </div>
+              )}
             </>
           )}
 
@@ -220,13 +527,15 @@ function AdminStudioPage() {
 
                 <div>
                   <span>Validation</span>
-                  <strong>Ready to test</strong>
+                  <strong>
+                    {tested ? 'Passed' : 'Ready to test'}
+                  </strong>
                 </div>
               </div>
 
               {tested && (
                 <div className="setu-success-message">
-                  ✓ Mapping test passed. All required fields are compatible.
+                  ✓ Mapping test passed.
                 </div>
               )}
             </>
@@ -248,18 +557,18 @@ function AdminStudioPage() {
                 </div>
 
                 <div>
-                  <span>Sample</span>
-                  <strong>Loaded</strong>
+                  <span>Connector</span>
+                  <strong>{connectorId || 'Pending'}</strong>
                 </div>
 
                 <div>
-                  <span>Mapping</span>
-                  <strong>Validated</strong>
+                  <span>Sample</span>
+                  <strong>{sampled ? 'Loaded' : 'Pending'}</strong>
                 </div>
 
                 <div>
                   <span>Test</span>
-                  <strong>Passed</strong>
+                  <strong>{tested ? 'Passed' : 'Pending'}</strong>
                 </div>
               </div>
 
@@ -267,6 +576,8 @@ function AdminStudioPage() {
                 <div className="setu-success-message">
                   ✓ Connector activated successfully. {system} is ready for
                   journey execution.
+                  {activationResult?.onboarding_seconds &&
+                    ` Onboarding: ${activationResult.onboarding_seconds}s.`}
                 </div>
               )}
             </>
@@ -277,7 +588,7 @@ function AdminStudioPage() {
               className="setu-secondary-button"
               type="button"
               onClick={previousStep}
-              disabled={currentStep === 0}
+              disabled={currentStep === 0 || loading}
             >
               Back
             </button>
@@ -286,22 +597,35 @@ function AdminStudioPage() {
               <button
                 className="setu-primary-button"
                 type="button"
-                onClick={nextStep}
+                onClick={
+                  currentStep === 2
+                    ? saveMappingAndContinue
+                    : nextStep
+                }
+                disabled={loading}
               >
-                {currentStep === 1
-                  ? 'Load Sample'
-                  : currentStep === 3
-                    ? 'Run Test'
-                    : 'Continue'}
+                {loading
+                  ? 'Working...'
+                  : currentStep === 1
+                    ? 'Load Sample'
+                    : currentStep === 2
+                      ? 'Save Mapping'
+                      : currentStep === 3
+                        ? 'Run Test'
+                        : 'Create Connector'}
               </button>
             ) : (
               <button
                 className="setu-primary-button"
                 type="button"
                 onClick={activateConnector}
-                disabled={activated}
+                disabled={activated || !sampled || !tested || loading}
               >
-                {activated ? 'Connector Activated' : 'Activate Connector'}
+                {loading
+                  ? 'Activating...'
+                  : activated
+                    ? 'Connector Activated'
+                    : 'Activate Connector'}
               </button>
             )}
           </div>
