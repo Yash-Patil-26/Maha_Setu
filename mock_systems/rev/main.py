@@ -34,6 +34,25 @@ REV_RECORDS = [
             "IssueDate": "02/08/2024",
             "ValidUntil": "",
         },
+    },
+    {
+        "mobile": "9822012346",
+        "dob": "12/11/2002",
+        "income": {
+            "CertNo": "MH-INC-2026-000124",
+            "HolderName": "Suresh Pawar",
+            "AnnualIncome": "1,80,000",
+            "IssueDate": "15/04/2026",
+            "ValidUntil": "14/04/2027",
+            "IssuingAuthority": "Tahsildar, Haveli",
+        },
+        "caste": {
+            "CertNo": "MH-CST-2024-004418",
+            "HolderName": "Suresh Pawar",
+            "Category": "OBC",
+            "IssueDate": "02/08/2024",
+            "ValidUntil": "",
+        },
     }
 ]
 
