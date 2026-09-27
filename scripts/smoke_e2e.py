@@ -798,6 +798,208 @@ def scenario_s4(
             False,
         )
 
+def scenario_s5(
+    admin_token: str,
+    suresh_token: str,
+) -> None:
+    identity_sample = {
+        "mobile": "9822012346",
+        "dob": "2002-11-12",
+    }
+
+    created = _json_request(
+        "POST",
+        "/api/connectors",
+        token=admin_token,
+        payload={
+            "system_code": "SKL",
+            "name": "skl_training",
+            "kind": "CSV",
+            "entity": "training_record",
+            "config": {
+                "file": "data_drop/skills_registry.csv",
+                "delimiter": ",",
+                "encoding": "utf-8-sig",
+            },
+            "lookup": {
+                "mobile_field": "MOBILE",
+                "dob_field": "DOB",
+                "dob_format": "%d-%m-%Y",
+            },
+            "auth": {},
+        },
+    )
+
+    _assert(
+        isinstance(created, dict),
+        "S5 connector create response is not an object",
+    )
+    connector_id = created.get("id")
+    _assert(
+        isinstance(connector_id, int),
+        "S5 connector create response has no id",
+    )
+    _assert(
+        created.get("status") == "DRAFT",
+        f"S5 expected DRAFT connector, got {created.get('status')}",
+    )
+
+    sample = _json_request(
+        "POST",
+        f"/api/connectors/{connector_id}/sample",
+        token=admin_token,
+        payload={"identity_sample": identity_sample},
+    )
+
+    _assert(
+        isinstance(sample, dict),
+        "S5 sample response is not an object",
+    )
+    _assert(
+        sample.get("raw", {}).get("TRAINEE_ID") == "SKL-2023-8841",
+        "S5 sample did not return the seeded Suresh training record",
+    )
+
+    suggested = _json_request(
+        "POST",
+        f"/api/connectors/{connector_id}/suggest-mapping",
+        token=admin_token,
+    )
+
+    mapping = suggested.get("mapping") if isinstance(suggested, dict) else None
+    _assert(
+        isinstance(mapping, dict) and mapping,
+        "S5 mapping suggestion is empty",
+    )
+
+    saved = _json_request(
+        "PUT",
+        f"/api/connectors/{connector_id}/mapping",
+        token=admin_token,
+        payload={
+            "mapping": mapping,
+            "validators": [],
+        },
+    )
+
+    _assert(
+        isinstance(saved, dict),
+        "S5 mapping save response is not an object",
+    )
+
+    tested = _json_request(
+        "POST",
+        f"/api/connectors/{connector_id}/test",
+        token=admin_token,
+        payload={
+            "mapping": mapping,
+            "identity_sample": identity_sample,
+        },
+    )
+
+    _assert(
+        isinstance(tested, dict),
+        "S5 connector test response is not an object",
+    )
+
+    validation = tested.get("validation")
+    _assert(
+        isinstance(validation, list) and validation,
+        "S5 connector test returned no validation results",
+    )
+    _assert(
+        all(item.get("passed") is True for item in validation),
+        "S5 connector validation did not fully pass",
+    )
+
+    canonical = tested.get("canonical")
+    _assert(
+        isinstance(canonical, dict),
+        "S5 connector test did not return canonical data",
+    )
+
+    activated = _json_request(
+        "POST",
+        f"/api/connectors/{connector_id}/activate",
+        token=admin_token,
+        payload={
+            "journey_id": "youth_enterprise_v1",
+            "step_id": "fetch_training",
+        },
+    )
+
+    _assert(
+        isinstance(activated, dict),
+        "S5 activation response is not an object",
+    )
+
+    connector = activated.get("connector") or {}
+    _assert(
+        connector.get("status") == "ACTIVE",
+        f"S5 expected ACTIVE connector, got {connector.get('status')}",
+    )
+    _assert(
+        isinstance(activated.get("onboarding_seconds"), (int, float)),
+        "S5 activation did not return onboarding_seconds",
+    )
+
+    consent = _json_request(
+        "POST",
+        "/api/consents",
+        token=suresh_token,
+        payload={
+            "journey_id": "youth_enterprise_v1",
+            "purpose": "youth_enterprise_eligibility",
+        },
+    )
+
+    _assert(
+        isinstance(consent, dict),
+        "S5 youth consent response is not an object",
+    )
+    _assert(
+        consent.get("status") == "ACTIVE",
+        f"S5 youth consent is not ACTIVE: {consent.get('status')}",
+    )
+
+    created_application = _json_request(
+        "POST",
+        "/api/applications",
+        token=suresh_token,
+        payload={
+            "journey_id": "youth_enterprise_v1",
+        },
+    )
+
+    _assert(
+        isinstance(created_application, dict),
+        "S5 youth application response is not an object",
+    )
+
+    application_id = created_application.get("application_id")
+    _assert(
+        isinstance(application_id, int),
+        "S5 youth application response has no application_id",
+    )
+
+    detail = get_application(
+        suresh_token,
+        application_id,
+    )
+
+    canonical_data = detail.get("canonical")
+    _assert(
+        isinstance(canonical_data, dict),
+        "S5 application canonical data is missing",
+    )
+
+    training_record = canonical_data.get("training_record")
+    _assert(
+        isinstance(training_record, dict),
+        "S5 application canonical data is missing training_record",
+    )
+
+
 def run_scenario(
     name: str,
     function,
@@ -889,6 +1091,19 @@ def main() -> int:
         print("PASS")
     except Exception as exc:
         RESULTS.append(("S4 Consent revoke", False, str(exc)))
+        print("FAIL")
+        print(f"  {exc}")
+
+    print("S5 Studio onboarding            ", end="")
+    try:
+        scenario_s5(
+            admin_token,
+            suresh_token,
+        )
+        RESULTS.append(("S5 Studio onboarding", True, "PASS"))
+        print("PASS")
+    except Exception as exc:
+        RESULTS.append(("S5 Studio onboarding", False, str(exc)))
         print("FAIL")
         print(f"  {exc}")
 
