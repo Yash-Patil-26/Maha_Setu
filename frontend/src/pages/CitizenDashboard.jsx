@@ -1,13 +1,19 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+
 import { CITIZEN_SERVICES } from '../fixtures/citizen'
 import { clearAuthSession, getAuthUser } from '../auth/storage'
+
 import '../citizen-ui.css'
 
 function CitizenDashboard() {
   const navigate = useNavigate()
-  const user = getAuthUser()
+  const [language, setLanguage] = useState('en')
 
+  const user = getAuthUser()
   const displayName = user?.display_name || user?.username || 'Citizen'
+
+  const isEnglish = language === 'en'
 
   function handleLogout() {
     clearAuthSession()
@@ -18,10 +24,139 @@ function CitizenDashboard() {
     navigate(`/citizen/apply/${journeyId}`)
   }
 
+  function goToFirstService() {
+    const firstService = CITIZEN_SERVICES[0]
+
+    if (firstService) {
+      goToService(firstService.journeyId)
+    }
+  }
+
+  function goToLastApplication() {
+    const applicationId = localStorage.getItem(
+      'last_citizen_application_id',
+    )
+
+    if (applicationId) {
+      navigate(`/citizen/applications/${applicationId}`)
+    }
+  }
+
+  const text = {
+    dashboard: isEnglish ? 'Dashboard' : '????????',
+    apply: isEnglish ? 'Apply for Schemes' : '?????????? ????',
+    applications: isEnglish ? 'My Applications' : '???? ????',
+    consent: isEnglish ? 'Consent & Data' : '????? ? ????',
+    profile: isEnglish ? 'My Profile' : '???? ????????',
+    help: isEnglish ? 'Help & Support' : '??? ? ??????',
+
+    citizen: isEnglish ? 'Citizen' : '??????',
+
+    citizenServices: isEnglish
+      ? 'Citizen Services'
+      : '?????? ????',
+
+    greeting: isEnglish
+      ? `Good Morning, ${displayName}`
+      : `??? ????, ${displayName}`,
+
+    welcomeDescription: isEnglish
+      ? 'Access government services, apply for schemes and track your applications from one place.'
+      : '?????? ???? ?????, ?????????? ???? ??? ??? ??????? ???????? ?????? ???? ?????? ????.',
+
+    popularSchemes: isEnglish
+      ? 'Popular Schemes'
+      : '???????? ?????',
+
+    exploreServices: isEnglish
+      ? 'Explore available government services'
+      : '?????? ?????? ???? ???',
+
+    viewAll: isEnglish
+      ? 'View All'
+      : '???? ???',
+
+    applyNow: isEnglish
+      ? 'Apply Now'
+      : '??? ???? ???',
+
+    yourApplications: isEnglish
+      ? 'Your Applications'
+      : '????? ????',
+
+    trackApplications: isEnglish
+      ? 'Track the progress of your submitted applications'
+      : '??????? ???? ???????? ???????? ?????? ???',
+
+    postMatric: isEnglish
+      ? 'Post Matric Scholarship'
+      : '???????????? ???????????',
+
+    scholarshipApplication: isEnglish
+      ? 'Scholarship Application'
+      : '??????????? ????',
+
+    inProgress: isEnglish
+      ? 'In Progress'
+      : '???????????',
+
+    updatedToday: isEnglish
+      ? 'Last updated today'
+      : '?? ?????? ??????',
+
+    emptyApplication: isEnglish
+      ? 'Your latest application will appear here after submission.'
+      : '???? ???? ?????????? ????? ?????? ???? ???? ?????.',
+
+    dataControl: isEnglish
+      ? 'Your Data, Your Control'
+      : '????? ????, ????? ????????',
+
+    dataControlDescription: isEnglish
+      ? 'You control consent for accessing your information from government departments.'
+      : '?????? ??????????? ????? ?????? ???????????? ????? ???????? ???????? ?????????? ???.',
+
+    fasterApplications: isEnglish
+      ? 'Faster Applications'
+      : '??? ???? ?????????',
+
+    fasterApplicationsDescription: isEnglish
+      ? 'Reduce repeated document submission with secure data sharing.'
+      : '???????? ???? ??????????? ??????? ????????? ???? ???????? ??? ??? ???.',
+
+    transparentTracking: isEnglish
+      ? 'Transparent Tracking'
+      : '???????? ????????',
+
+    transparentTrackingDescription: isEnglish
+      ? 'Track your application status at every stage.'
+      : '???????? ????????? ??????? ??????? ?????? ???.',
+
+    seamlessServices: isEnglish
+      ? 'Seamless Services'
+      : '???? ????',
+
+    strongerMaharashtra: isEnglish
+      ? 'Stronger Maharashtra'
+      : '?????? ??????????',
+
+    about: isEnglish ? 'About MahaSetu' : '??? ?????????',
+    terms: isEnglish ? 'Terms of Use' : '????????? ???',
+    privacy: isEnglish ? 'Privacy Policy' : '???????? ????',
+
+    digitalPrototype: isEnglish
+      ? 'MahaSetu - Digital Service Integration Prototype'
+      : '??? ???? - ?????? ???? ????????? ??????????',
+
+    logout: isEnglish ? 'Logout' : '????? ???',
+  }
+
   return (
     <main className="citizen-page">
+
       {/* TOP HEADER */}
       <header className="citizen-topbar">
+
         <div className="citizen-brand">
           <div className="citizen-gov-mark">
             MS
@@ -39,19 +174,37 @@ function CitizenDashboard() {
         </div>
 
         <div className="citizen-logo">
-          <strong>Maha<span>Setu</span></strong>
-          <small>Unified Platform for Government Services</small>
+          <strong>
+            Maha<span>Setu</span>
+          </strong>
+
+          <small>
+            Unified Platform for Government Services
+          </small>
         </div>
 
         <div className="citizen-top-actions">
-          <span className="citizen-language">EN | मराठी</span>
+
+          <button
+            className="citizen-language"
+            type="button"
+            onClick={() =>
+              setLanguage((current) =>
+                current === 'en' ? 'mr' : 'en',
+              )
+            }
+            title="Change language"
+          >
+            {isEnglish ? 'EN | \u092e\u0930\u093e\u0920\u0940' : '\u092e\u0930\u093e\u0920\u0940 | EN'}
+          </button>
 
           <button
             className="citizen-icon-button"
             type="button"
             aria-label="Notifications"
+            title="Notifications"
           >
-            🔔
+            &#128276;
             <span className="notification-dot" />
           </button>
 
@@ -61,14 +214,20 @@ function CitizenDashboard() {
             </div>
 
             <span>{displayName}</span>
-            <span className="user-chevron">⌄</span>
+
+            <span className="user-chevron">
+              &#9662;
+            </span>
           </div>
+
         </div>
       </header>
 
       <div className="citizen-layout">
+
         {/* SIDEBAR */}
         <aside className="citizen-sidebar">
+
           <div className="sidebar-profile">
             <div className="sidebar-avatar">
               {displayName.charAt(0).toUpperCase()}
@@ -76,92 +235,106 @@ function CitizenDashboard() {
 
             <div>
               <strong>{displayName}</strong>
-              <span>Citizen</span>
+              <span>{text.citizen}</span>
             </div>
           </div>
 
           <nav className="citizen-nav">
+
             <button
               className="citizen-nav-item active"
               type="button"
               onClick={() => navigate('/citizen')}
             >
-              <span>⌂</span>
+              <span className="citizen-nav-icon">
+                &#8962;
+              </span>
+
               <div>
-                <strong>Dashboard</strong>
-                <small>मुख्य पृष्ठ</small>
+                <strong>{text.dashboard}</strong>
+                <small />
               </div>
             </button>
 
             <button
               className="citizen-nav-item"
               type="button"
-              onClick={() => {
-                const firstService = CITIZEN_SERVICES[0]
-                if (firstService) {
-                  goToService(firstService.journeyId)
-                }
-              }}
+              onClick={goToFirstService}
             >
-              <span>▣</span>
+              <span className="citizen-nav-icon">
+                &#9633;
+              </span>
+
               <div>
-                <strong>Apply for Schemes</strong>
-                <small>योजना अर्ज</small>
+                <strong>{text.apply}</strong>
+                <small />
               </div>
             </button>
 
             <button
               className="citizen-nav-item"
               type="button"
-              onClick={() => {
-                const applicationId = localStorage.getItem(
-                  'last_citizen_application_id',
-                )
-
-                if (applicationId) {
-                  navigate(`/citizen/applications/${applicationId}`)
-                }
-              }}
+              onClick={goToLastApplication}
             >
-              <span>▤</span>
+              <span className="citizen-nav-icon">
+                &#9776;
+              </span>
+
               <div>
-                <strong>My Applications</strong>
-                <small>माझे अर्ज</small>
+                <strong>{text.applications}</strong>
+                <small />
               </div>
             </button>
 
             <button
               className="citizen-nav-item"
               type="button"
+              onClick={() => navigate('/citizen/consents')}
             >
-              <span>♢</span>
+              <span className="citizen-nav-icon">
+                &#9671;
+              </span>
+
               <div>
-                <strong>Consent &amp; Data</strong>
-                <small>संमती व डेटा</small>
+                <strong>{text.consent}</strong>
+                <small />
               </div>
             </button>
 
             <button
               className="citizen-nav-item"
               type="button"
+              onClick={() => navigate('/citizen/profile')}
             >
-              <span>♙</span>
+              <span className="citizen-nav-icon">
+                &#9675;
+              </span>
+
               <div>
-                <strong>My Profile</strong>
-                <small>माझे प्रोफाइल</small>
+                <strong>{text.profile}</strong>
+                <small />
               </div>
             </button>
 
             <button
               className="citizen-nav-item"
               type="button"
+              onClick={() => window.alert(
+                isEnglish
+                  ? 'Help & Support will be available soon.'
+                  : '??? ??? ?????? ????? ?????? ????.',
+              )}
             >
-              <span>?</span>
+              <span className="citizen-nav-icon">
+                ?
+              </span>
+
               <div>
-                <strong>Help &amp; Support</strong>
-                <small>मदत व सहाय्य</small>
+                <strong>{text.help}</strong>
+                <small />
               </div>
             </button>
+
           </nav>
 
           <div className="sidebar-bottom">
@@ -170,214 +343,281 @@ function CitizenDashboard() {
               type="button"
               onClick={handleLogout}
             >
-              ⇥ Logout
+              {text.logout}
             </button>
           </div>
+
         </aside>
 
         {/* MAIN CONTENT */}
         <section className="citizen-content">
+
           <div className="citizen-breadcrumb">
-            Home <span>›</span> Citizen Dashboard
+            {text.dashboard}
+            <span>
+              &gt;
+            </span>
+            {text.dashboard}
           </div>
 
           {/* WELCOME */}
           <section className="citizen-welcome">
+
             <div>
-              <p className="eyebrow">Citizen Services</p>
+              <p className="eyebrow">
+                {text.citizenServices}
+              </p>
 
               <h1>
-                Good Morning, {displayName}
+                {text.greeting}
               </h1>
 
               <p>
-                Access government services, apply for schemes and
-                track your applications from one place.
+                {text.welcomeDescription}
               </p>
             </div>
 
             <div className="welcome-illustration">
-              <div className="welcome-circle">✦</div>
-              <span>Seamless Services</span>
-              <small>Stronger Maharashtra</small>
+
+              <div className="welcome-circle">
+                MS
+              </div>
+
+              <span>
+                {text.seamlessServices}
+              </span>
+
+              <small>
+                {text.strongerMaharashtra}
+              </small>
+
             </div>
+
           </section>
 
           {/* POPULAR SCHEMES */}
           <div className="section-heading">
+
             <div>
-              <h2>Popular Schemes</h2>
-              <p>Explore available government services</p>
+              <h2>
+                {text.popularSchemes}
+              </h2>
+
+              <p>
+                {text.exploreServices}
+              </p>
             </div>
 
             <button
               className="text-link"
               type="button"
-              onClick={() => {
-                const firstService = CITIZEN_SERVICES[0]
-                if (firstService) {
-                  goToService(firstService.journeyId)
-                }
-              }}
+              onClick={goToFirstService}
             >
-              View All →
+              {text.viewAll} &gt;
             </button>
+
           </div>
 
           <section className="scheme-grid">
+
             {CITIZEN_SERVICES.map((service, index) => (
+
               <article
                 className={`scheme-card scheme-card-${index + 1}`}
                 key={service.journeyId}
               >
+
                 <div className="scheme-icon">
-                  {index === 0 ? '🎓' : index === 1 ? '👥' : '💼'}
+                  {index === 0
+                    ? 'S'
+                    : index === 1
+                      ? 'E'
+                      : 'K'}
                 </div>
 
                 <span className="scheme-category">
                   {index === 0
-                    ? 'Students'
+                    ? isEnglish
+                      ? 'Students'
+                      : '??????????'
                     : index === 1
-                      ? 'Employment'
-                      : 'Skills'}
+                      ? isEnglish
+                        ? 'Employment'
+                        : '??????'
+                      : isEnglish
+                        ? 'Skills'
+                        : '??????'}
                 </span>
 
-                <h3>{service.title}</h3>
+                <h3>
+                  {service.title}
+                </h3>
 
-                <p>{service.description}</p>
+                <p>
+                  {service.description}
+                </p>
 
                 <button
                   type="button"
-                  onClick={() => goToService(service.journeyId)}
+                  onClick={() =>
+                    goToService(service.journeyId)
+                  }
                 >
-                  Apply Now →
+                  {text.applyNow} &gt;
                 </button>
+
               </article>
+
             ))}
+
           </section>
 
           {/* APPLICATIONS */}
           <div className="section-heading application-heading">
+
             <div>
-              <h2>Your Applications</h2>
-              <p>Track the progress of your submitted applications</p>
+              <h2>
+                {text.yourApplications}
+              </h2>
+
+              <p>
+                {text.trackApplications}
+              </p>
             </div>
 
             <button
               className="text-link"
               type="button"
-              onClick={() => {
-                const applicationId = localStorage.getItem(
-                  'last_citizen_application_id',
-                )
-
-                if (applicationId) {
-                  navigate(`/citizen/applications/${applicationId}`)
-                }
-              }}
+              onClick={goToLastApplication}
             >
-              View All →
+              {text.viewAll} &gt;
             </button>
+
           </div>
 
           <section className="application-list">
+
             <article className="application-row">
+
               <div className="application-service-icon">
-                🎓
+                &#9733;
               </div>
 
               <div className="application-info">
+
                 <strong>
-                  Post Matric Scholarship
+                  {text.postMatric}
                 </strong>
 
                 <span>
-                  Scholarship Application
+                  {text.scholarshipApplication}
                 </span>
+
               </div>
 
               <span className="status-pill status-progress">
-                In Progress
+                {text.inProgress}
               </span>
 
               <span className="application-date">
-                Last updated today
+                {text.updatedToday}
               </span>
 
               <button
                 className="application-arrow"
                 type="button"
-                onClick={() => {
-                  const applicationId = localStorage.getItem(
-                    'last_citizen_application_id',
-                  )
-
-                  if (applicationId) {
-                    navigate(`/citizen/applications/${applicationId}`)
-                  }
-                }}
+                onClick={goToLastApplication}
+                aria-label="Open application"
               >
-                →
+                &gt;
               </button>
+
             </article>
 
             <div className="empty-application-note">
-              Your latest application will appear here after submission.
+              {text.emptyApplication}
             </div>
+
           </section>
 
           {/* QUICK INFO */}
           <section className="citizen-info-grid">
+
             <article className="info-card">
-              <span className="info-icon">🔐</span>
+
+              <span className="info-icon">
+                &#128274;
+              </span>
 
               <div>
-                <strong>Your Data, Your Control</strong>
+                <strong>
+                  {text.dataControl}
+                </strong>
+
                 <p>
-                  You control consent for accessing your information
-                  from government departments.
+                  {text.dataControlDescription}
                 </p>
               </div>
+
             </article>
 
             <article className="info-card">
-              <span className="info-icon">⚡</span>
+
+              <span className="info-icon">
+                &#9889;
+              </span>
 
               <div>
-                <strong>Faster Applications</strong>
+                <strong>
+                  {text.fasterApplications}
+                </strong>
+
                 <p>
-                  Reduce repeated document submission with secure
-                  data sharing.
+                  {text.fasterApplicationsDescription}
                 </p>
               </div>
+
             </article>
 
             <article className="info-card">
-              <span className="info-icon">✓</span>
+
+              <span className="info-icon">
+                &#10003;
+              </span>
 
               <div>
-                <strong>Transparent Tracking</strong>
+                <strong>
+                  {text.transparentTracking}
+                </strong>
+
                 <p>
-                  Track your application status at every stage.
+                  {text.transparentTrackingDescription}
                 </p>
               </div>
+
             </article>
+
           </section>
 
           <footer className="citizen-footer">
+
             <div>
-              <span>About MahaSetu</span>
-              <span>Terms of Use</span>
-              <span>Privacy Policy</span>
-              <span>Help &amp; Support</span>
+              <span>{text.about}</span>
+              <span>{text.terms}</span>
+              <span>{text.privacy}</span>
+              <span>{text.help}</span>
             </div>
 
             <small>
-              MahaSetu — Digital Service Integration Prototype
+              {text.digitalPrototype}
             </small>
+
           </footer>
+
         </section>
+
       </div>
+
     </main>
   )
 }

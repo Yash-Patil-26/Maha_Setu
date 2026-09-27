@@ -10,6 +10,7 @@ import AdminJourneysPage from './pages/AdminJourneysPage.jsx'
 import CitizenDashboard from './pages/CitizenDashboard.jsx'
 import CitizenApplyPage from './pages/CitizenApplyPage.jsx'
 import CitizenApplicationPage from './pages/CitizenApplicationPage.jsx'
+import CitizenConsentPage from './pages/CitizenConsentPage.jsx'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import LoginPage from './pages/LoginPage.jsx'
 import PlaceholderPage from './pages/PlaceholderPage.jsx'
@@ -29,7 +30,7 @@ function App() {
           path="/citizen/applications/:id"
           element={<CitizenApplicationPage />}
         />
-        <Route path="/citizen/consents" element={<PlaceholderPage />} />
+        <Route path="/citizen/consents" element={<CitizenConsentPage />} />
         <Route path="/citizen/profile" element={<PlaceholderPage />} />
       </Route>
 
