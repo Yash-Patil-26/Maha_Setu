@@ -7,6 +7,7 @@ from .api.applications import router as applications_router
 from .api.auth import router as auth_router
 from .api.connectors import router as connectors_router
 from .api.consents import router as consents_router
+from .api.metrics import router as metrics_router
 from .api.systems import router as systems_router
 from .api.webhook import router as webhook_router
 from .db import init_db
@@ -52,4 +53,5 @@ app.include_router(consents_router)
 app.include_router(connectors_router)
 app.include_router(webhook_router)
 
+app.include_router(metrics_router)
 app.include_router(systems_router)
