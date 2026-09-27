@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 
 from ..db import SessionLocal
 from ..models import System, User
+from ..services.audit import record_audit_event
 from .auth import require_roles
 
 router = APIRouter(
@@ -55,7 +56,7 @@ def list_systems(
 def simulate_outage(
     code: str,
     body: dict,
-    _user: User = Depends(
+    user: User = Depends(
         require_roles("admin"),
     ),
     db: Session = Depends(get_db),
@@ -84,6 +85,17 @@ def simulate_outage(
         "DOWN"
         if down
         else "UP"
+    )
+
+    record_audit_event(
+        db,
+        user=user,
+        action=(
+            "System Outage Simulation"
+            if down
+            else "System Restore"
+        ),
+        resource=system.code,
     )
 
     db.commit()

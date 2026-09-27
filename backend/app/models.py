@@ -246,3 +246,30 @@ class AccessLog(Base):
             name="ck_access_log_outcome",
         ),
     )
+
+class AuditLog(Base):
+    __tablename__ = "audit_logs"
+
+    id: Mapped[int] = mapped_column(
+        Integer,
+        primary_key=True,
+        autoincrement=True,
+    )
+    user_id: Mapped[int | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    username: Mapped[str | None] = mapped_column(String(100))
+    role: Mapped[str | None] = mapped_column(String(20))
+    action: Mapped[str] = mapped_column(String(150), nullable=False)
+    resource: Mapped[str | None] = mapped_column(String(150))
+    status: Mapped[str] = mapped_column(
+        String(30),
+        nullable=False,
+        default="Success",
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=utc_now,
+    )

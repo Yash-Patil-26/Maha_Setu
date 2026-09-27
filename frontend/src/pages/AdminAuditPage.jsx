@@ -1,65 +1,75 @@
-import { useState } from 'react'
-
-const initialLogs = [
-  {
-    id: 1,
-    user: 'Admin User',
-    role: 'Administrator',
-    action: 'System Configuration',
-    resource: 'Revenue Department',
-    status: 'Success',
-    time: '2 minutes ago',
-  },
-  {
-    id: 2,
-    user: 'Vikas Shejul',
-    role: 'Administrator',
-    action: 'Login',
-    resource: 'Admin Portal',
-    status: 'Success',
-    time: '8 minutes ago',
-  },
-  {
-    id: 3,
-    user: 'Officer User',
-    role: 'Government Official',
-    action: 'Application Approved',
-    resource: 'APP-1042',
-    status: 'Success',
-    time: '15 minutes ago',
-  },
-  {
-    id: 4,
-    user: 'Recruiter User',
-    role: 'Recruiter',
-    action: 'Candidate Search',
-    resource: 'CAN-001',
-    status: 'Success',
-    time: '24 minutes ago',
-  },
-  {
-    id: 5,
-    user: 'System',
-    role: 'System',
-    action: 'Data Synchronization',
-    resource: 'Education Department',
-    status: 'Completed',
-    time: '32 minutes ago',
-  },
-]
+import { useEffect, useState } from 'react'
+import { apiRequest } from '../api/client.js'
 
 function AdminAuditPage() {
-  const [logs, setLogs] = useState(initialLogs)
+  const [logs, setLogs] = useState([])
   const [filter, setFilter] = useState('All')
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+
+  async function loadLogs() {
+    setLoading(true)
+    setError('')
+
+    try {
+      const result = await apiRequest('/api/admin/audit')
+      setLogs(Array.isArray(result) ? result : [])
+    } catch (err) {
+      setError(err.message || 'Failed to load audit logs')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    let active = true
+
+    apiRequest('/api/admin/audit')
+      .then((result) => {
+        if (active) {
+          setLogs(Array.isArray(result) ? result : [])
+        }
+      })
+      .catch((err) => {
+        if (active) {
+          setError(err.message || 'Failed to load audit logs')
+        }
+      })
+      .finally(() => {
+        if (active) {
+          setLoading(false)
+        }
+      })
+
+    return () => {
+      active = false
+    }
+  }, [])
 
   const filteredLogs =
     filter === 'All'
       ? logs
       : logs.filter((log) => log.role === filter)
 
-  function refreshLogs() {
-    setLogs((current) => [...current])
-  }
+  const totalEvents = logs.length
+
+  const successfulEvents = logs.filter(
+    (log) =>
+      log.status === 'Success' ||
+      log.status === 'Completed',
+  ).length
+
+  const systemEvents = logs.filter(
+    (log) =>
+      log.role === 'System' ||
+      log.action.startsWith('System '),
+  ).length
+
+  const alerts = logs.filter(
+    (log) =>
+      log.status !== 'Success' &&
+      log.status !== 'Completed',
+  ).length
 
   return (
     <div className="setu-dashboard-page">
@@ -79,34 +89,35 @@ function AdminAuditPage() {
         <button
           className="setu-secondary-button"
           type="button"
-          onClick={refreshLogs}
+          onClick={loadLogs}
+          disabled={loading}
         >
-          ↻ Refresh
+          {loading ? 'Loading...' : '↻ Refresh'}
         </button>
       </div>
 
       <section className="setu-stat-grid">
         <article className="setu-stat-card">
           <span>Total Events</span>
-          <strong>1,284</strong>
-          <small>Last 24 hours</small>
+          <strong>{totalEvents}</strong>
+          <small>Loaded audit events</small>
         </article>
 
         <article className="setu-stat-card">
           <span>Successful</span>
-          <strong>1,261</strong>
-          <small>98.2% of events</small>
+          <strong>{successfulEvents}</strong>
+          <small>Completed operations</small>
         </article>
 
         <article className="setu-stat-card">
           <span>System Events</span>
-          <strong>342</strong>
-          <small>Automated operations</small>
+          <strong>{systemEvents}</strong>
+          <small>Automated/system operations</small>
         </article>
 
         <article className="setu-stat-card">
           <span>Alerts</span>
-          <strong>23</strong>
+          <strong>{alerts}</strong>
           <small>Requires review</small>
         </article>
       </section>
@@ -129,9 +140,16 @@ function AdminAuditPage() {
               Government Official
             </option>
             <option value="Recruiter">Recruiter</option>
+            <option value="Citizen">Citizen</option>
             <option value="System">System</option>
           </select>
         </div>
+
+        {error && (
+          <div className="setu-error-message">
+            {error}
+          </div>
+        )}
 
         <div className="setu-table-wrap">
           <table className="setu-table">
@@ -147,34 +165,40 @@ function AdminAuditPage() {
             </thead>
 
             <tbody>
-              {filteredLogs.map((log) => (
-                <tr key={log.id}>
-                  <td>
-                    <strong>{log.user}</strong>
+              {!loading && filteredLogs.length === 0 ? (
+                <tr>
+                  <td colSpan="6">
+                    No audit events found.
                   </td>
-
-                  <td>{log.role}</td>
-
-                  <td>{log.action}</td>
-
-                  <td>{log.resource}</td>
-
-                  <td>
-                    <span className="setu-status success">
-                      {log.status}
-                    </span>
-                  </td>
-
-                  <td>{log.time}</td>
                 </tr>
-              ))}
+              ) : (
+                filteredLogs.map((log) => (
+                  <tr key={log.id}>
+                    <td>
+                      <strong>{log.user}</strong>
+                    </td>
+
+                    <td>{log.role}</td>
+                    <td>{log.action}</td>
+                    <td>{log.resource}</td>
+
+                    <td>
+                      <span className="setu-status success">
+                        {log.status}
+                      </span>
+                    </td>
+
+                    <td>{log.time}</td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
       </section>
 
       <footer className="setu-page-footer">
-        Synthetic data — SETU prototype
+        Live audit data — SETU prototype
       </footer>
     </div>
   )

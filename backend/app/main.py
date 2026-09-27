@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .api.applications import router as applications_router
+from .api.audit import router as audit_router
 from .api.auth import router as auth_router
 from .api.connectors import router as connectors_router
 from .api.consents import router as consents_router
@@ -48,6 +49,7 @@ def api_health() -> dict[str, str]:
 
 
 app.include_router(applications_router)
+app.include_router(audit_router)
 app.include_router(auth_router)
 app.include_router(consents_router)
 app.include_router(connectors_router)
