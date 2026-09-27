@@ -54,6 +54,25 @@ function mappingSource(specification) {
   return formatValue(specification)
 }
 
+function updateMappingValue(mapping, target, value) {
+  const current = mapping?.[target]
+
+  if (current && typeof current === 'object') {
+    return {
+      ...mapping,
+      [target]: {
+        ...current,
+        source: value,
+      },
+    }
+  }
+
+  return {
+    ...mapping,
+    [target]: value,
+  }
+}
+
 export default function AdminStudioPage() {
   const [currentStep, setCurrentStep] = useState(0)
   const [connectorId, setConnectorId] = useState(null)
@@ -307,6 +326,10 @@ export default function AdminStudioPage() {
     ? testResult.validation
     : []
 
+  const validationsPassed =
+    validationEntries.length > 0 &&
+    validationEntries.every((item) => item.passed === true)
+
   const primaryLabel = (() => {
     if (loading) {
       return 'Working...'
@@ -433,6 +456,22 @@ export default function AdminStudioPage() {
                 and reads the actual SKL CSV through the backend connector.
               </p>
 
+              {sample?.fields && sample.fields.length > 0 && (
+                <div className="setu-content-card">
+                  <h3>Returned Fields</h3>
+                  <div className="setu-mapping-list">
+                    {sample.fields.map((field) => (
+                      <div key={field.path}>
+                        <strong>{field.path}</strong>
+                        <span>
+                          {formatValue(field.sample)} · {field.inferred_type}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {connectorId && (
                 <div className="setu-review-box">
                   <div>
@@ -509,9 +548,20 @@ export default function AdminStudioPage() {
                     ([target, specification]) => (
                       <div key={target}>
                         <strong>{target}</strong>
-                        <span>
-                          {mappingSource(specification)}
-                        </span>
+                        <input
+                          className="setu-input"
+                          value={mappingSource(specification)}
+                          onChange={(event) => {
+                            setMapping((current) =>
+                              updateMappingValue(
+                                current,
+                                target,
+                                event.target.value,
+                              ),
+                            )
+                          }}
+                          aria-label={`Mapping for ${target}`}
+                        />
                       </div>
                     ),
                   )}
@@ -682,7 +732,11 @@ export default function AdminStudioPage() {
               className="setu-primary-button"
               type="button"
               onClick={handlePrimaryAction}
-              disabled={loading || !!activationResult}
+              disabled={
+                loading ||
+                !!activationResult ||
+                (currentStep === 4 && !validationsPassed)
+              }
             >
               {primaryLabel}
             </button>
