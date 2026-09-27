@@ -4,6 +4,7 @@ import CitizenApplicationPage from './pages/CitizenApplicationPage.jsx'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import LoginPage from './pages/LoginPage.jsx'
 import PlaceholderPage from './pages/PlaceholderPage.jsx'
+import CitizenConsentPage from './pages/CitizenConsentPage.jsx'
 import ProtectedRoute from './auth/ProtectedRoute.jsx'
 import './App.css'
 
@@ -19,7 +20,7 @@ function App() {
           path="/citizen/applications/:id"
           element={<CitizenApplicationPage />}
         />
-        <Route path="/citizen/consents" element={<PlaceholderPage />} />
+        <Route path="/citizen/consents" element={<CitizenConsentPage />} />
         <Route path="/citizen/profile" element={<PlaceholderPage />} />
       </Route>
 
