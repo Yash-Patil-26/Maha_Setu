@@ -6,13 +6,13 @@ import AdminSystemsPage from './pages/AdminSystemsPage.jsx'
 import AdminStudioPage from './pages/AdminStudioPage.jsx'
 import AdminAuditPage from './pages/AdminAuditPage.jsx'
 import AdminJourneysPage from './pages/AdminJourneysPage.jsx'
+
 import CitizenDashboard from './pages/CitizenDashboard.jsx'
 import CitizenApplyPage from './pages/CitizenApplyPage.jsx'
 import CitizenApplicationPage from './pages/CitizenApplicationPage.jsx'
 import CitizenConsentPage from './pages/CitizenConsentPage.jsx'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import LoginPage from './pages/LoginPage.jsx'
-import PlaceholderPage from './pages/PlaceholderPage.jsx'
 import ProtectedRoute from './auth/ProtectedRoute.jsx'
 import './App.css'
 import './ui-polish.css'
@@ -30,23 +30,15 @@ function App() {
           element={<CitizenApplicationPage />}
         />
         <Route path="/citizen/consents" element={<CitizenConsentPage />} />
-        <Route path="/citizen/profile" element={<PlaceholderPage />} />
       </Route>
 
 
       <Route element={<ProtectedRoute roles={['officer']} />}>
         <Route element={<DashboardLayout />}>
-          <Route
-            path="/officer"
-            element={<OfficerDashboard />}
-          />
+          <Route path="/officer" element={<OfficerDashboard />} />
           <Route
             path="/officer/applications/:id"
             element={<OfficerApplicationPage />}
-          />
-          <Route
-            path="/officer/conflicts"
-            element={<PlaceholderPage />}
           />
         </Route>
       </Route>
@@ -54,19 +46,16 @@ function App() {
       <Route element={<ProtectedRoute roles={['admin']} />}>
         <Route element={<DashboardLayout />}>
           <Route
-            path="/admin"
-            element={<AdminDashboard />}
+            path="/admin" element={<AdminDashboard />}
           />
+
           <Route
             path="/admin/systems"
             element={<AdminSystemsPage />}
           />
+
           <Route
             path="/admin/studio"
-            element={<AdminStudioPage />}
-          />
-          <Route
-            path="/admin/studio/:connectorId"
             element={<AdminStudioPage />}
           />
           <Route

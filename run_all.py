@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import os
+import signal
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 
@@ -147,11 +149,57 @@ def start_process(
 ) -> subprocess.Popen:
     print(f"[START] {name}: {' '.join(command)}")
 
-    return subprocess.Popen(
-        command,
-        cwd=cwd,
-        env=env,
-    )
+    kwargs: dict = {
+        "cwd": cwd,
+        "env": env,
+    }
+
+    if os.name == "posix":
+        # Give every service its own process group so shutdown can
+        # terminate the service and any children it spawned.
+        kwargs["start_new_session"] = True
+    else:
+        kwargs["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP
+
+    return subprocess.Popen(command, **kwargs)
+
+
+def stop_process(name: str, process: subprocess.Popen) -> None:
+    if process.poll() is not None:
+        return
+
+    print(f"[STOP] {name}")
+
+    try:
+        if os.name == "posix":
+            os.killpg(os.getpgid(process.pid), signal.SIGTERM)
+        else:
+            process.send_signal(signal.CTRL_BREAK_EVENT)
+    except ProcessLookupError:
+        return
+    except OSError:
+        try:
+            process.terminate()
+        except OSError:
+            return
+
+    try:
+        process.wait(timeout=5)
+    except subprocess.TimeoutExpired:
+        print(f"[KILL] {name}")
+
+        try:
+            if os.name == "posix":
+                os.killpg(os.getpgid(process.pid), signal.SIGKILL)
+            else:
+                process.kill()
+        except (ProcessLookupError, OSError):
+            pass
+
+        try:
+            process.wait(timeout=2)
+        except subprocess.TimeoutExpired:
+            pass
 
 
 def main() -> int:
@@ -166,6 +214,40 @@ def main() -> int:
     print(f"[PYTHON] Project interpreter: {python_executable}")
 
     processes: list[tuple[str, subprocess.Popen]] = []
+    shutting_down = False
+
+    def shutdown(signum=None, _frame=None):
+        nonlocal shutting_down
+
+        if shutting_down:
+            return
+
+        shutting_down = True
+
+        if signum is not None:
+            try:
+                signal_name = signal.Signals(signum).name
+            except ValueError:
+                signal_name = str(signum)
+
+            print()
+            print(f"Received {signal_name}; stopping SETU services...")
+
+        for name, process in processes:
+            stop_process(name, process)
+
+        print("All services stopped.")
+
+    handled_signals = [
+        signal.SIGINT,
+        signal.SIGTERM,
+    ]
+
+    if hasattr(signal, "SIGHUP"):
+        handled_signals.append(signal.SIGHUP)
+
+    for signum in handled_signals:
+        signal.signal(signum, shutdown)
 
     try:
         for process_config in build_processes(python_executable):
@@ -175,6 +257,7 @@ def main() -> int:
                 process_config["cwd"],
                 env,
             )
+
             processes.append((process_config["name"], process))
 
         print()
@@ -191,26 +274,27 @@ def main() -> int:
                 return_code = process.poll()
 
                 if return_code is not None:
-                    print(f"[STOPPED] {name} exited with code {return_code}")
-                    return return_code
+                    print(
+                        f"[STOPPED] {name} exited with code {return_code}"
+                    )
+
+                    shutdown()
+
+                    return (
+                        0
+                        if shutting_down
+                        else return_code
+                    )
+
+            # Avoid a busy-spin loop consuming CPU.
+            time.sleep(0.2)
 
     except KeyboardInterrupt:
-        print()
-        print("Stopping SETU services...")
+        shutdown(signal.SIGINT)
 
     finally:
-        for name, process in processes:
-            if process.poll() is None:
-                print(f"[STOP] {name}")
-                process.terminate()
-
-        for _, process in processes:
-            try:
-                process.wait(timeout=5)
-            except subprocess.TimeoutExpired:
-                process.kill()
-
-        print("All services stopped.")
+        if not shutting_down:
+            shutdown()
 
     return 0
 

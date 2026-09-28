@@ -18,3 +18,19 @@ Rule: only Dev A adds or approves entries. Newest last. Anyone can propose via a
 | ADR-012 | 22 Sep | **Process relaxed for the sprint window:** self-merge to `dev` with a one-line team ping instead of mandatory pre-merge review; Dev A merges `dev`→`main` every ~4h (after each checkpoint) instead of nightly; `smoke_e2e.py` (S1–S4) is the primary safety net instead of broad unit-test coverage; stuck-rule shortened from 45 to 20 minutes | Review latency isn't affordable at this scope and timeline | `main` stays protected (no direct pushes); full PR review resumes after this deadline passes |
 | CCN-002 | 22 Sep | **SSO simplified:** RS256 key pair + JWKS discovery replaced with a shared-secret HS256 token (`SETU_SSO_SECRET` env var, same pattern as the existing webhook HMAC secret). `GET /.well-known/jwks.json` removed from `docs/api.md`; `/api/auth/sso-token` response shape unchanged (`{url, expires_in}`) | RS256/JWKS key management is disproportionate implementation cost for a same-laptop demo in the time available | `docs/api.md` §3 updated (JWKS row removed, sso-token row's mechanism note updated); no canonical data or other endpoint affected |
 | ADR-013 | 22 Sep | **Re-scoped as a standalone 36-hour mock Grand Finale drive** (Handoff v3.0), decoupled from the 23 Sep self-imposed deadline. Process weight cut further: formal unit tests optional (smoke script only), no PR-review/Contract-Change-Note formality, ticket list merged from 27 rows to ~18 natural units of work. UI/UX direction confirmed: match the *function and flow* of real citizen scheme-matching portals (income/caste eligibility, application tracking), not their exact branding | Reduce over-engineering for an idea-submission MVP; optimize for a working demo, a clean resume line, and genuine SIH finale practice — not enterprise process | Real portal deadline (30 Sep) still applies once this drive is done; `docs/TEAM_GUIDE.md` v1.2 also fixes a content-duplication bug found in the committed file |
+
+
+
+<!-- SETU-LIVE-DECISIONS:START -->
+### ADR-014 | 28 Sep | Finale sprint integration state
+T-081, T-100b and T-111 are landed on the current finale-sprint line. T-110 completes the remaining live-data wiring and presentation polish without backend schema/API behavior changes. The submission path must remain on one canonical implementation while the final validation gate is completed.
+
+### ADR-015 | 28 Sep | Preserve Dev D frontend work while polishing
+The current T-110 frontend pass preserves the previously integrated Dev D application shell, citizen flow, timeline, officer/admin UI, consent and Studio work. The purpose of T-110 is controlled live-data integration, semantic consistency, loading/error/empty treatment and visual unification rather than a wholesale frontend rewrite.
+
+### ADR-016 | 28 Sep | Keep Dev C alternative implementation isolated
+The Dev C candidate branch contains overlapping/alternate architecture and functionality that is not part of the accepted submission baseline. It remains separate from the submission line. No wholesale merge is permitted. A separate reconstruction/build may be pursued only after the submission build is frozen and validated.
+
+### ADR-017 | 28 Sep | Submission branch freeze criteria
+The submission line is not considered frozen merely because feature work is complete. Freeze requires the ordered validation gates, clean-clone verification, smoke validation, demo-path inspection, screenshot/video readiness, and claims alignment described by the finale sprint plan.
+<!-- SETU-LIVE-DECISIONS:END -->

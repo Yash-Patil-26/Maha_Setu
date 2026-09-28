@@ -1,45 +1,96 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { CITIZEN_SERVICES } from '../fixtures/citizen'
 import { apiRequest } from '../api/client.js'
 
-function consentPurpose(journeyId) {
-  if (journeyId === 'scholarship_v1') {
-    return 'scholarship_eligibility'
-  }
+const SERVICE_META = {
+  scholarship_v1: {
+    title: 'Post-Matric Scholarship',
+    marathi: 'पदव्युत्तर शिष्यवृत्ती',
+    description:
+      'Check eligibility and apply using consented Revenue and Education records.',
+    purpose: 'scholarship_eligibility',
+  },
 
-  if (journeyId === 'youth_enterprise_v1') {
-    return 'youth_enterprise_eligibility'
-  }
-
-  return null
+  youth_enterprise_v1: {
+    title: 'Youth Enterprise Support',
+    marathi: 'युवा उद्योजक सहाय्य',
+    description:
+      'Use connected training records to support youth enterprise eligibility.',
+    purpose: 'youth_enterprise_eligibility',
+  },
 }
 
 function CitizenApplyPage() {
   const { journeyId } = useParams()
   const navigate = useNavigate()
 
-  const service = CITIZEN_SERVICES.find(
-    (item) => item.journeyId === journeyId,
-  )
+  const service = SERVICE_META[journeyId]
+  const servicePurpose = service?.purpose
 
   const [consentId, setConsentId] = useState(null)
+  const [loadingConsent, setLoadingConsent] = useState(() =>
+    Boolean(servicePurpose),
+  )
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+
+  useEffect(() => {
+    let active = true
+
+    async function loadExistingConsent() {
+      try {
+        const result = await apiRequest('/api/consents')
+
+        const existing = Array.isArray(result)
+          ? result.find(
+              (consent) =>
+                consent.journey_id === journeyId &&
+                consent.purpose === servicePurpose &&
+                consent.status === 'ACTIVE',
+            )
+          : null
+
+        if (active) {
+          setConsentId(existing?.id ?? null)
+          setError('')
+        }
+      } catch {
+        if (active) {
+          setConsentId(null)
+        }
+      } finally {
+        if (active) {
+          setLoadingConsent(false)
+        }
+      }
+    }
+
+    if (servicePurpose) {
+      void loadExistingConsent()
+    }
+
+    return () => {
+      active = false
+    }
+  }, [journeyId, servicePurpose])
 
   if (!service) {
     return (
       <main>
-        <h1>Service not found</h1>
+        <header className="page-header">
+          <h1>Service not found</h1>
+          <p>The requested service is not available.</p>
+        </header>
+
+        <a className="button button-secondary" href="/citizen">
+          Back to dashboard
+        </a>
       </main>
     )
   }
 
-  async function grantConsent() {
-    const purpose = consentPurpose(journeyId)
-
-    if (!purpose) {
-      setError('Unsupported journey consent purpose.')
+  async function handleConsent() {
+    if (consentId) {
       return
     }
 
@@ -51,22 +102,24 @@ function CitizenApplyPage() {
         method: 'POST',
         body: JSON.stringify({
           journey_id: journeyId,
-          purpose,
+          purpose: service.purpose,
         }),
       })
 
       setConsentId(result.id)
     } catch (err) {
-      setError(
-        err.message ||
-          'Consent service is not available yet.',
-      )
+      setError(err.message || 'Unable to grant consent.')
     } finally {
       setBusy(false)
     }
   }
 
-  async function createApplication() {
+  async function handleApply() {
+    if (!consentId) {
+      setError('Please grant consent before applying.')
+      return
+    }
+
     setError('')
     setBusy(true)
 
@@ -82,7 +135,7 @@ function CitizenApplyPage() {
         `/citizen/applications/${result.application_id}`,
       )
     } catch (err) {
-      setError(err.message)
+      setError(err.message || 'Unable to create application.')
     } finally {
       setBusy(false)
     }
@@ -91,51 +144,50 @@ function CitizenApplyPage() {
   return (
     <main>
       <header className="page-header">
-        <p>
-          Citizen Dashboard / {service.title}
-        </p>
+        <p>Citizen Dashboard / {service.title}</p>
 
-        <h1>
-          Apply for {service.title}
-        </h1>
+        <h1>Apply for {service.title}</h1>
 
-        <p>
-          {service.description}
-        </p>
+        <p>{service.description}</p>
       </header>
 
       <section className="card">
         <h2>Consent</h2>
 
         <p>
-          Grant consent through the real SETU consent service
-          before applying.
+          I consent to SETU using the required system data to process
+          this application.
         </p>
 
         <button
           className="button"
           type="button"
-          onClick={grantConsent}
-          disabled={busy || Boolean(consentId)}
+          onClick={handleConsent}
+          disabled={
+            busy ||
+            loadingConsent ||
+            Boolean(consentId)
+          }
         >
-          {consentId
-            ? 'Consent granted'
-            : 'Grant consent'}
+          {loadingConsent
+            ? 'Checking consent…'
+            : consentId
+              ? 'Consent granted'
+              : 'Grant consent'}
         </button>
       </section>
 
       <section className="card">
-        <h2>Application</h2>
+        <h2>Apply</h2>
 
         <p>
-          The application will be created by the real FastAPI
-          journey endpoint.
+          Once consent is granted, you can create your application.
         </p>
 
         <button
           className="button"
           type="button"
-          onClick={createApplication}
+          onClick={handleApply}
           disabled={busy || !consentId}
         >
           Create application

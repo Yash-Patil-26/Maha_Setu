@@ -1,41 +1,120 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { apiRequest } from '../api/client.js'
 
 function AdminJourneysPage() {
   const [journeys, setJourneys] = useState([])
-  const [selectedJourney, setSelectedJourney] = useState(null)
+  const [selectedId, setSelectedId] = useState('')
+  const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState('')
 
   async function loadJourneys() {
-    setLoading(true)
-    setError('')
+    const data = await apiRequest('/api/journeys')
+    const normalized = Array.isArray(data) ? data : []
 
-    try {
-      const result = await apiRequest('/api/journeys')
-      setJourneys(Array.isArray(result) ? result : [])
-    } catch (err) {
-      setError(err.message || 'Failed to load journeys')
-    } finally {
-      setLoading(false)
-    }
+    setJourneys(normalized)
+
+    setSelectedId((current) => {
+      if (current && normalized.some((journey) => journey.id === current)) {
+        return current
+      }
+
+      return normalized[0]?.id || ''
+    })
   }
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    loadJourneys()
+    let cancelled = false
+
+    apiRequest('/api/journeys')
+      .then((data) => {
+        if (cancelled) return
+
+        const normalized = Array.isArray(data) ? data : []
+
+        setJourneys(normalized)
+        setSelectedId(normalized[0]?.id || '')
+      })
+      .catch((err) => {
+        if (cancelled) return
+
+        setError(err.message || 'Failed to load journeys')
+      })
+      .finally(() => {
+        if (cancelled) return
+        setLoading(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
   }, [])
 
-  const activeCount = journeys.filter(
-    (journey) => journey.status === 'ACTIVE',
+  async function handleRefresh() {
+    setRefreshing(true)
+    setError('')
+
+    try {
+      await loadJourneys()
+    } catch (err) {
+      setError(err.message || 'Failed to refresh journeys')
+    } finally {
+      setRefreshing(false)
+    }
+  }
+
+  const filteredJourneys = useMemo(() => {
+    const query = search.trim().toLowerCase()
+
+    if (!query) return journeys
+
+    return journeys.filter((journey) => {
+      const haystack = [
+        journey.id,
+        journey.name,
+        journey.status,
+        journey.version,
+        ...(Array.isArray(journey.steps)
+          ? journey.steps.flatMap((step) => [
+              step.id,
+              step.type,
+              step.connector,
+              step.entity,
+            ])
+          : []),
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase()
+
+      return haystack.includes(query)
+    })
+  }, [journeys, search])
+
+  const selectedJourney =
+    journeys.find((journey) => journey.id === selectedId) ||
+    filteredJourneys[0] ||
+    null
+
+  const activeJourneys = journeys.filter(
+    (journey) =>
+      String(journey.status || '').toUpperCase() === 'ACTIVE',
   ).length
 
   const configuredSteps = journeys.reduce(
     (total, journey) =>
       total +
-      (journey.steps || []).filter(
-        (step) => step.configured,
-      ).length,
+      (Array.isArray(journey.steps)
+        ? journey.steps.filter((step) => step.configured).length
+        : 0),
+    0,
+  )
+
+  const totalSteps = journeys.reduce(
+    (total, journey) =>
+      total +
+      (Array.isArray(journey.steps) ? journey.steps.length : 0),
     0,
   )
 
@@ -43,193 +122,279 @@ function AdminJourneysPage() {
     <main className="setu-dashboard-page">
       <div className="setu-page-heading">
         <div>
-          <span className="setu-breadcrumb">
+          <div className="setu-breadcrumb">
             Home / Admin / Journey Management
-          </span>
+          </div>
+
           <h1>Journey Management</h1>
+
           <p>
-            Review live citizen service journeys and connector
-            configuration.
+            Inspect the live citizen-service journeys that orchestrate
+            interoperability across connected government systems.
           </p>
         </div>
+
+        <button
+          className="setu-secondary-button"
+          type="button"
+          onClick={handleRefresh}
+          disabled={loading || refreshing}
+        >
+          {refreshing ? 'Refreshing...' : 'Refresh'}
+        </button>
       </div>
 
       {error && (
-        <div className="form-error" role="alert">
-          {error}
-        </div>
+        <section className="setu-content-card">
+          <p className="setu-error-message">{error}</p>
+        </section>
       )}
 
       <section className="setu-stat-grid">
         <article className="setu-stat-card">
           <span>Total Journeys</span>
-          <strong>{loading ? '...' : journeys.length}</strong>
-          <small>Loaded from the journey store</small>
+          <strong>{journeys.length}</strong>
+          <small>Live journey registry</small>
         </article>
 
         <article className="setu-stat-card">
-          <span>Active</span>
-          <strong>{loading ? '...' : activeCount}</strong>
-          <small>Active journey definitions</small>
+          <span>Active Journeys</span>
+          <strong>{activeJourneys}</strong>
+          <small>Currently active</small>
+        </article>
+
+        <article className="setu-stat-card">
+          <span>Processing Steps</span>
+          <strong>{totalSteps}</strong>
+          <small>Across configured journeys</small>
         </article>
 
         <article className="setu-stat-card">
           <span>Configured Steps</span>
-          <strong>
-            {loading ? '...' : configuredSteps}
-          </strong>
-          <small>Steps ready for execution</small>
-        </article>
-
-        <article className="setu-stat-card">
-          <span>Versions</span>
-          <strong>
-            {loading
-              ? '...'
-              : new Set(
-                  journeys.map((journey) => journey.version),
-                ).size}
-          </strong>
-          <small>Versions represented</small>
+          <strong>{configuredSteps}</strong>
+          <small>Ready for execution</small>
         </article>
       </section>
 
-      <section className="setu-content-card">
-        <div className="setu-card-heading">
+      <section className="setu-journey-config">
+        <div className="setu-journey-config-header">
           <div>
             <h2>Service Journeys</h2>
             <p>
-              Backend-backed journey definitions and their configured
-              steps.
+              Select a journey to inspect its orchestration path and
+              connector dependencies.
             </p>
           </div>
 
-          <button
-            className="setu-secondary-button"
-            type="button"
-            onClick={loadJourneys}
-            disabled={loading}
-          >
-            {loading ? 'Loading...' : '↻ Refresh'}
-          </button>
+          <input
+            className="setu-input"
+            type="search"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Search journeys, connectors or entities..."
+            aria-label="Search journeys"
+          />
         </div>
 
-        <div className="setu-table-wrap">
-          <table className="setu-table">
-            <thead>
-              <tr>
-                <th>Journey</th>
-                <th>Version</th>
-                <th>Steps</th>
-                <th>Configured</th>
-                <th>Status</th>
-                <th>View</th>
-              </tr>
-            </thead>
+        {loading ? (
+          <div className="setu-empty-state">
+            Loading journey registry...
+          </div>
+        ) : filteredJourneys.length === 0 ? (
+          <div className="setu-empty-state">
+            No journeys match the current search.
+          </div>
+        ) : (
+          <div className="setu-journey-layout">
+            <aside className="setu-journey-step-list">
+              {filteredJourneys.map((journey) => {
+                const active =
+                  journey.id === selectedJourney?.id
 
-            <tbody>
-              {loading ? (
-                <tr>
-                  <td colSpan="6">Loading journeys...</td>
-                </tr>
-              ) : journeys.length === 0 ? (
-                <tr>
-                  <td colSpan="6">No journeys found.</td>
-                </tr>
+                const steps = Array.isArray(journey.steps)
+                  ? journey.steps
+                  : []
+
+                return (
+                  <button
+                    key={journey.id}
+                    type="button"
+                    className={`setu-journey-item ${
+                      active ? 'active' : ''
+                    }`}
+                    onClick={() => setSelectedId(journey.id)}
+                  >
+                    <div className="setu-journey-item-top">
+                      <strong>{journey.name}</strong>
+
+                      <span
+                        className={`setu-status ${
+                          String(journey.status).toUpperCase() ===
+                          'ACTIVE'
+                            ? 'success'
+                            : 'pending'
+                        }`}
+                      >
+                        {journey.status}
+                      </span>
+                    </div>
+
+                    <small>
+                      v{journey.version} · {steps.length} step
+                      {steps.length === 1 ? '' : 's'}
+                    </small>
+
+                    <span className="setu-journey-item-id">
+                      {journey.id}
+                    </span>
+                  </button>
+                )
+              })}
+            </aside>
+
+            <section className="setu-journey-detail">
+              {!selectedJourney ? (
+                <div className="setu-empty-state">
+                  Select a journey to inspect its configuration.
+                </div>
               ) : (
-                journeys.map((journey) => {
-                  const steps = journey.steps || []
-                  const configured = steps.filter(
-                    (step) => step.configured,
-                  ).length
+                <>
+                  <div className="setu-section-heading">
+                    <div>
+                      <span className="setu-kicker">
+                        {selectedJourney.id}
+                      </span>
 
-                  return (
-                    <tr key={`${journey.id}-${journey.version}`}>
-                      <td>
-                        <strong>{journey.name}</strong>
-                        <small>{journey.id}</small>
-                      </td>
-                      <td>v{journey.version}</td>
-                      <td>{steps.length}</td>
-                      <td>
-                        {configured} / {steps.length}
-                      </td>
-                      <td>
-                        <span className="setu-status success">
-                          {journey.status}
-                        </span>
-                      </td>
-                      <td>
-                        <button
-                          className="setu-secondary-button"
-                          type="button"
-                          onClick={() =>
-                            setSelectedJourney(journey)
-                          }
+                      <h2>{selectedJourney.name}</h2>
+
+                      <p>
+                        Journey version {selectedJourney.version}
+                      </p>
+                    </div>
+
+                    <span
+                      className={`setu-status ${
+                        String(selectedJourney.status).toUpperCase() ===
+                        'ACTIVE'
+                          ? 'success'
+                          : 'pending'
+                      }`}
+                    >
+                      {selectedJourney.status}
+                    </span>
+                  </div>
+
+                  <div className="setu-journey-summary">
+                    <div>
+                      <span>Version</span>
+                      <strong>
+                        {selectedJourney.version}
+                      </strong>
+                    </div>
+
+                    <div>
+                      <span>Steps</span>
+                      <strong>
+                        {Array.isArray(selectedJourney.steps)
+                          ? selectedJourney.steps.length
+                          : 0}
+                      </strong>
+                    </div>
+
+                    <div>
+                      <span>Configured</span>
+                      <strong>
+                        {Array.isArray(selectedJourney.steps)
+                          ? selectedJourney.steps.filter(
+                              (step) => step.configured,
+                            ).length
+                          : 0}
+                      </strong>
+                    </div>
+                  </div>
+
+                  <div className="setu-journey-steps">
+                    {Array.isArray(selectedJourney.steps) &&
+                    selectedJourney.steps.length > 0 ? (
+                      selectedJourney.steps.map((step, index) => (
+                        <article
+                          className="setu-journey-step"
+                          key={step.id || `${selectedJourney.id}-${index}`}
                         >
-                          View
-                        </button>
-                      </td>
-                    </tr>
-                  )
-                })
+                          <div className="setu-journey-step-number">
+                            {index + 1}
+                          </div>
+
+                          <div className="setu-journey-step-content">
+                            <div className="setu-journey-step-heading">
+                              <div>
+                                <span className="setu-kicker">
+                                  {step.type || 'PROCESSING STEP'}
+                                </span>
+
+                                <h3>
+                                  {step.entity ||
+                                    step.id ||
+                                    'Untitled step'}
+                                </h3>
+                              </div>
+
+                              <span
+                                className={`setu-status ${
+                                  step.configured
+                                    ? 'success'
+                                    : 'pending'
+                                }`}
+                              >
+                                {step.configured
+                                  ? 'Configured'
+                                  : 'Needs configuration'}
+                              </span>
+                            </div>
+
+                            <div className="setu-journey-step-meta">
+                              <div>
+                                <span>Connector</span>
+                                <strong>
+                                  {step.connector || 'Not specified'}
+                                </strong>
+                              </div>
+
+                              <div>
+                                <span>Step ID</span>
+                                <strong>
+                                  {step.id || 'Not specified'}
+                                </strong>
+                              </div>
+                            </div>
+                          </div>
+                        </article>
+                      ))
+                    ) : (
+                      <div className="setu-empty-state">
+                        This journey currently has no configured steps.
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="setu-info-banner">
+                    <strong>Read-only configuration view</strong>
+                    <span>
+                      Journey creation and modification are not exposed by
+                      the current SETU backend contract. This screen therefore
+                      reflects the live registry without presenting
+                      unsupported controls.
+                    </span>
+                  </div>
+                </>
               )}
-            </tbody>
-          </table>
-        </div>
+            </section>
+          </div>
+        )}
       </section>
 
-      {selectedJourney && (
-        <section className="setu-content-card">
-          <div className="setu-card-heading">
-            <div>
-              <h2>{selectedJourney.name}</h2>
-              <p>
-                {selectedJourney.id} · v
-                {selectedJourney.version}
-              </p>
-            </div>
-
-            <button
-              className="setu-secondary-button"
-              type="button"
-              onClick={() => setSelectedJourney(null)}
-            >
-              Close
-            </button>
-          </div>
-
-          <div className="setu-journey-steps">
-            <h3>Workflow</h3>
-
-            <div className="setu-journey-step-list">
-              {(selectedJourney.steps || []).map(
-                (step, index) => (
-                  <div key={step.id || index}>
-                    <span>{index + 1}</span>
-                    <strong>{step.id}</strong>
-                    <small>
-                      {step.type}
-                      {step.connector
-                        ? ` · ${step.connector}`
-                        : ''}
-                      {step.entity
-                        ? ` · ${step.entity}`
-                        : ''}
-                      {step.configured
-                        ? ' · configured'
-                        : ' · not configured'}
-                    </small>
-                  </div>
-                ),
-              )}
-            </div>
-          </div>
-        </section>
-      )}
-
       <footer className="setu-page-footer">
-        Live journey definitions — SETU prototype
+        Live journey registry — SETU prototype
       </footer>
     </main>
   )

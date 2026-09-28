@@ -13,7 +13,6 @@ function DashboardLayout() {
       { label: 'Apply for Schemes', icon: '▣', path: '/citizen' },
       { label: 'My Applications', icon: '▤', path: '/citizen' },
       { label: 'Consent & Data', icon: '◈', path: '/citizen/consents' },
-      { label: 'My Profile', icon: '♙', path: '/citizen/profile' },
       { label: 'Help & Support', icon: '?', path: '/citizen' },
     ],
 

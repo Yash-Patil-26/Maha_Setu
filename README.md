@@ -848,3 +848,28 @@ The UI represents actual application state, integrations, journeys, failures, an
 ## SETU in One Sentence
 
 **SETU is a consent-aware interoperability hub that connects fragmented service systems, converts their data into a common model, orchestrates complete citizen journeys, preserves traceability, and recovers gracefully when integrations fail.**
+
+
+
+<!-- SETU-LIVE-STATE:START -->
+## Current Project State
+
+**Last updated:** 2026-09-28 19:46 IST
+
+- **Active problem statement:** SIH PS 26129, “System integration and interoperability among government digital platforms, resulting in fragmented service delivery.”
+- **Current branch:** `feat/T-110-polish`
+- **Current HEAD:** `e427bc5`
+- **T-081:** Landed. Admin can onboard the SKL CSV source through Studio UI and the live backend connector becomes ACTIVE.
+- **T-100b:** Landed. Studio onboarding smoke scenario is part of the S1-S5 smoke coverage.
+- **T-111:** Implemented and landed. Admin Dashboard, Access Log and Journeys consume live backend data. Manual acceptance previously confirmed live DENIED audit evidence and configured SKL training mapping.
+- **T-110:** Implementation and manual visual QA completed across the scoped Login, Citizen, Officer and Admin surfaces. Current work includes live Citizen application data, unified SETU visual language, shared status/source semantics, loading/empty/error states, bilingual navigation and primary actions, footer standardization, and removal of demo-path placeholder/fixture usage.
+- **Known validation before the final gate:** backend pytest 75 passed; Ruff clean; frontend lint 0 errors with 1 known `OfficerApplicationPage.jsx` hook-dependency warning; frontend build passed; git diff check passed; S1-S5 smoke previously passed 5/5.
+- **Final gate state:** T-110 Step 8 final validation is the remaining verification gate. Do not treat the submission branch as frozen until that gate passes.
+- **QA environment:** stable local stack previously verified on HUB `8000`, REV `8001`, BSS `8002`, frontend `5173`. Firefox/WebDriver/headless automation was intentionally abandoned after instability; normal Firefox manual QA was used.
+- **Demo-path integrity:** no active frontend fixture imports and no `PlaceholderPage` route remain on the demo path. Fixture definition files may remain unused.
+- **Contract/API scope:** T-110 and T-111 did not introduce backend schema/API behavior changes or new frontend dependencies.
+- **Release direction:** after final validation, proceed to freeze/clean-clone/video/deck release work. Keep the submission build isolated from later experimental reconstruction.
+- **Dev D preservation:** current frontend work is a controlled integration/polish pass over the previously shipped Dev D frontend work, not a wholesale replacement.
+- **Dev C preservation:** the alternate Dev C candidate architecture remains separate. Do not wholesale-merge the stale/divergent candidate branch into the submission baseline.
+- **Second build:** a separate reconstruction/alternate implementation is planned only after the submission build is frozen and validated.
+<!-- SETU-LIVE-STATE:END -->

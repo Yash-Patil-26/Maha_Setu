@@ -1,47 +1,42 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import { apiRequest } from '../api/client.js'
 
 function AdminSystemsPage() {
   const [systems, setSystems] = useState([])
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(true)
 
   async function load() {
     try {
-      const result = await apiRequest(
-        '/api/systems',
-      )
-
-      setSystems(result)
+      setLoading(true)
+      const data = await apiRequest('/api/systems')
+      setSystems(data)
       setError('')
     } catch (err) {
-      setError(err.message)
+      setError(err.message || 'Failed to load systems')
+    } finally {
+      setLoading(false)
     }
   }
 
   async function toggle(code, down) {
     try {
-      await apiRequest(
-        `/api/systems/${code}/simulate-outage`,
-        {
-          method: 'POST',
-          body: JSON.stringify({
-            down,
-          }),
-        },
-      )
-
+      await apiRequest(`/api/systems/${code}/simulate-outage`, {
+        method: 'POST',
+        body: JSON.stringify({ down }),
+      })
       await load()
     } catch (err) {
-      setError(err.message)
+      setError(err.message || 'Failed to update system')
     }
   }
 
   useEffect(() => {
-    // The load function performs asynchronous API synchronization.
-    // Keep the initial invocation outside the synchronous effect body.
-    window.setTimeout(() => {
-      void load();
+    const timer = window.setTimeout(() => {
+      void load()
     }, 0)
+
+    return () => window.clearTimeout(timer)
   }, [])
 
   return (
@@ -54,15 +49,14 @@ function AdminSystemsPage() {
 
           <h1>Manage Systems</h1>
 
-          <p>
-            Live system registry and outage control.
-          </p>
+          <p>Live system registry and outage simulation.</p>
         </div>
 
         <button
-          className="button"
+          className="setu-primary-button"
           type="button"
           onClick={load}
+          disabled={loading}
         >
           Refresh
         </button>
@@ -74,63 +68,77 @@ function AdminSystemsPage() {
         </p>
       )}
 
-      <section className="setu-system-grid">
-        {systems.map((system) => (
-          <article
-            className="setu-system-card"
-            key={system.code}
-          >
-            <div className="setu-system-card-top">
-              <div className="setu-system-icon">
-                {system.code}
-              </div>
-
-              <span
-                className={`setu-status ${
-                  system.health === 'UP'
-                    ? 'success'
-                    : 'pending'
-                }`}
-              >
-                {system.health}
-              </span>
+      {loading ? (
+        <section className="setu-content-card">
+          <p>Loading systems...</p>
+        </section>
+      ) : (
+        <section className="setu-content-card">
+          <div className="setu-card-heading">
+            <div>
+              <h2>Connected Systems</h2>
+              <p>Live registry and system health status.</p>
             </div>
+          </div>
 
-            <h3>{system.name}</h3>
+          <div className="setu-system-grid">
+            {systems.map((system) => {
+              const isDown =
+                system.health === 'DOWN' || system.simulate_down
 
-            <p>
-              {system.protocol} ·{' '}
-              {system.auth_type}
-            </p>
+              return (
+                <article
+                  className="setu-system-card"
+                  key={system.code}
+                >
+                  <div className="setu-system-card-top">
+                    <div className="setu-system-icon">
+                      {system.code}
+                    </div>
 
-            <p>
-              ID scheme: {system.id_scheme}
-            </p>
+                    <span
+                      className={`setu-status ${
+                        isDown ? 'pending' : 'success'
+                      }`}
+                    >
+                      {system.health}
+                    </span>
+                  </div>
 
-            <button
-              className={
-                system.simulate_down
-                  ? 'setu-primary-button'
-                  : 'setu-secondary-button'
-              }
-              type="button"
-              onClick={() =>
-                toggle(
-                  system.code,
-                  !system.simulate_down,
-                )
-              }
-            >
-              {system.simulate_down
-                ? 'Restore system'
-                : 'Simulate outage'}
-            </button>
-          </article>
-        ))}
-      </section>
+                  <h3>{system.name}</h3>
+
+                  <p>
+                    {system.protocol} · {system.auth_type}
+                  </p>
+
+                  <p>
+                    Owner: {system.owner_department}
+                  </p>
+
+                  <p>
+                    ID scheme: {system.id_scheme}
+                  </p>
+
+                  <button
+                    className={
+                      isDown
+                        ? 'setu-primary-button'
+                        : 'setu-secondary-button'
+                    }
+                    type="button"
+                    onClick={() => toggle(system.code, !isDown)}
+                  >
+                    {isDown ? 'Restore system' : 'Simulate outage'}
+                  </button>
+                </article>
+              )
+            })}
+          </div>
+        </section>
+      )}
 
       <footer className="setu-page-footer">
-        Synthetic data — SETU prototype
+        Live system registry — SETU prototype
       </footer>
     </div>
   )

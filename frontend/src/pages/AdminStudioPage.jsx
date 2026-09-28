@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { apiRequest } from '../api/client.js'
 
-const steps = [
+const STEPS = [
   'Select System',
   'Sample Data',
   'Suggested Mapping',
@@ -16,7 +16,7 @@ const DEMO_IDENTITY = {
 
 const SKL_CONFIG = {
   system_code: 'SKL',
-  name_prefix: 'skl_training',
+  name: 'skl_training',
   kind: 'CSV',
   entity: 'training_record',
   config: {
@@ -29,6 +29,7 @@ const SKL_CONFIG = {
     dob_field: 'DOB',
     dob_format: '%d-%m-%Y',
   },
+  auth: {},
 }
 
 const JOURNEY_ID = 'youth_enterprise_v1'
@@ -54,27 +55,42 @@ function mappingSource(specification) {
   return formatValue(specification)
 }
 
-function updateMappingValue(mapping, target, value) {
-  const current = mapping?.[target]
-
-  if (current && typeof current === 'object') {
-    return {
-      ...mapping,
-      [target]: {
-        ...current,
-        source: value,
-      },
-    }
+function mappingTransform(specification) {
+  if (!specification || typeof specification !== 'object') {
+    return 'Direct'
   }
 
-  return {
-    ...mapping,
-    [target]: value,
+  const transform = specification.transform
+
+  if (!transform) {
+    return 'Direct'
   }
+
+  if (typeof transform === 'string') {
+    return transform
+  }
+
+  if (transform.date) {
+    return `Date: ${transform.date}`
+  }
+
+  if (transform.enum) {
+    return 'Enum transform'
+  }
+
+  return 'Transform'
 }
 
-export default function AdminStudioPage() {
+function AdminStudioPage() {
+  const [systems, setSystems] = useState([])
+  const [journeyStep, setJourneyStep] = useState(null)
+
+  const [systemCode, setSystemCode] = useState(
+    SKL_CONFIG.system_code,
+  )
+
   const [currentStep, setCurrentStep] = useState(0)
+
   const [connectorId, setConnectorId] = useState(null)
   const [connectorName, setConnectorName] = useState('')
   const [connectorStatus, setConnectorStatus] = useState('')
@@ -84,36 +100,123 @@ export default function AdminStudioPage() {
   const [testResult, setTestResult] = useState(null)
   const [activationResult, setActivationResult] = useState(null)
 
+  const [loadingContext, setLoadingContext] = useState(true)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
+  useEffect(() => {
+    let cancelled = false
+
+    Promise.all([
+      apiRequest('/api/systems'),
+      apiRequest('/api/journeys'),
+    ])
+      .then(([systemsData, journeysData]) => {
+        if (cancelled) return
+
+        const systemList = Array.isArray(systemsData)
+          ? systemsData
+          : []
+
+        const journeyList = Array.isArray(journeysData)
+          ? journeysData
+          : []
+
+        setSystems(systemList)
+
+        const targetJourney = journeyList.find(
+          (journey) => journey.id === JOURNEY_ID,
+        )
+
+        const targetStep =
+          targetJourney?.steps?.find(
+            (step) => step.id === STEP_ID,
+          ) || null
+
+        setJourneyStep(targetStep)
+      })
+      .catch((err) => {
+        if (cancelled) return
+
+        setError(
+          err.message || 'Unable to load Studio configuration.',
+        )
+      })
+      .finally(() => {
+        if (cancelled) return
+        setLoadingContext(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const selectedSystem = useMemo(
+    () =>
+      systems.find(
+        (system) => system.code === systemCode,
+      ) || null,
+    [systems, systemCode],
+  )
+
+  const supportedSystem =
+    systemCode === SKL_CONFIG.system_code
+
+  const journeyConnectorMatches =
+    journeyStep?.connector === SKL_CONFIG.name
+
   function showError(err) {
-    setError(err?.message || 'Studio operation failed.')
+    setError(
+      err?.message ||
+        'Studio operation failed. Please review the current step.',
+    )
   }
 
   async function createConnector() {
+    if (connectorId) {
+      setCurrentStep(1)
+      return
+    }
+
+    if (!supportedSystem) {
+      setError(
+        'This onboarding template is currently configured for the SKL system.',
+      )
+      return
+    }
+
+    if (!journeyConnectorMatches) {
+      setError(
+        'The live youth enterprise journey is not currently linked to the expected SKL connector.',
+      )
+      return
+    }
+
     setLoading(true)
     setError('')
 
     try {
-      const name = SKL_CONFIG.name_prefix
-
       const result = await apiRequest('/api/connectors', {
         method: 'POST',
         body: JSON.stringify({
           system_code: SKL_CONFIG.system_code,
-          name,
+          name: SKL_CONFIG.name,
           kind: SKL_CONFIG.kind,
           entity: SKL_CONFIG.entity,
           config: SKL_CONFIG.config,
           lookup: SKL_CONFIG.lookup,
-          auth: {},
+          auth: SKL_CONFIG.auth,
         }),
       })
 
       setConnectorId(result.id)
-      setConnectorName(result.name || name)
-      setConnectorStatus(result.status || 'DRAFT')
+      setConnectorName(
+        result.name || SKL_CONFIG.name,
+      )
+      setConnectorStatus(
+        result.status || 'DRAFT',
+      )
       setCurrentStep(1)
     } catch (err) {
       showError(err)
@@ -124,7 +227,7 @@ export default function AdminStudioPage() {
 
   async function loadSample() {
     if (!connectorId) {
-      setError('Connector has not been created yet.')
+      setError('Create the connector before loading a sample.')
       return
     }
 
@@ -153,7 +256,7 @@ export default function AdminStudioPage() {
 
   async function generateMapping() {
     if (!connectorId) {
-      setError('Connector has not been created yet.')
+      setError('Create the connector before generating a mapping.')
       return
     }
 
@@ -165,44 +268,35 @@ export default function AdminStudioPage() {
         `/api/connectors/${connectorId}/suggest-mapping`,
         {
           method: 'POST',
+          body: JSON.stringify({}),
         },
       )
 
-      setMapping(result.mapping || {})
-    } catch (err) {
-      showError(err)
-    } finally {
-      setLoading(false)
-    }
-  }
+      const suggestedMapping = result?.mapping
 
-  async function saveMapping() {
-    if (!connectorId) {
-      setError('Connector has not been created yet.')
-      return
-    }
+      if (
+        !suggestedMapping ||
+        typeof suggestedMapping !== 'object' ||
+        Object.keys(suggestedMapping).length === 0
+      ) {
+        throw new Error(
+          'The connector returned no suggested mapping.',
+        )
+      }
 
-    if (!mapping || Object.keys(mapping).length === 0) {
-      setError('No mapping has been generated.')
-      return
-    }
-
-    setLoading(true)
-    setError('')
-
-    try {
-      const result = await apiRequest(
+      await apiRequest(
         `/api/connectors/${connectorId}/mapping`,
         {
           method: 'PUT',
           body: JSON.stringify({
-            mapping,
+            mapping: suggestedMapping,
             validators: [],
           }),
         },
       )
 
-      setConnectorStatus(result.status || 'DRAFT')
+      setMapping(suggestedMapping)
+      setConnectorStatus('DRAFT')
       setCurrentStep(3)
     } catch (err) {
       showError(err)
@@ -211,9 +305,11 @@ export default function AdminStudioPage() {
     }
   }
 
-  async function runTest() {
-    if (!connectorId) {
-      setError('Connector has not been created yet.')
+  async function testMapping() {
+    if (!connectorId || !mapping) {
+      setError(
+        'Generate and save the mapping before testing it.',
+      )
       return
     }
 
@@ -232,6 +328,22 @@ export default function AdminStudioPage() {
         },
       )
 
+      const validations = Array.isArray(
+        result?.validation,
+      )
+        ? result.validation
+        : []
+
+      const allPassed = validations.every(
+        (item) => item?.passed !== false,
+      )
+
+      if (!allPassed) {
+        throw new Error(
+          'Connector mapping validation did not pass.',
+        )
+      }
+
       setTestResult(result)
       setConnectorStatus('TESTED')
       setCurrentStep(4)
@@ -243,8 +355,10 @@ export default function AdminStudioPage() {
   }
 
   async function activateConnector() {
-    if (!connectorId) {
-      setError('Connector has not been created yet.')
+    if (!connectorId || !testResult) {
+      setError(
+        'Complete the connector test before activation.',
+      )
       return
     }
 
@@ -275,86 +389,56 @@ export default function AdminStudioPage() {
   }
 
   function previousStep() {
-    if (loading || currentStep === 0) {
-      return
-    }
+    if (loading) return
 
     setError('')
-    setCurrentStep((step) => Math.max(0, step - 1))
+
+    setCurrentStep((step) =>
+      step > 0 ? step - 1 : step,
+    )
   }
 
-  async function handlePrimaryAction() {
-    if (loading) {
-      return
-    }
-
-    switch (currentStep) {
-      case 0:
-        await createConnector()
-        break
-      case 1:
-        await loadSample()
-        break
-      case 2:
-        if (!mapping) {
-          await generateMapping()
-          return
-        }
-
-        await saveMapping()
-        break
-      case 3:
-        await runTest()
-        break
-      case 4:
-        if (!activationResult) {
-          await activateConnector()
-        }
-        break
-      default:
-        break
-    }
-  }
-
-  const mappingEntries = mapping
-    ? Object.entries(mapping)
-    : []
-
-  const validationEntries = Array.isArray(
-    testResult?.validation,
-  )
-    ? testResult.validation
-    : []
-
-  const validationsPassed =
-    validationEntries.length > 0 &&
-    validationEntries.every((item) => item.passed === true)
-
-  const primaryLabel = (() => {
-    if (loading) {
-      return 'Working...'
-    }
-
+  function primaryAction() {
     if (currentStep === 0) {
-      return 'Create Connector'
+      void createConnector()
+      return
     }
 
     if (currentStep === 1) {
-      return 'Load Sample'
+      void loadSample()
+      return
     }
 
     if (currentStep === 2) {
-      return mapping ? 'Save Mapping' : 'Generate Mapping'
+      void generateMapping()
+      return
     }
 
     if (currentStep === 3) {
-      return 'Run Test'
+      void testMapping()
+      return
     }
 
-    return activationResult
+    if (currentStep === 4) {
+      void activateConnector()
+    }
+  }
+
+  const primaryLabel = {
+    0: connectorId
+      ? 'Continue to Sample'
+      : 'Create Connector',
+    1: 'Load Real Sample',
+    2: mapping
+      ? 'Continue to Test'
+      : 'Generate & Save Mapping',
+    3: testResult
+      ? 'Continue to Activation'
+      : 'Run Connector Test',
+    4: activationResult
       ? 'Connector Activated'
-      : 'Activate Connector'
-  })()
+      : 'Activate Connector',
+  }[currentStep]
 
   return (
     <div className="setu-dashboard-page">
@@ -367,35 +451,54 @@ export default function AdminStudioPage() {
           <h1>Onboarding Studio</h1>
 
           <p>
-            Connect and configure a government system through the real
-            SETU connector lifecycle.
+            Connect and configure a government system through
+            a real, traceable interoperability workflow.
           </p>
         </div>
+
+        {connectorStatus && (
+          <span
+            className={`setu-status ${
+              connectorStatus === 'ACTIVE' ||
+              connectorStatus === 'TESTED'
+                ? 'success'
+                : 'pending'
+            }`}
+          >
+            {connectorStatus}
+          </span>
+        )}
       </div>
 
       {error && (
-        <div className="form-error" role="alert">
-          {error}
-        </div>
+        <section className="setu-content-card">
+          <p className="form-error" role="alert">
+            {error}
+          </p>
+        </section>
       )}
 
       <section className="setu-content-card">
         <div className="setu-card-heading">
           <div>
-            <h2>Live Connector Onboarding</h2>
+            <h2>Connector Onboarding</h2>
+
             <p>
-              The current finale demo path on this environment is the
-              SKL CSV connector for the Youth Enterprise journey.
+              Sample source data, generate deterministic canonical
+              mapping, validate the connector, and activate it
+              against a live journey step.
             </p>
           </div>
         </div>
 
         <div className="setu-studio-steps">
-          {steps.map((step, index) => (
+          {STEPS.map((step, index) => (
             <div
               className={`setu-studio-step ${
                 index === currentStep ? 'active' : ''
-              } ${index < currentStep ? 'completed' : ''}`}
+              } ${
+                index < currentStep ? 'completed' : ''
+              }`}
               key={step}
             >
               <span>{index + 1}</span>
@@ -410,40 +513,96 @@ export default function AdminStudioPage() {
               <h3>Select System</h3>
 
               <p className="setu-form-help">
-                SKL is the implemented live onboarding path for this
-                prototype. It uses the repository-backed skills registry.
+                Studio currently demonstrates onboarding for the
+                Skills & Employment Registry connector used by
+                the Youth Enterprise journey.
               </p>
 
               <label>
-                Government System
-                <select value="SKL" disabled>
-                  <option value="SKL">
-                    SKL — Skills &amp; Employment
-                  </option>
+                Government system
+                <select
+                  value={systemCode}
+                  onChange={(event) =>
+                    setSystemCode(event.target.value)
+                  }
+                  disabled={
+                    loadingContext ||
+                    Boolean(connectorId)
+                  }
+                >
+                  {systems
+                    .filter(
+                      (system) =>
+                        system.code ===
+                        SKL_CONFIG.system_code,
+                    )
+                    .map((system) => (
+                      <option
+                        key={system.code}
+                        value={system.code}
+                      >
+                        {system.name} ({system.code})
+                      </option>
+                    ))}
                 </select>
               </label>
 
               <div className="setu-review-box">
                 <div>
-                  <span>System Code</span>
-                  <strong>SKL</strong>
+                  <span>System</span>
+                  <strong>
+                    {selectedSystem?.name ||
+                      SKL_CONFIG.system_code}
+                  </strong>
                 </div>
 
                 <div>
-                  <span>Connector Type</span>
-                  <strong>CSV</strong>
+                  <span>Protocol</span>
+                  <strong>
+                    {selectedSystem?.protocol || 'CSV'}
+                  </strong>
                 </div>
 
                 <div>
-                  <span>Source</span>
-                  <strong>data_drop/skills_registry.csv</strong>
+                  <span>Connector</span>
+                  <strong>
+                    {SKL_CONFIG.name}
+                  </strong>
                 </div>
 
                 <div>
-                  <span>Journey</span>
-                  <strong>Youth Enterprise Support</strong>
+                  <span>Target entity</span>
+                  <strong>
+                    {SKL_CONFIG.entity}
+                  </strong>
+                </div>
+
+                <div>
+                  <span>Journey step</span>
+                  <strong>
+                    {journeyStep
+                      ? `${JOURNEY_ID} / ${STEP_ID}`
+                      : 'Loading...'}
+                  </strong>
+                </div>
+
+                <div>
+                  <span>Journey link</span>
+                  <strong>
+                    {journeyConnectorMatches
+                      ? 'Matched'
+                      : 'Not matched'}
+                  </strong>
                 </div>
               </div>
+
+              {connectorId && (
+                <div className="setu-success-message">
+                  Connector {connectorName || SKL_CONFIG.name}{' '}
+                  already exists in this onboarding session.
+                  Continue to the live source sample.
+                </div>
+              )}
             </>
           )}
 
@@ -452,47 +611,65 @@ export default function AdminStudioPage() {
               <h3>Sample Data</h3>
 
               <p className="setu-form-help">
-                The sample request uses the seeded synthetic identity
-                and reads the actual SKL CSV through the backend connector.
+                SETU will query the configured Skills Registry
+                using the demo identity and display the actual
+                source response returned by the connector.
               </p>
 
-              {sample?.fields && sample.fields.length > 0 && (
-                <div className="setu-content-card">
-                  <h3>Returned Fields</h3>
-                  <div className="setu-mapping-list">
-                    {sample.fields.map((field) => (
-                      <div key={field.path}>
-                        <strong>{field.path}</strong>
+              <div className="setu-review-box">
+                <div>
+                  <span>Mobile</span>
+                  <strong>
+                    {DEMO_IDENTITY.mobile}
+                  </strong>
+                </div>
+
+                <div>
+                  <span>Date of birth</span>
+                  <strong>
+                    {DEMO_IDENTITY.dob}
+                  </strong>
+                </div>
+
+                <div>
+                  <span>Connector</span>
+                  <strong>
+                    {connectorName || SKL_CONFIG.name}
+                  </strong>
+                </div>
+              </div>
+
+              {sample?.raw && (
+                <div className="setu-mapping-list">
+                  {Object.entries(sample.raw).map(
+                    ([key, value]) => (
+                      <div key={key}>
+                        <strong>{key}</strong>
                         <span>
-                          {formatValue(field.sample)} · {field.inferred_type}
+                          {formatValue(value)}
                         </span>
                       </div>
-                    ))}
-                  </div>
+                    ),
+                  )}
                 </div>
               )}
 
-              {connectorId && (
+              {sample?.fields?.length > 0 && (
                 <div className="setu-review-box">
                   <div>
-                    <span>Connector</span>
-                    <strong>{connectorName}</strong>
-                  </div>
-
-                  <div>
-                    <span>Connector ID</span>
-                    <strong>{connectorId}</strong>
-                  </div>
-
-                  <div>
-                    <span>Status</span>
-                    <strong>{connectorStatus || 'DRAFT'}</strong>
-                  </div>
-
-                  <div>
-                    <span>Demo identity</span>
+                    <span>Detected fields</span>
                     <strong>
-                      {DEMO_IDENTITY.mobile} · {DEMO_IDENTITY.dob}
+                      {sample.fields.length}
+                    </strong>
+                  </div>
+
+                  <div>
+                    <span>Sample duration</span>
+                    <strong>
+                      {formatValue(
+                        sample.duration_ms,
+                      )}
+                      ms
                     </strong>
                   </div>
                 </div>
@@ -505,66 +682,60 @@ export default function AdminStudioPage() {
               <h3>Suggested Mapping</h3>
 
               <p className="setu-form-help">
-                These mappings are generated by the backend mapping engine
-                against the sampled SKL source fields.
+                SETU generated this mapping deterministically
+                from the live source structure. The mapping is
+                saved before the connector can be tested.
               </p>
 
-              {!mapping && (
-                <div className="setu-review-box">
-                  <div>
-                    <span>Sample status</span>
-                    <strong>
-                      {sample ? 'Loaded' : 'Not loaded'}
-                    </strong>
-                  </div>
-
-                  <div>
-                    <span>Action</span>
-                    <strong>Generate mapping from source data</strong>
-                  </div>
-                </div>
-              )}
-
-              {sample?.raw && !mapping && (
-                <div className="setu-content-card">
-                  <h3>Live Source Record</h3>
-
+              {mapping ? (
+                <>
                   <div className="setu-mapping-list">
-                    {Object.entries(sample.raw).map(
-                      ([field, value]) => (
-                        <div key={field}>
-                          <strong>{field}</strong>
-                          <span>{formatValue(value)}</span>
+                    {Object.entries(mapping).map(
+                      ([target, specification]) => (
+                        <div key={target}>
+                          <strong>{target}</strong>
+
+                          <span>
+                            {mappingSource(
+                              specification,
+                            )}{' '}
+                            ·{' '}
+                            {mappingTransform(
+                              specification,
+                            )}
+                          </span>
                         </div>
                       ),
                     )}
                   </div>
-                </div>
-              )}
 
-              {mapping && (
-                <div className="setu-mapping-list">
-                  {mappingEntries.map(
-                    ([target, specification]) => (
-                      <div key={target}>
-                        <strong>{target}</strong>
-                        <input
-                          className="setu-input"
-                          value={mappingSource(specification)}
-                          onChange={(event) => {
-                            setMapping((current) =>
-                              updateMappingValue(
-                                current,
-                                target,
-                                event.target.value,
-                              ),
-                            )
-                          }}
-                          aria-label={`Mapping for ${target}`}
-                        />
-                      </div>
-                    ),
-                  )}
+                  <div className="setu-review-box">
+                    <div>
+                      <span>Canonical fields</span>
+                      <strong>
+                        {Object.keys(mapping).length}
+                      </strong>
+                    </div>
+
+                    <div>
+                      <span>Persistence</span>
+                      <strong>Saved to connector</strong>
+                    </div>
+
+                    <div>
+                      <span>Mode</span>
+                      <strong>Deterministic mapping</strong>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="setu-review-box">
+                  <div>
+                    <span>Mapping status</span>
+                    <strong>
+                      Waiting for generation
+                    </strong>
+                  </div>
                 </div>
               )}
             </>
@@ -575,75 +746,74 @@ export default function AdminStudioPage() {
               <h3>Test Mapping</h3>
 
               <p className="setu-form-help">
-                Save the mapping, then execute the connector against the
-                same seeded identity. The backend validates the canonical
-                record before allowing activation.
+                The saved mapping is now executed against the
+                same real source identity. SETU validates the
+                resulting canonical record before activation.
               </p>
 
               <div className="setu-review-box">
                 <div>
                   <span>Connector</span>
-                  <strong>{connectorName}</strong>
-                </div>
-
-                <div>
-                  <span>Mapped fields</span>
-                  <strong>{mappingEntries.length}</strong>
-                </div>
-
-                <div>
-                  <span>Validation state</span>
                   <strong>
-                    {testResult ? 'Passed' : 'Ready to test'}
+                    {connectorName || SKL_CONFIG.name}
+                  </strong>
+                </div>
+
+                <div>
+                  <span>Mapping fields</span>
+                  <strong>
+                    {mapping
+                      ? Object.keys(mapping).length
+                      : 0}
+                  </strong>
+                </div>
+
+                <div>
+                  <span>Source identity</span>
+                  <strong>
+                    {DEMO_IDENTITY.mobile}
                   </strong>
                 </div>
               </div>
 
               {testResult?.canonical && (
-                <div className="setu-review-box">
-                  <div>
-                    <span>Canonical trainee ID</span>
-                    <strong>
-                      {formatValue(
-                        testResult.canonical.trainee_id,
-                      )}
-                    </strong>
+                <>
+                  <div className="setu-mapping-list">
+                    {Object.entries(
+                      testResult.canonical,
+                    ).map(([key, value]) => (
+                      <div key={key}>
+                        <strong>{key}</strong>
+                        <span>
+                          {formatValue(value)}
+                        </span>
+                      </div>
+                    ))}
                   </div>
 
-                  <div>
-                    <span>Canonical name</span>
-                    <strong>
-                      {formatValue(
-                        testResult.canonical.trainee_name,
-                      )}
-                    </strong>
-                  </div>
-
-                  <div>
-                    <span>Completion status</span>
-                    <strong>
-                      {formatValue(
-                        testResult.canonical.completion_status,
-                      )}
-                    </strong>
-                  </div>
-                </div>
-              )}
-
-              {validationEntries.length > 0 && (
-                <div className="setu-mapping-list">
-                  {validationEntries.map((item, index) => (
-                    <div
-                      key={`${item.field}-${index}`}
-                    >
-                      <strong>{item.field}</strong>
-                      <span>
-                        {item.passed ? 'PASS' : 'FAIL'} ·{' '}
-                        {item.message}
-                      </span>
+                  <div className="setu-review-box">
+                    <div>
+                      <span>Validation checks</span>
+                      <strong>
+                        {Array.isArray(
+                          testResult.validation,
+                        )
+                          ? testResult.validation.length
+                          : 0}
+                      </strong>
                     </div>
-                  ))}
-                </div>
+
+                    <div>
+                      <span>Test duration</span>
+                      <strong>
+                        {formatValue(
+                          testResult.duration_ms,
+                        )}
+                        ms
+                      </strong>
+                    </div>
+                  </div>
+                </>
               )}
             </>
           )}
@@ -653,26 +823,22 @@ export default function AdminStudioPage() {
               <h3>Activate Connector</h3>
 
               <p className="setu-form-help">
-                Activation binds this tested connector to the
-                <strong> fetch_training </strong>
-                step of the active Youth Enterprise journey.
+                Activate the tested connector against the live
+                Youth Enterprise journey step.
               </p>
 
               <div className="setu-review-box">
                 <div>
-                  <span>System</span>
-                  <strong>SKL</strong>
-                </div>
-
-                <div>
                   <span>Connector</span>
-                  <strong>{connectorName}</strong>
+                  <strong>
+                    {connectorName || SKL_CONFIG.name}
+                  </strong>
                 </div>
 
                 <div>
-                  <span>Test status</span>
+                  <span>System</span>
                   <strong>
-                    {testResult ? 'PASSED' : 'NOT TESTED'}
+                    {SKL_CONFIG.system_code}
                   </strong>
                 </div>
 
@@ -682,38 +848,56 @@ export default function AdminStudioPage() {
                 </div>
 
                 <div>
-                  <span>Journey step</span>
+                  <span>Step</span>
                   <strong>{STEP_ID}</strong>
+                </div>
+
+                <div>
+                  <span>Requirement</span>
+                  <strong>
+                    TESTED → ACTIVE
+                  </strong>
                 </div>
               </div>
 
               {activationResult && (
-                <div className="setu-success-message">
-                  ✓ Connector activated successfully. The backend
-                  persisted the connector as ACTIVE and configured the
-                  journey step.
-                </div>
-              )}
-
-              {activationResult?.journey_version && (
-                <div className="setu-review-box">
-                  <div>
-                    <span>Journey version</span>
-                    <strong>
-                      {activationResult.journey_version}
-                    </strong>
+                <>
+                  <div className="setu-success-message">
+                    Connector activated successfully. The live
+                    journey step is now configured for execution.
                   </div>
 
-                  {activationResult.onboarding_seconds !==
-                    undefined && (
+                  <div className="setu-review-box">
+                    <div>
+                      <span>Connector status</span>
+                      <strong>
+                        {formatValue(
+                          activationResult
+                            ?.connector?.status,
+                        )}
+                      </strong>
+                    </div>
+
+                    <div>
+                      <span>Journey version</span>
+                      <strong>
+                        {formatValue(
+                          activationResult.journey_version,
+                        )}
+                      </strong>
+                    </div>
+
                     <div>
                       <span>Onboarding time</span>
                       <strong>
-                        {activationResult.onboarding_seconds}s
+                        {formatValue(
+                          activationResult.onboarding_seconds,
+                        )}
+                        s
                       </strong>
                     </div>
-                  )}
-                </div>
+                  </div>
+                </>
               )}
             </>
           )}
@@ -723,7 +907,10 @@ export default function AdminStudioPage() {
               className="setu-secondary-button"
               type="button"
               onClick={previousStep}
-              disabled={currentStep === 0 || loading}
+              disabled={
+                currentStep === 0 ||
+                loading
+              }
             >
               Back
             </button>
@@ -731,14 +918,21 @@ export default function AdminStudioPage() {
             <button
               className="setu-primary-button"
               type="button"
-              onClick={handlePrimaryAction}
+              onClick={primaryAction}
               disabled={
                 loading ||
-                !!activationResult ||
-                (currentStep === 4 && !validationsPassed)
+                loadingContext ||
+                (currentStep === 0 &&
+                  (!selectedSystem ||
+                    !supportedSystem ||
+                    !journeyConnectorMatches)) ||
+                (currentStep === 4 &&
+                  Boolean(activationResult))
               }
             >
-              {primaryLabel}
+              {loading
+                ? 'Working...'
+                : primaryLabel}
             </button>
           </div>
         </div>
@@ -750,3 +944,5 @@ export default function AdminStudioPage() {
     </div>
   )
 }
+
+export default AdminStudioPage

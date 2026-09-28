@@ -30,7 +30,6 @@ export function getAccessToken() {
   return localStorage.getItem(TOKEN_KEY)
 }
 
-
 export function getAuthToken() {
   return localStorage.getItem(TOKEN_KEY)
 }

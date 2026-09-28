@@ -75,3 +75,21 @@ Follow the hour-block table in `SETU_Engineering_Handoff.md` §17 — that's the
 ## 10. Red flags — stop and call Dev A
 
 ChatGPT adds Docker/Kafka/a new framework · a field or endpoint gets renamed · the UI shows hardcoded data · "works on my machine" · a decision made only in a chat and never written down anywhere.
+
+
+
+<!-- SETU-LIVE-TEAM:START -->
+## Current Finale-Sprint State
+
+**Updated:** 2026-09-28 19:46 IST
+
+The active implementation line is `feat/T-110-polish` at `e427bc5`.
+
+T-081, T-100b and T-111 are landed. T-110 has completed its implementation and manual visual QA pass. The remaining immediate engineering checkpoint is the T-110 final validation gate.
+
+Current acceptance evidence includes 75 backend tests passing, Ruff clean, frontend build passing, lint with 0 errors and 1 known hook-dependency warning, git diff check clean, and the S1-S5 smoke suite previously passing 5/5.
+
+The current submission line must keep one canonical implementation. The integrated Dev D frontend is preserved and polished rather than replaced. The Dev C alternate implementation remains isolated from the submission baseline. The later alternate reconstruction is a separate post-freeze workstream.
+
+No backend/API/schema changes are part of T-110/T-111. No new frontend dependency was introduced by the polish pass.
+<!-- SETU-LIVE-TEAM:END -->

@@ -1,4 +1,8 @@
-import { useEffect, useState } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useState,
+} from 'react'
 import { Link } from 'react-router-dom'
 import { apiRequest } from '../api/client.js'
 
@@ -37,7 +41,7 @@ export default function CitizenConsentPage() {
   const [accessLoadingId, setAccessLoadingId] = useState(null)
   const [accessErrors, setAccessErrors] = useState({})
 
-  async function loadConsents() {
+  const loadConsents = useCallback(async () => {
     setLoading(true)
     setError('')
 
@@ -45,15 +49,18 @@ export default function CitizenConsentPage() {
       const result = await apiRequest('/api/consents')
       setConsents(Array.isArray(result) ? result : [])
     } catch (err) {
-      setError(err.message || 'Unable to load consent records.')
+      setError(
+        err.message ||
+          'Unable to load consent records.',
+      )
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
   useEffect(() => {
-    loadConsents()
-  }, [])
+    void loadConsents()
+  }, [loadConsents])
 
   async function handleRevoke(consent) {
     const confirmed = window.confirm(
@@ -77,13 +84,18 @@ export default function CitizenConsentPage() {
 
       setConsents((current) =>
         current.map((item) =>
-          item.id === consent.id ? updated : item,
+          item.id === consent.id
+            ? updated
+            : item,
         ),
       )
 
       setExpandedConsentId(null)
     } catch (err) {
-      setError(err.message || 'Unable to revoke consent.')
+      setError(
+        err.message ||
+          'Unable to revoke consent.',
+      )
     } finally {
       setBusyConsentId(null)
     }
@@ -102,6 +114,7 @@ export default function CitizenConsentPage() {
     }
 
     setAccessLoadingId(consent.id)
+
     setAccessErrors((current) => ({
       ...current,
       [consent.id]: '',
@@ -114,13 +127,16 @@ export default function CitizenConsentPage() {
 
       setAccessLogs((current) => ({
         ...current,
-        [consent.id]: Array.isArray(result) ? result : [],
+        [consent.id]: Array.isArray(result)
+          ? result
+          : [],
       }))
     } catch (err) {
       setAccessErrors((current) => ({
         ...current,
         [consent.id]:
-          err.message || 'Unable to load access history.',
+          err.message ||
+          'Unable to load access history.',
       }))
     } finally {
       setAccessLoadingId(null)
@@ -131,38 +147,53 @@ export default function CitizenConsentPage() {
     <main>
       <header className="page-header">
         <p>Citizen Dashboard / Privacy</p>
+
         <div className="dashboard-header">
           <div>
             <h1>My Consents</h1>
+
             <p>
-              Review and manage the data-sharing permissions you have
-              granted to SETU.
+              Review and manage the data-sharing
+              permissions you have granted to SETU.
             </p>
           </div>
 
-          <Link className="consent-back-link" to="/citizen">
+          <Link
+            className="consent-back-link"
+            to="/citizen"
+          >
             Back to dashboard
           </Link>
         </div>
       </header>
 
       {error && (
-        <p className="form-error" role="alert">
+        <p
+          className="form-error"
+          role="alert"
+        >
           {error}
         </p>
       )}
 
       {loading ? (
         <section className="card consent-empty-state">
-          <p>Loading your consent records…</p>
+          <p aria-live="polite">
+            Loading your consent records…
+          </p>
         </section>
       ) : consents.length === 0 ? (
         <section className="card consent-empty-state">
           <h2>No consent records</h2>
+
           <p>
-            You have not granted any data-sharing permissions yet.
+            You have not granted any data-sharing
+            permissions yet.
           </p>
-          <Link to="/citizen">Browse available services</Link>
+
+          <Link to="/citizen">
+            Browse available services
+          </Link>
         </section>
       ) : (
         <section
@@ -170,10 +201,17 @@ export default function CitizenConsentPage() {
           aria-label="Consent records"
         >
           {consents.map((consent) => {
-            const logs = accessLogs[consent.id] || []
-            const accessError = accessErrors[consent.id]
-            const isExpanded = expandedConsentId === consent.id
-            const isActive = consent.status === 'ACTIVE'
+            const logs =
+              accessLogs[consent.id] || []
+
+            const accessError =
+              accessErrors[consent.id]
+
+            const isExpanded =
+              expandedConsentId === consent.id
+
+            const isActive =
+              consent.status === 'ACTIVE'
 
             return (
               <article
@@ -183,9 +221,14 @@ export default function CitizenConsentPage() {
                 <div className="consent-card-header">
                   <div>
                     <p className="consent-eyebrow">
-                      {labelize(consent.journey_id)}
+                      {labelize(
+                        consent.journey_id,
+                      )}
                     </p>
-                    <h2>{labelize(consent.purpose)}</h2>
+
+                    <h2>
+                      {labelize(consent.purpose)}
+                    </h2>
                   </div>
 
                   <span
@@ -200,23 +243,32 @@ export default function CitizenConsentPage() {
                 <div className="consent-meta-grid">
                   <div>
                     <span>Granted</span>
+
                     <strong>
-                      {formatDate(consent.granted_at)}
+                      {formatDate(
+                        consent.granted_at,
+                      )}
                     </strong>
                   </div>
 
                   <div>
                     <span>Expires</span>
+
                     <strong>
-                      {formatDate(consent.expires_at)}
+                      {formatDate(
+                        consent.expires_at,
+                      )}
                     </strong>
                   </div>
 
                   {consent.revoked_at && (
                     <div>
                       <span>Revoked</span>
+
                       <strong>
-                        {formatDate(consent.revoked_at)}
+                        {formatDate(
+                          consent.revoked_at,
+                        )}
                       </strong>
                     </div>
                   )}
@@ -224,24 +276,32 @@ export default function CitizenConsentPage() {
 
                 <div className="consent-section">
                   <h3>Source systems</h3>
+
                   <div className="consent-chip-list">
-                    {consent.source_systems.map((system) => (
-                      <span
-                        className="consent-chip"
-                        key={system}
-                      >
-                        {system}
-                      </span>
-                    ))}
+                    {consent.source_systems.map(
+                      (system) => (
+                        <span
+                          className="consent-chip"
+                          key={system}
+                        >
+                          {system}
+                        </span>
+                      ),
+                    )}
                   </div>
                 </div>
 
                 <div className="consent-section">
                   <h3>Permitted fields</h3>
+
                   <div className="consent-field-list">
-                    {consent.fields.map((field) => (
-                      <span key={field}>{labelize(field)}</span>
-                    ))}
+                    {consent.fields.map(
+                      (field) => (
+                        <span key={field}>
+                          {labelize(field)}
+                        </span>
+                      ),
+                    )}
                   </div>
                 </div>
 
@@ -249,10 +309,16 @@ export default function CitizenConsentPage() {
                   <button
                     className="secondary-button"
                     type="button"
-                    onClick={() => toggleAccessLog(consent)}
-                    disabled={accessLoadingId === consent.id}
+                    onClick={() =>
+                      toggleAccessLog(consent)
+                    }
+                    disabled={
+                      accessLoadingId ===
+                      consent.id
+                    }
                   >
-                    {accessLoadingId === consent.id
+                    {accessLoadingId ===
+                    consent.id
                       ? 'Loading access history…'
                       : isExpanded
                         ? 'Hide access history'
@@ -263,10 +329,16 @@ export default function CitizenConsentPage() {
                     <button
                       className="danger-button"
                       type="button"
-                      onClick={() => handleRevoke(consent)}
-                      disabled={busyConsentId === consent.id}
+                      onClick={() =>
+                        handleRevoke(consent)
+                      }
+                      disabled={
+                        busyConsentId ===
+                        consent.id
+                      }
                     >
-                      {busyConsentId === consent.id
+                      {busyConsentId ===
+                      consent.id
                         ? 'Revoking…'
                         : 'Revoke consent'}
                     </button>
@@ -277,21 +349,29 @@ export default function CitizenConsentPage() {
                   <div className="consent-access-panel">
                     <div>
                       <h3>Access history</h3>
+
                       <p>
-                        Records of SETU accessing data for this
-                        consent purpose.
+                        Records of SETU accessing
+                        data for this consent purpose.
                       </p>
                     </div>
 
                     {accessError && (
-                      <p className="form-error" role="alert">
+                      <p
+                        className="form-error"
+                        role="alert"
+                      >
                         {accessError}
                       </p>
                     )}
 
-                    {!accessError && logs.length === 0 && (
-                      <p>No access has been recorded yet.</p>
-                    )}
+                    {!accessError &&
+                      logs.length === 0 && (
+                        <p>
+                          No access has been
+                          recorded yet.
+                        </p>
+                      )}
 
                     {logs.length > 0 && (
                       <div className="access-log-list">
@@ -304,6 +384,7 @@ export default function CitizenConsentPage() {
                               <strong>
                                 {log.system_code}
                               </strong>
+
                               <span>
                                 {log.outcome}
                               </span>
@@ -315,7 +396,7 @@ export default function CitizenConsentPage() {
 
                             <p>
                               Fields:{' '}
-                              {log.fields.length > 0
+                              {log.fields?.length
                                 ? log.fields
                                     .map(labelize)
                                     .join(', ')
@@ -324,7 +405,8 @@ export default function CitizenConsentPage() {
 
                             {log.application_id && (
                               <small>
-                                Application {log.application_id}
+                                Application{' '}
+                                {log.application_id}
                               </small>
                             )}
                           </article>
@@ -340,8 +422,8 @@ export default function CitizenConsentPage() {
       )}
 
       <footer className="page-footer">
-        Consent records are stored by SETU and scoped to your
-        authenticated identity.
+        Consent records are stored by SETU and
+        scoped to your authenticated identity.
       </footer>
     </main>
   )

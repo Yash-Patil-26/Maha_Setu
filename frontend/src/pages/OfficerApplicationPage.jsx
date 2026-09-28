@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { apiRequest } from '../api/client.js'
 
@@ -7,87 +7,163 @@ function OfficerApplicationPage() {
   const navigate = useNavigate()
 
   const [application, setApplication] = useState(null)
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [busy, setBusy] = useState(false)
+  const [actionLoading, setActionLoading] = useState(false)
+  const [actionError, setActionError] = useState('')
 
-  async function load() {
-    try {
-      const result = await apiRequest(
-        `/api/applications/${id}`,
-      )
+  const applyApplicationData = useCallback((data) => {
+    setApplication({
+      ...data,
+      name: `Citizen ${data.user_id}`,
+      scheme: data.journey_id,
+      submitted: new Date(data.created_at).toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+      }),
+    })
+  }, [])
 
-      setApplication(result)
-      setError('')
-    } catch (err) {
-      setError(err.message)
-    }
-  }
-
-  useEffect(() => {
-    // The load function performs asynchronous API synchronization.
-    // Keep the initial invocation outside the synchronous effect body.
-    window.setTimeout(() => {
-      void load();
-    }, 0)
-
-    const timer = window.setInterval(
-      load,
-      3000,
-    )
-
-    return () =>
-      window.clearInterval(timer)
+  const fetchApplication = useCallback(async () => {
+    const data = await apiRequest(`/api/applications/${id}`)
+    return data
   }, [id])
 
-  async function retry() {
-    setBusy(true)
-
+  const loadApplication = useCallback(async () => {
     try {
-      await apiRequest(
-        `/api/applications/${id}/retry`,
-        {
-          method: 'POST',
-        },
-      )
+      setLoading(true)
+      setError('')
 
-      await load()
+      const data = await fetchApplication()
+      applyApplicationData(data)
     } catch (err) {
-      setError(err.message)
+      setError(err.message || 'Failed to load application')
     } finally {
-      setBusy(false)
+      setLoading(false)
     }
-  }
+  }, [applyApplicationData, fetchApplication])
 
-  async function openBss() {
-    setBusy(true)
+  useEffect(() => {
+    let cancelled = false
 
+    fetchApplication()
+      .then((data) => {
+        if (cancelled) return
+        applyApplicationData(data)
+      })
+      .catch((err) => {
+        if (cancelled) return
+        setError(err.message || 'Failed to load application')
+      })
+      .finally(() => {
+        if (cancelled) return
+        setLoading(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [applyApplicationData, fetchApplication])
+
+  async function handleOpenBss() {
     try {
-      const result = await apiRequest(
-        '/api/auth/sso-token',
-        {
-          method: 'POST',
-          body: JSON.stringify({
-            audience: 'bss',
-          }),
-        },
+      setActionLoading(true)
+      setActionError('')
+
+      const result = await apiRequest('/api/auth/sso-token', {
+        method: 'POST',
+        body: JSON.stringify({
+          audience: 'bss',
+        }),
+      })
+
+      if (!result?.url) {
+        throw new Error('BSS SSO URL was not returned by SETU.')
+      }
+
+      const popup = window.open(
+        result.url,
+        '_blank',
+        'noopener,noreferrer',
       )
 
-      window.location.href = result.url
+      if (!popup) {
+        window.location.assign(result.url)
+      }
     } catch (err) {
-      setError(err.message)
-      setBusy(false)
+      setActionError(
+        err.message || 'Unable to open BSS through SETU SSO',
+      )
+    } finally {
+      setActionLoading(false)
     }
   }
 
-  if (!application) {
+  async function handleRetry() {
+    try {
+      setActionLoading(true)
+      setActionError('')
+
+      await apiRequest(`/api/applications/${id}/retry`, {
+        method: 'POST',
+      })
+
+      await loadApplication()
+    } catch (err) {
+      setActionError(
+        err.message || 'Failed to retry application',
+      )
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  if (loading) {
     return (
-      <main>
-        <p>
-          {error || 'Loading application…'}
-        </p>
+      <main className="setu-dashboard-page">
+        <div className="setu-page-heading">
+          <h1>Loading Application...</h1>
+          <p>Fetching application details from MahaSetu.</p>
+        </div>
       </main>
     )
   }
+
+  if (error || !application) {
+    return (
+      <main className="setu-dashboard-page">
+        <div className="setu-page-heading">
+          <h1>Application Not Found</h1>
+          <p>{error || 'Application details are unavailable.'}</p>
+
+          <button
+            className="button button-secondary"
+            type="button"
+            onClick={() => navigate('/officer')}
+          >
+            Back to Officer Dashboard
+          </button>
+        </div>
+      </main>
+    )
+  }
+
+  const stepCount = Array.isArray(application.steps)
+    ? application.steps.length
+    : 0
+
+  const provenanceCount =
+    application.provenance &&
+    typeof application.provenance === 'object'
+      ? Object.keys(application.provenance).length
+      : 0
+
+  const externalReferenceCount =
+    application.external_refs &&
+    typeof application.external_refs === 'object'
+      ? Object.keys(application.external_refs).length
+      : 0
 
   return (
     <main className="setu-dashboard-page">
@@ -100,7 +176,8 @@ function OfficerApplicationPage() {
           <h1>Application Details</h1>
 
           <p>
-            Live data from the SETU application service.
+            Review live application state and continue through the connected
+            BSS decision workflow.
           </p>
         </div>
 
@@ -109,76 +186,205 @@ function OfficerApplicationPage() {
           type="button"
           onClick={() => navigate('/officer')}
         >
-          Back
+          ← Back to Applications
         </button>
       </div>
-
-      {error && (
-        <p className="form-error" role="alert">
-          {error}
-        </p>
-      )}
 
       <section className="setu-content-card">
         <div className="setu-application-heading">
           <div>
-            <span className="setu-label">
-              Application ID
-            </span>
-            <h2>{application.id}</h2>
+            <span className="setu-label">Application ID</span>
+            <h2>APP-{String(application.id).padStart(6, '0')}</h2>
           </div>
 
-          <span className="setu-status">
+          <span
+            className={`setu-status ${application.status
+              .toLowerCase()
+              .replaceAll(' ', '-')}`}
+          >
             {application.status}
           </span>
         </div>
       </section>
 
       <section className="setu-content-card">
-        <h2>Decision / Recovery</h2>
+        <div className="setu-section-heading">
+          <div>
+            <h2>Application Context</h2>
+            <p>
+              Live fields returned by the SETU application service.
+            </p>
+          </div>
+        </div>
 
-        <p>
-          Approval and rejection are produced by BSS
-          and returned to SETU through the signed
-          webhook. Retry is available for paused
-          applications.
-        </p>
+        <div className="setu-detail-grid">
+          <div>
+            <span>Applicant Reference</span>
+            <strong>{application.name}</strong>
+          </div>
 
-        <div className="setu-decision-actions">
-          <button
-            className="setu-approve-button"
-            type="button"
-            onClick={openBss}
-            disabled={busy}
-          >
-            Open BSS via SSO
-          </button>
+          <div>
+            <span>Journey</span>
+            <strong>{application.journey_id}</strong>
+          </div>
 
-          <button
-            className="setu-review-button"
-            type="button"
-            onClick={retry}
-            disabled={
-              busy ||
-              application.status !==
-                'PAUSED_EXCEPTION'
-            }
-          >
-            Retry paused application
-          </button>
+          <div>
+            <span>Submitted On</span>
+            <strong>{application.submitted}</strong>
+          </div>
+
+          <div>
+            <span>Current Step</span>
+            <strong>{application.current_step || 'Not available'}</strong>
+          </div>
+
+          <div>
+            <span>Journey Version</span>
+            <strong>
+              {application.journey_version ?? 'Not available'}
+            </strong>
+          </div>
+
+          <div>
+            <span>Outcome</span>
+            <strong>{application.outcome || 'Pending'}</strong>
+          </div>
+
+          <div>
+            <span>Correlation ID</span>
+            <strong>
+              {application.correlation_id || 'Not available'}
+            </strong>
+          </div>
+
+          <div>
+            <span>Master ID</span>
+            <strong>
+              {application.master_id || 'Not assigned'}
+            </strong>
+          </div>
         </div>
       </section>
 
       <section className="setu-content-card">
-        <h2>Application state</h2>
+        <div className="setu-section-heading">
+          <div>
+            <h2>Interoperability Context</h2>
+            <p>
+              Evidence of the connected processing state carried by this
+              application.
+            </p>
+          </div>
+        </div>
 
-        <pre style={{ overflowX: 'auto' }}>
-          {JSON.stringify(
-            application,
-            null,
-            2,
+        <div className="setu-detail-grid">
+          <div>
+            <span>Journey Steps</span>
+            <strong>{stepCount}</strong>
+          </div>
+
+          <div>
+            <span>Data Provenance Entries</span>
+            <strong>{provenanceCount}</strong>
+          </div>
+
+          <div>
+            <span>External References</span>
+            <strong>{externalReferenceCount}</strong>
+          </div>
+
+          <div>
+            <span>Data Source</span>
+            <strong>SETU Connected Systems</strong>
+          </div>
+        </div>
+      </section>
+
+      <section className="setu-content-card">
+        <div className="setu-section-heading">
+          <div>
+            <h2>Connected Decision Workflow</h2>
+            <p>
+              The officer review remains in BSS while SETU coordinates the
+              application state and receives the signed result.
+            </p>
+          </div>
+        </div>
+
+        <div className="setu-verification-list">
+          <div>
+            <span className="setu-check">1</span>
+            <div>
+              <strong>SETU SSO Handoff</strong>
+              <small>
+                SETU issues the authenticated BSS access URL.
+              </small>
+            </div>
+          </div>
+
+          <div>
+            <span className="setu-check">2</span>
+            <div>
+              <strong>BSS Decision</strong>
+              <small>
+                The connected officer system performs the decision action.
+              </small>
+            </div>
+          </div>
+
+          <div>
+            <span className="setu-check">3</span>
+            <div>
+              <strong>Signed Webhook Return</strong>
+              <small>
+                BSS sends the signed decision back to SETU for state update.
+              </small>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="setu-content-card">
+        <div className="setu-section-heading">
+          <div>
+            <h2>Officer Decision</h2>
+            <p>
+              Complete the decision in BSS through the SETU SSO handoff.
+            </p>
+          </div>
+        </div>
+
+        {actionError && (
+          <div className="setu-error-message">
+            {actionError}
+          </div>
+        )}
+
+        <div className="setu-decision-actions">
+          {application.status === 'PAUSED_EXCEPTION' ? (
+            <button
+              className="setu-review-button"
+              type="button"
+              onClick={handleRetry}
+              disabled={actionLoading}
+            >
+              {actionLoading
+                ? 'Retrying journey…'
+                : 'Retry Processing'}
+            </button>
+          ) : (
+            <button
+              className="setu-approve-button"
+              type="button"
+              onClick={handleOpenBss}
+              disabled={actionLoading}
+            >
+              {actionLoading
+                ? 'Opening BSS…'
+                : 'Open BSS via SETU SSO'}
+            </button>
           )}
-        </pre>
+        </div>
       </section>
 
       <footer className="page-footer">

@@ -152,3 +152,10 @@ Journey consent steps: J1 `["identity_lookup","income","caste_category","enrolme
     "institution_name": null, "course_code": "BTECH-CSE", "year_of_study": 3, "status": "ACTIVE", "last_updated": "2026-07-10"}
 }
 ```
+
+
+
+<!-- SETU-CONTRACT-STATUS:START -->
+### Current implementation status note
+T-081, T-100b, T-110 and T-111 did not require a canonical contract/schema revision. The existing API and canonical data definitions remain the source of truth for the submission line.
+<!-- SETU-CONTRACT-STATUS:END -->

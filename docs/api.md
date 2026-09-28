@@ -91,7 +91,9 @@ Enums: application `status` = `CREATED, IN_PROGRESS, BLOCKED_CONSENT, PAUSED_EXC
 | POST | `/api/auth/sso-token` | officer, admin | `{audience:"bss"}` | 200 `{url,expires_in}` (`{BSS_BASE_URL}/sso?token=…`) | 400, 403 |
 | POST | `/api/consents` | citizen | `{purpose,journey_id}` (purpose must equal the journey's consent purpose) | 201 Consent (`expires_at` = now + `CONSENT_TTL_DAYS`, default 30) | 400, 404 |
 | POST | `/api/consents/{id}/revoke` | citizen (owner) | — | 200 Consent (`REVOKED`); emits event `consent.revoked` | 403, 404 |
-| POST | `/api/applications` | citizen | `{journey_id}` | 202 `{application_id,status:"CREATED",correlation_id}` | 403 `CONSENT_REQUIRED`, 404 |
+| POST | `/api/applications` | citizen | `{journey_id}` | 202 `{application_id,status:"SUBMITTED",correlation_id}` | 403 `CONSENT_REQUIRED`, 404 |
+
+> Implementation note: a new application is initially persisted with internal status `CREATED`; the journey engine executes synchronously and the successful create response reports the resulting application status, `SUBMITTED`.
 | POST | `/api/applications/{id}/retry` | officer, admin; **citizen (own) only when `BLOCKED_CONSENT` (new)** | — | 202 `{application_id,status:"IN_PROGRESS"}` | 403, 409 `STATE_CONFLICT` |
 | POST | `/api/applications/{id}/grievances` | citizen (owner) | `{text}` 1–500 chars | 201 Grievance | 400, 403 |
 | POST | `/api/conflicts/{id}/resolve` | officer | exactly one of `{chosen_source_system}` or `{value}` | 200 Conflict (`RESOLVED`); updates golden record + provenance; resumes the application | 400, 409 |
@@ -156,3 +158,10 @@ Connector query: `SELECT STUD_ID, STUD_NM, DOB_STR, INST_CD, COURSE_CD, YR_OF_ST
 File `data_drop/skills_registry.csv`, UTF-8 with BOM (`utf-8-sig`), comma-delimited, header row:
 `TRAINEE_ID,TRAINEE_NAME,DOB,MOBILE,COURSE_CODE,COURSE_NAME,COMPLETION,CERT_NO,CERT_DATE`
 Example row: `SKL-2023-8841,PAWAR SURESH A,12-11-2002,9822012345,ELEC-101,Electrical Technician,Y,SKL-CERT-55102,20-06-2026`. `DOB` and `CERT_DATE` are `DD-MM-YYYY`; `COMPLETION` is `Y`/`N`. **No connector exists for SKL at start.**
+
+
+
+<!-- SETU-CONTRACT-STATUS:START -->
+### Current implementation status note
+T-081, T-100b, T-110 and T-111 did not require a canonical contract/schema revision. The existing API and canonical data definitions remain the source of truth for the submission line.
+<!-- SETU-CONTRACT-STATUS:END -->

@@ -9,7 +9,10 @@ export async function apiRequest(path, options = {}) {
   const headers = new Headers(options.headers || {})
   headers.set('Accept', 'application/json')
 
-  if (options.body !== undefined && !headers.has('Content-Type')) {
+  if (
+    options.body !== undefined &&
+    !headers.has('Content-Type')
+  ) {
     headers.set('Content-Type', 'application/json')
   }
 
@@ -22,11 +25,13 @@ export async function apiRequest(path, options = {}) {
     headers,
   })
 
-  const contentType = response.headers.get('content-type') || ''
+  const contentType =
+    response.headers.get('content-type') || ''
 
-  const payload = contentType.includes('application/json')
-    ? await response.json()
-    : await response.text()
+  const payload =
+    contentType.includes('application/json')
+      ? await response.json()
+      : await response.text()
 
   if (!response.ok) {
     const message =

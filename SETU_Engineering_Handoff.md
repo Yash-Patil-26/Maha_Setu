@@ -252,3 +252,34 @@ Formal unit tests are **optional** for this MVP — skip them unless a specific 
 ## 24. After this drive — resume note
 
 Keep it light: a clean README (setup + a 20-second GIF of S1 running), the repo itself, and 2–3 lines describing what you built and your role — e.g. "Built the connector/mapping engine and the consent-enforcement layer for a government-interoperability prototype (FastAPI, React, SQLite); designed to onboard a new legacy data source without writing code." That's a genuine, defensible line for a BTech CSE resume. Don't build a separate portfolio deliverable for this — the working repo and the demo video already are the portfolio piece.
+
+<!-- SETU-LIVE-IMPLEMENTATION-STATE:START -->
+## Current Implementation State
+
+**Updated:** 2026-09-28 19:47 IST
+
+The current implementation line is `feat/T-110-polish` at `e427bc5`.
+
+### Landed implementation
+- T-081: live Admin Onboarding Studio flow for SKL CSV connector.
+- T-100b: Studio onboarding included in end-to-end smoke coverage.
+- T-111: Admin Dashboard, Access Log and Journeys wired to live backend data.
+- T-110: live Citizen application data, unified SETU visual treatment, shared status/source semantics, loading/empty/error states, bilingual navigation and primary actions, standardized footer, and removal of active demo-path fixture/placeholder usage.
+
+### Current validation evidence
+- Backend pytest: 75 passed.
+- Ruff: clean.
+- Frontend lint: 0 errors, 1 known `OfficerApplicationPage.jsx` hook-dependency warning.
+- Frontend build: passed.
+- `git diff --check`: passed.
+- S1-S5 smoke: previously 5/5 PASS.
+- Manual visual QA: completed at 1366x768 and 1920x1080.
+- Local QA services were verified on HUB 8000, REV 8001, BSS 8002 and frontend 5173.
+
+### Release state
+T-110 Step 8 final validation remains the immediate verification gate. The submission implementation must not be considered frozen until that gate passes.
+
+The current frontend preserves the previously integrated Dev D work. The alternate Dev C architecture remains isolated from the submission line. Any alternate reconstruction is a separate post-freeze workstream.
+
+T-110/T-111 introduced no backend schema/API behavior changes and no new frontend dependencies.
+<!-- SETU-LIVE-IMPLEMENTATION-STATE:END -->

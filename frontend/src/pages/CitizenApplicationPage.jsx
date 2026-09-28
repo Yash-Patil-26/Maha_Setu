@@ -17,6 +17,7 @@ function normalizeApplication(raw) {
       fields_autofilled: 0,
       citizen_typed: 0,
       documents_not_uploaded: 0,
+      systems_queried: 0,
     },
   }
 }
@@ -38,19 +39,20 @@ function CitizenApplicationPage() {
         )
 
         if (active) {
-          setApplication(
-            normalizeApplication(result),
-          )
+          setApplication(normalizeApplication(result))
           setError('')
         }
       } catch (err) {
         if (active) {
-          setError(err.message)
+          setError(
+            err.message ||
+              'Unable to load application.',
+          )
         }
       }
     }
 
-    load()
+    void load()
 
     timer = window.setInterval(load, 3000)
 
@@ -63,9 +65,18 @@ function CitizenApplicationPage() {
   if (error) {
     return (
       <main>
+        <header className="page-header">
+          <p>Citizen Dashboard / Applications</p>
+          <h1>Application unavailable</h1>
+        </header>
+
         <p className="form-error" role="alert">
           {error}
         </p>
+
+        <a className="button button-secondary" href="/citizen">
+          Back to dashboard
+        </a>
       </main>
     )
   }
@@ -73,7 +84,19 @@ function CitizenApplicationPage() {
   if (!application) {
     return (
       <main>
-        <p>Loading application…</p>
+        <header className="page-header">
+          <p>Citizen Dashboard / Applications</p>
+          <h1>Loading application…</h1>
+          <p>
+            SETU is retrieving the latest application state.
+          </p>
+        </header>
+
+        <section className="card">
+          <p aria-live="polite">
+            Please wait while the application journey is loaded.
+          </p>
+        </section>
       </main>
     )
   }
@@ -95,24 +118,33 @@ function CitizenApplicationPage() {
       </header>
 
       <section className="card application-summary">
-        <span className="status-badge">
-          {application.status}
-        </span>
+        <div>
+          <span className="status-badge">
+            {application.status}
+          </span>
 
-        <p className="application-id">
-          Correlation: {application.correlation_id}
-        </p>
+          <h2>Application ID</h2>
 
-        <p>
-          Current step:{' '}
-          {application.current_step || '—'}
-        </p>
-
-        {application.outcome && (
-          <p>
-            Outcome: {application.outcome}
+          <p className="application-id">
+            {application.id}
           </p>
-        )}
+
+          <p>
+            Correlation:{' '}
+            {application.correlation_id || '—'}
+          </p>
+
+          <p>
+            Current step:{' '}
+            {application.current_step || '—'}
+          </p>
+
+          {application.outcome && (
+            <p>
+              Outcome: {application.outcome}
+            </p>
+          )}
+        </div>
       </section>
 
       <section className="card">
