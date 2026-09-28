@@ -3,11 +3,13 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from .api.access_log import router as access_log_router
 from .api.applications import router as applications_router
 from .api.audit import router as audit_router
 from .api.auth import router as auth_router
 from .api.connectors import router as connectors_router
 from .api.consents import router as consents_router
+from .api.journeys import router as journeys_router
 from .api.metrics import router as metrics_router
 from .api.systems import router as systems_router
 from .api.webhook import router as webhook_router
@@ -48,6 +50,7 @@ def api_health() -> dict[str, str]:
     return {"status": "ok"}
 
 
+app.include_router(access_log_router)
 app.include_router(applications_router)
 app.include_router(audit_router)
 app.include_router(auth_router)
@@ -55,5 +58,6 @@ app.include_router(consents_router)
 app.include_router(connectors_router)
 app.include_router(webhook_router)
 
+app.include_router(journeys_router)
 app.include_router(metrics_router)
 app.include_router(systems_router)

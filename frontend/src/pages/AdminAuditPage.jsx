@@ -12,77 +12,53 @@ function AdminAuditPage() {
     setError('')
 
     try {
-      const result = await apiRequest('/api/admin/audit')
-      setLogs(Array.isArray(result) ? result : [])
+      const result = await apiRequest(
+        '/api/audit?limit=200&offset=0',
+      )
+      setLogs(
+        Array.isArray(result?.items)
+          ? result.items
+          : [],
+      )
     } catch (err) {
-      setError(err.message || 'Failed to load audit logs')
+      setError(err.message || 'Failed to load access logs')
     } finally {
       setLoading(false)
     }
   }
 
   useEffect(() => {
-    let active = true
-
-    apiRequest('/api/admin/audit')
-      .then((result) => {
-        if (active) {
-          setLogs(Array.isArray(result) ? result : [])
-        }
-      })
-      .catch((err) => {
-        if (active) {
-          setError(err.message || 'Failed to load audit logs')
-        }
-      })
-      .finally(() => {
-        if (active) {
-          setLoading(false)
-        }
-      })
-
-    return () => {
-      active = false
-    }
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadLogs()
   }, [])
 
   const filteredLogs =
     filter === 'All'
       ? logs
-      : logs.filter((log) => log.role === filter)
+      : logs.filter((log) => log.outcome === filter)
 
-  const totalEvents = logs.length
-
-  const successfulEvents = logs.filter(
-    (log) =>
-      log.status === 'Success' ||
-      log.status === 'Completed',
+  const allowed = logs.filter(
+    (log) => log.outcome === 'ALLOWED',
   ).length
 
-  const systemEvents = logs.filter(
-    (log) =>
-      log.role === 'System' ||
-      log.action.startsWith('System '),
+  const denied = logs.filter(
+    (log) => log.outcome === 'DENIED',
   ).length
 
-  const alerts = logs.filter(
-    (log) =>
-      log.status !== 'Success' &&
-      log.status !== 'Completed',
-  ).length
+  const systems = new Set(
+    logs.map((log) => log.system_code),
+  ).size
 
   return (
-    <div className="setu-dashboard-page">
+    <main className="setu-dashboard-page">
       <div className="setu-page-heading">
         <div>
           <span className="setu-breadcrumb">
             Home / Admin / Access Log
           </span>
-
           <h1>Access Log</h1>
-
           <p>
-            Monitor user activity, system access and data operations.
+            Review consent-based access to source-system data.
           </p>
         </div>
 
@@ -96,29 +72,35 @@ function AdminAuditPage() {
         </button>
       </div>
 
+      {error && (
+        <div className="form-error" role="alert">
+          {error}
+        </div>
+      )}
+
       <section className="setu-stat-grid">
         <article className="setu-stat-card">
-          <span>Total Events</span>
-          <strong>{totalEvents}</strong>
-          <small>Loaded audit events</small>
+          <span>Total Accesses</span>
+          <strong>{loading ? '...' : logs.length}</strong>
+          <small>Loaded access-log rows</small>
         </article>
 
         <article className="setu-stat-card">
-          <span>Successful</span>
-          <strong>{successfulEvents}</strong>
-          <small>Completed operations</small>
+          <span>Allowed</span>
+          <strong>{loading ? '...' : allowed}</strong>
+          <small>Successful consent checks</small>
         </article>
 
         <article className="setu-stat-card">
-          <span>System Events</span>
-          <strong>{systemEvents}</strong>
-          <small>Automated/system operations</small>
+          <span>Denied</span>
+          <strong>{loading ? '...' : denied}</strong>
+          <small>Blocked access attempts</small>
         </article>
 
         <article className="setu-stat-card">
-          <span>Alerts</span>
-          <strong>{alerts}</strong>
-          <small>Requires review</small>
+          <span>Source Systems</span>
+          <strong>{loading ? '...' : systems}</strong>
+          <small>Systems represented</small>
         </article>
       </section>
 
@@ -126,7 +108,9 @@ function AdminAuditPage() {
         <div className="setu-card-heading">
           <div>
             <h2>Activity Log</h2>
-            <p>Recent activity across the MahaSetu platform.</p>
+            <p>
+              Every row represents an actual data-access decision.
+            </p>
           </div>
 
           <select
@@ -134,61 +118,59 @@ function AdminAuditPage() {
             value={filter}
             onChange={(event) => setFilter(event.target.value)}
           >
-            <option value="All">All Roles</option>
-            <option value="Administrator">Administrator</option>
-            <option value="Government Official">
-              Government Official
-            </option>
-            <option value="Recruiter">Recruiter</option>
-            <option value="Citizen">Citizen</option>
-            <option value="System">System</option>
+            <option value="All">All Outcomes</option>
+            <option value="ALLOWED">Allowed</option>
+            <option value="DENIED">Denied</option>
           </select>
         </div>
-
-        {error && (
-          <div className="setu-error-message">
-            {error}
-          </div>
-        )}
 
         <div className="setu-table-wrap">
           <table className="setu-table">
             <thead>
               <tr>
-                <th>User</th>
-                <th>Role</th>
-                <th>Action</th>
-                <th>Resource</th>
-                <th>Status</th>
                 <th>Time</th>
+                <th>System</th>
+                <th>Purpose</th>
+                <th>Fields</th>
+                <th>Application</th>
+                <th>Outcome</th>
               </tr>
             </thead>
 
             <tbody>
-              {!loading && filteredLogs.length === 0 ? (
+              {loading ? (
+                <tr>
+                  <td colSpan="6">Loading access logs...</td>
+                </tr>
+              ) : filteredLogs.length === 0 ? (
                 <tr>
                   <td colSpan="6">
-                    No audit events found.
+                    No access-log entries found.
                   </td>
                 </tr>
               ) : (
                 filteredLogs.map((log) => (
                   <tr key={log.id}>
+                    <td>{log.at}</td>
                     <td>
-                      <strong>{log.user}</strong>
+                      <strong>{log.system_code}</strong>
                     </td>
-
-                    <td>{log.role}</td>
-                    <td>{log.action}</td>
-                    <td>{log.resource}</td>
-
+                    <td>{log.purpose}</td>
                     <td>
-                      <span className="setu-status success">
-                        {log.status}
+                      {(log.fields || []).join(', ')}
+                    </td>
+                    <td>{log.application_id ?? '—'}</td>
+                    <td>
+                      <span
+                        className={`setu-status ${
+                          log.outcome === 'ALLOWED'
+                            ? 'success'
+                            : 'pending'
+                        }`}
+                      >
+                        {log.outcome}
                       </span>
                     </td>
-
-                    <td>{log.time}</td>
                   </tr>
                 ))
               )}
@@ -198,9 +180,9 @@ function AdminAuditPage() {
       </section>
 
       <footer className="setu-page-footer">
-        Live audit data — SETU prototype
+        Live access data — SETU prototype
       </footer>
-    </div>
+    </main>
   )
 }
 

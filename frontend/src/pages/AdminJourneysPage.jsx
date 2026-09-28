@@ -1,122 +1,96 @@
-import { useState } from 'react'
-
-const initialJourneys = [
-  {
-    id: 'JRN-001',
-    name: 'Income Certificate',
-    department: 'Revenue Department',
-    steps: 5,
-    applications: 124,
-    status: 'Active',
-  },
-  {
-    id: 'JRN-002',
-    name: 'Scholarship Application',
-    department: 'Education Department',
-    steps: 6,
-    applications: 86,
-    status: 'Active',
-  },
-  {
-    id: 'JRN-003',
-    name: 'Skill Training Registration',
-    department: 'Skills & Employment',
-    steps: 4,
-    applications: 52,
-    status: 'Active',
-  },
-  {
-    id: 'JRN-004',
-    name: 'Benefit Scheme Enrollment',
-    department: 'Benefit Scheme System',
-    steps: 7,
-    applications: 31,
-    status: 'Draft',
-  },
-]
+import { useEffect, useState } from 'react'
+import { apiRequest } from '../api/client.js'
 
 function AdminJourneysPage() {
-  const [journeys, setJourneys] = useState(initialJourneys)
+  const [journeys, setJourneys] = useState([])
   const [selectedJourney, setSelectedJourney] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
-  function createJourney() {
-    const newJourney = {
-      id: `JRN-00${journeys.length + 1}`,
-      name: 'New Citizen Service',
-      department: 'New Department',
-      steps: 1,
-      applications: 0,
-      status: 'Draft',
+  async function loadJourneys() {
+    setLoading(true)
+    setError('')
+
+    try {
+      const result = await apiRequest('/api/journeys')
+      setJourneys(Array.isArray(result) ? result : [])
+    } catch (err) {
+      setError(err.message || 'Failed to load journeys')
+    } finally {
+      setLoading(false)
     }
-
-    setJourneys((current) => [...current, newJourney])
-    setSelectedJourney(newJourney)
   }
 
-  function toggleStatus(id) {
-    setJourneys((current) =>
-      current.map((journey) =>
-        journey.id === id
-          ? {
-              ...journey,
-              status: journey.status === 'Active' ? 'Draft' : 'Active',
-            }
-          : journey,
-      ),
-    )
-  }
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadJourneys()
+  }, [])
+
+  const activeCount = journeys.filter(
+    (journey) => journey.status === 'ACTIVE',
+  ).length
+
+  const configuredSteps = journeys.reduce(
+    (total, journey) =>
+      total +
+      (journey.steps || []).filter(
+        (step) => step.configured,
+      ).length,
+    0,
+  )
 
   return (
-    <div className="setu-dashboard-page">
+    <main className="setu-dashboard-page">
       <div className="setu-page-heading">
         <div>
           <span className="setu-breadcrumb">
             Home / Admin / Journey Management
           </span>
-
           <h1>Journey Management</h1>
-
           <p>
-            Configure citizen service journeys and their workflow steps.
+            Review live citizen service journeys and connector
+            configuration.
           </p>
         </div>
-
-        <button
-          className="setu-primary-button"
-          type="button"
-          onClick={createJourney}
-        >
-          + Create Journey
-        </button>
       </div>
+
+      {error && (
+        <div className="form-error" role="alert">
+          {error}
+        </div>
+      )}
 
       <section className="setu-stat-grid">
         <article className="setu-stat-card">
           <span>Total Journeys</span>
-          <strong>{journeys.length}</strong>
-          <small>Configured services</small>
+          <strong>{loading ? '...' : journeys.length}</strong>
+          <small>Loaded from the journey store</small>
         </article>
 
         <article className="setu-stat-card">
           <span>Active</span>
-          <strong>
-            {journeys.filter((journey) => journey.status === 'Active').length}
-          </strong>
-          <small>Live journeys</small>
+          <strong>{loading ? '...' : activeCount}</strong>
+          <small>Active journey definitions</small>
         </article>
 
         <article className="setu-stat-card">
-          <span>Drafts</span>
+          <span>Configured Steps</span>
           <strong>
-            {journeys.filter((journey) => journey.status === 'Draft').length}
+            {loading ? '...' : configuredSteps}
           </strong>
-          <small>Under configuration</small>
+          <small>Steps ready for execution</small>
         </article>
 
         <article className="setu-stat-card">
-          <span>Applications</span>
-          <strong>293</strong>
-          <small>Across all journeys</small>
+          <span>Versions</span>
+          <strong>
+            {loading
+              ? '...'
+              : new Set(
+                  journeys.map((journey) => journey.version),
+                ).size}
+          </strong>
+          <small>Versions represented</small>
         </article>
       </section>
 
@@ -125,9 +99,19 @@ function AdminJourneysPage() {
           <div>
             <h2>Service Journeys</h2>
             <p>
-              Manage workflows connecting citizens with government services.
+              Backend-backed journey definitions and their configured
+              steps.
             </p>
           </div>
+
+          <button
+            className="setu-secondary-button"
+            type="button"
+            onClick={loadJourneys}
+            disabled={loading}
+          >
+            {loading ? 'Loading...' : '↻ Refresh'}
+          </button>
         </div>
 
         <div className="setu-table-wrap">
@@ -135,51 +119,61 @@ function AdminJourneysPage() {
             <thead>
               <tr>
                 <th>Journey</th>
-                <th>Department</th>
+                <th>Version</th>
                 <th>Steps</th>
-                <th>Applications</th>
+                <th>Configured</th>
                 <th>Status</th>
-                <th>Action</th>
+                <th>View</th>
               </tr>
             </thead>
 
             <tbody>
-              {journeys.map((journey) => (
-                <tr key={journey.id}>
-                  <td>
-                    <strong>{journey.name}</strong>
-                    <small>{journey.id}</small>
-                  </td>
-
-                  <td>{journey.department}</td>
-
-                  <td>{journey.steps}</td>
-
-                  <td>{journey.applications}</td>
-
-                  <td>
-                    <span
-                      className={`setu-status ${
-                        journey.status === 'Active'
-                          ? 'success'
-                          : 'pending'
-                      }`}
-                    >
-                      {journey.status}
-                    </span>
-                  </td>
-
-                  <td>
-                    <button
-                      className="setu-secondary-button"
-                      type="button"
-                      onClick={() => setSelectedJourney(journey)}
-                    >
-                      Configure
-                    </button>
-                  </td>
+              {loading ? (
+                <tr>
+                  <td colSpan="6">Loading journeys...</td>
                 </tr>
-              ))}
+              ) : journeys.length === 0 ? (
+                <tr>
+                  <td colSpan="6">No journeys found.</td>
+                </tr>
+              ) : (
+                journeys.map((journey) => {
+                  const steps = journey.steps || []
+                  const configured = steps.filter(
+                    (step) => step.configured,
+                  ).length
+
+                  return (
+                    <tr key={`${journey.id}-${journey.version}`}>
+                      <td>
+                        <strong>{journey.name}</strong>
+                        <small>{journey.id}</small>
+                      </td>
+                      <td>v{journey.version}</td>
+                      <td>{steps.length}</td>
+                      <td>
+                        {configured} / {steps.length}
+                      </td>
+                      <td>
+                        <span className="setu-status success">
+                          {journey.status}
+                        </span>
+                      </td>
+                      <td>
+                        <button
+                          className="setu-secondary-button"
+                          type="button"
+                          onClick={() =>
+                            setSelectedJourney(journey)
+                          }
+                        >
+                          View
+                        </button>
+                      </td>
+                    </tr>
+                  )
+                })
+              )}
             </tbody>
           </table>
         </div>
@@ -189,9 +183,10 @@ function AdminJourneysPage() {
         <section className="setu-content-card">
           <div className="setu-card-heading">
             <div>
-              <h2>Configure Journey</h2>
+              <h2>{selectedJourney.name}</h2>
               <p>
-                {selectedJourney.name} · {selectedJourney.id}
+                {selectedJourney.id} · v
+                {selectedJourney.version}
               </p>
             </div>
 
@@ -204,80 +199,39 @@ function AdminJourneysPage() {
             </button>
           </div>
 
-          <div className="setu-journey-config">
-            <div>
-              <span>Service Name</span>
-              <strong>{selectedJourney.name}</strong>
-            </div>
-
-            <div>
-              <span>Department</span>
-              <strong>{selectedJourney.department}</strong>
-            </div>
-
-            <div>
-              <span>Workflow Steps</span>
-              <strong>{selectedJourney.steps} steps</strong>
-            </div>
-
-            <div>
-              <span>Current Status</span>
-              <strong>{selectedJourney.status}</strong>
-            </div>
-          </div>
-
           <div className="setu-journey-steps">
             <h3>Workflow</h3>
 
             <div className="setu-journey-step-list">
-              {Array.from(
-                { length: selectedJourney.steps },
-                (_, index) => (
-                  <div key={index}>
+              {(selectedJourney.steps || []).map(
+                (step, index) => (
+                  <div key={step.id || index}>
                     <span>{index + 1}</span>
-                    <strong>
-                      {[
-                        'Citizen Application',
-                        'Document Verification',
-                        'Department Review',
-                        'Approval',
-                        'Service Delivery',
-                        'Final Verification',
-                        'Completion',
-                      ][index] || `Workflow Step ${index + 1}`}
-                    </strong>
+                    <strong>{step.id}</strong>
+                    <small>
+                      {step.type}
+                      {step.connector
+                        ? ` · ${step.connector}`
+                        : ''}
+                      {step.entity
+                        ? ` · ${step.entity}`
+                        : ''}
+                      {step.configured
+                        ? ' · configured'
+                        : ' · not configured'}
+                    </small>
                   </div>
                 ),
               )}
             </div>
           </div>
-
-          <div className="setu-studio-actions">
-            <button
-              className="setu-secondary-button"
-              type="button"
-              onClick={() => setSelectedJourney(null)}
-            >
-              Cancel
-            </button>
-
-            <button
-              className="setu-primary-button"
-              type="button"
-              onClick={() => toggleStatus(selectedJourney.id)}
-            >
-              {selectedJourney.status === 'Active'
-                ? 'Move to Draft'
-                : 'Activate Journey'}
-            </button>
-          </div>
         </section>
       )}
 
       <footer className="setu-page-footer">
-        Synthetic data — SETU prototype
+        Live journey definitions — SETU prototype
       </footer>
-    </div>
+    </main>
   )
 }
 

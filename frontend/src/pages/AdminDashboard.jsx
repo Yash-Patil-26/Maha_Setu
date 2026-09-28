@@ -1,34 +1,40 @@
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-
-const systems = [
-  {
-    name: 'Revenue Department',
-    code: 'REV',
-    status: 'Connected',
-    records: '12.4K',
-  },
-  {
-    name: 'Education Department',
-    code: 'EDU',
-    status: 'Connected',
-    records: '8.7K',
-  },
-  {
-    name: 'Skills & Employment',
-    code: 'SKL',
-    status: 'Connected',
-    records: '5.2K',
-  },
-  {
-    name: 'Benefit Scheme System',
-    code: 'BSS',
-    status: 'Pending',
-    records: '3.1K',
-  },
-]
+import { apiRequest } from '../api/client.js'
 
 function AdminDashboard() {
   const navigate = useNavigate()
+  const [metrics, setMetrics] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    let active = true
+
+    apiRequest('/api/metrics/summary')
+      .then((result) => {
+        if (active) {
+          setMetrics(result)
+        }
+      })
+      .catch((err) => {
+        if (active) {
+          setError(err.message || 'Failed to load dashboard metrics')
+        }
+      })
+      .finally(() => {
+        if (active) {
+          setLoading(false)
+        }
+      })
+
+    return () => {
+      active = false
+    }
+  }, [])
+
+  const onceOnly = metrics?.once_only || {}
+  const onboarding = metrics?.onboarding || {}
 
   return (
     <main className="setu-dashboard-page">
@@ -37,9 +43,7 @@ function AdminDashboard() {
           <div className="setu-breadcrumb">
             Home / Admin Dashboard
           </div>
-
           <h1>Admin Dashboard</h1>
-
           <p>
             Manage connected systems, service journeys and SETU
             interoperability.
@@ -47,73 +51,88 @@ function AdminDashboard() {
         </div>
       </div>
 
+      {error && (
+        <div className="form-error" role="alert">
+          {error}
+        </div>
+      )}
+
       <section className="setu-stat-grid">
         <article className="setu-stat-card">
-          <span>Connected Systems</span>
-          <strong>4</strong>
-          <small>Government systems</small>
+          <span>Applications</span>
+          <strong>
+            {loading ? '...' : onceOnly.applications ?? 0}
+          </strong>
+          <small>Processed applications</small>
         </article>
 
         <article className="setu-stat-card">
-          <span>Active Journeys</span>
-          <strong>8</strong>
-          <small>Configured services</small>
+          <span>Autofill Rate</span>
+          <strong>
+            {loading ? '...' : `${onceOnly.autofill_pct ?? 0}%`}
+          </strong>
+          <small>Fields populated automatically</small>
         </article>
 
         <article className="setu-stat-card">
-          <span>API Requests</span>
-          <strong>2.8K</strong>
-          <small>Last 24 hours</small>
+          <span>Onboarding Sessions</span>
+          <strong>
+            {loading ? '...' : onboarding.sessions ?? 0}
+          </strong>
+          <small>Completed connector sessions</small>
         </article>
 
         <article className="setu-stat-card">
-          <span>System Health</span>
-          <strong>98%</strong>
-          <small>All services operational</small>
+          <span>Last Onboarding</span>
+          <strong>
+            {loading ? '...' : `${onboarding.last_seconds ?? 0}s`}
+          </strong>
+          <small>Most recent connector session</small>
         </article>
       </section>
 
       <section className="setu-content-card">
         <div className="setu-section-heading">
           <div>
-            <h2>Connected Systems</h2>
+            <h2>Once-Only Metrics</h2>
             <p>
-              Monitor systems integrated with the SETU platform.
+              Live measurements from the SETU application database.
             </p>
           </div>
-
-          <button
-            className="button"
-            type="button"
-            onClick={() => navigate('/admin/systems')}
-          >
-            Manage Systems
-          </button>
         </div>
 
         <div className="setu-system-grid">
-          {systems.map((system) => (
-            <article className="setu-system-card" key={system.code}>
-              <div className="setu-system-icon">
-                {system.code}
-              </div>
+          <article className="setu-system-card">
+            <div className="setu-system-icon">FT</div>
+            <div className="setu-system-info">
+              <h3>Total Fields</h3>
+              <p>{onceOnly.fields_total ?? 0} fields observed</p>
+            </div>
+          </article>
 
-              <div className="setu-system-info">
-                <h3>{system.name}</h3>
-                <p>{system.records} records</p>
-              </div>
+          <article className="setu-system-card">
+            <div className="setu-system-icon">AF</div>
+            <div className="setu-system-info">
+              <h3>Autofilled Fields</h3>
+              <p>{onceOnly.fields_autofilled ?? 0} fields populated</p>
+            </div>
+          </article>
 
-              <span
-                className={`setu-status ${
-                  system.status === 'Connected'
-                    ? 'approved'
-                    : 'pending'
-                }`}
-              >
-                {system.status}
-              </span>
-            </article>
-          ))}
+          <article className="setu-system-card">
+            <div className="setu-system-icon">CT</div>
+            <div className="setu-system-info">
+              <h3>Citizen Typed</h3>
+              <p>{onceOnly.citizen_typed ?? 0} fields entered</p>
+            </div>
+          </article>
+
+          <article className="setu-system-card">
+            <div className="setu-system-icon">DU</div>
+            <div className="setu-system-info">
+              <h3>Documents Avoided</h3>
+              <p>{onceOnly.documents_not_uploaded ?? 0} uploads avoided</p>
+            </div>
+          </article>
         </div>
       </section>
 
@@ -128,6 +147,14 @@ function AdminDashboard() {
         <div className="setu-admin-actions">
           <button
             type="button"
+            onClick={() => navigate('/admin/systems')}
+          >
+            <strong>Manage Systems</strong>
+            <span>Review connected government systems</span>
+          </button>
+
+          <button
+            type="button"
             onClick={() => navigate('/admin/studio')}
           >
             <strong>Onboarding Studio</strong>
@@ -139,7 +166,7 @@ function AdminDashboard() {
             onClick={() => navigate('/admin/journeys')}
           >
             <strong>Journey Management</strong>
-            <span>Configure citizen service journeys</span>
+            <span>Review live citizen service journeys</span>
           </button>
 
           <button
@@ -147,13 +174,13 @@ function AdminDashboard() {
             onClick={() => navigate('/admin/audit')}
           >
             <strong>Access Log</strong>
-            <span>Review system and data access activity</span>
+            <span>Review consent-based data access</span>
           </button>
         </div>
       </section>
 
       <footer className="page-footer">
-        Synthetic data — SETU prototype
+        Live metrics — SETU prototype
       </footer>
     </main>
   )
