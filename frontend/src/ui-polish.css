@@ -1751,3 +1751,32 @@
 }
 
 /* MAHASETU-VISUAL-UNIFICATION-V1 END */
+
+/* MAHASETU-VISUAL-V1-01 */
+
+.setu-sidebar-nav {
+  flex: 0 0 auto;
+  align-content: start;
+  grid-auto-rows: max-content;
+}
+
+.setu-nav-item {
+  align-self: start;
+  justify-self: stretch;
+  box-sizing: border-box;
+  min-height: 44px;
+  height: auto;
+}
+
+@media (max-width: 900px) {
+  .setu-sidebar-nav {
+    flex: 0 0 auto;
+    align-content: normal;
+  }
+
+  .setu-nav-item {
+    height: auto;
+  }
+}
+
+/* MAHASETU-VISUAL-V1-01 END */

@@ -4,7 +4,7 @@ import { apiRequest } from '../api/client.js'
 
 const formatApplication = (application) => ({
   id: application.id,
-  name: `Citizen ${application.user_id}`,
+  name: 'Citizen applicant',
   scheme: application.journey_id,
   status: application.status,
   priority: application.status === 'CREATED' ? 'High' : 'Medium',
@@ -153,7 +153,7 @@ function OfficerDashboard() {
       </section>
 
       {/* Approval Queue */}
-      <section className="setu-content-card">
+      <section id="approval-queue" className="setu-content-card">
         <div className="setu-section-heading">
           <div>
             <h2>Approval Queue</h2>
@@ -165,7 +165,7 @@ function OfficerDashboard() {
           <button
             className="button"
             type="button"
-            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}          >
+            onClick={() => document.getElementById('approval-queue')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}          >
             View All
           </button>
         </div>

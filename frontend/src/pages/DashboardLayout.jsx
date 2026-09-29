@@ -1,8 +1,9 @@
-import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { clearAuthSession, getAuthUser } from '../auth/storage'
 
 function DashboardLayout() {
   const navigate = useNavigate()
+  const location = useLocation()
   const user = getAuthUser()
   const role = user?.role || 'citizen'
 
@@ -23,13 +24,16 @@ function DashboardLayout() {
     officer: [
       {
         label: 'Dashboard',
+        marathi: 'डॅशबोर्ड',
         icon: '⌂',
         path: '/officer',
       },
       {
         label: 'Applications',
+        marathi: 'अर्ज',
         icon: '▤',
         path: '/officer',
+        anchor: 'approval-queue',
       },
     ],
 
@@ -130,25 +134,61 @@ function DashboardLayout() {
             className="setu-sidebar-nav"
             aria-label="Primary navigation"
           >
-            {items.map((item) => (
-              <NavLink
-                key={`${item.label}-${item.path}`}
-                to={item.path}
-                end={item.path === `/${role}`}
-                className={({ isActive }) =>
-                  `setu-nav-item ${isActive ? 'active' : ''}`
-                }
-              >
-                <span
-                  className="setu-nav-icon"
-                  aria-hidden="true"
-                >
-                  {item.icon}
-                </span>
+            {items.map((item) => {
+              const labelContent = (
+                <>
+                  <span
+                    className="setu-nav-icon"
+                    aria-hidden="true"
+                  >
+                    {item.icon}
+                  </span>
 
-                <span>{item.label}</span>
-              </NavLink>
-            ))}
+                  <span className="setu-nav-label">
+                    <strong>{item.label}</strong>
+                    <small>{item.marathi}</small>
+                  </span>
+                </>
+              )
+
+              if (item.anchor) {
+                const anchorActive =
+                  (
+                    location.pathname === item.path &&
+                    location.hash === `#${item.anchor}`
+                  ) ||
+                  location.pathname.startsWith(
+                    '/officer/applications/',
+                  )
+
+                return (
+                  <a
+                    key={`${item.label}-${item.path}-${item.anchor}`}
+                    href={`${item.path}#${item.anchor}`}
+                    className={`setu-nav-item${
+                      anchorActive ? ' active' : ''
+                    }`}
+                  >
+                    {labelContent}
+                  </a>
+                )
+              }
+
+              return (
+                <NavLink
+                  key={`${item.label}-${item.path}`}
+                  to={item.path}
+                  end={item.path === `/${role}`}
+                  className={({ isActive }) =>
+                    `setu-nav-item${
+                      isActive ? ' active' : ''
+                    }`
+                  }
+                >
+                  {labelContent}
+                </NavLink>
+              )
+            })}
           </nav>
 
           <div className="setu-sidebar-footer">

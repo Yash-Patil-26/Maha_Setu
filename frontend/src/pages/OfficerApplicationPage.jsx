@@ -15,7 +15,7 @@ function OfficerApplicationPage() {
   const applyApplicationData = useCallback((data) => {
     setApplication({
       ...data,
-      name: `Citizen ${data.user_id}`,
+      name: 'Citizen applicant',
       scheme: data.journey_id,
       submitted: new Date(data.created_at).toLocaleDateString('en-GB', {
         day: '2-digit',
