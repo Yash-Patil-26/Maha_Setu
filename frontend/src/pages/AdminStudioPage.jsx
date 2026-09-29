@@ -2,11 +2,11 @@ import { useEffect, useMemo, useState } from 'react'
 import { apiRequest } from '../api/client.js'
 
 const STEPS = [
-  'Select System',
-  'Sample Data',
-  'Suggested Mapping',
-  'Test Mapping',
-  'Activate Connector',
+  'Choose System',
+  'Load Source Sample',
+  'Review Data Mapping',
+  'Test Connection',
+  'Activate Connection',
 ]
 
 const DEMO_IDENTITY = {
@@ -79,6 +79,16 @@ function mappingTransform(specification) {
   }
 
   return 'Transform'
+}
+
+function formatConnectorStatus(status) {
+  const labels = {
+    DRAFT: 'Setup in progress',
+    TESTED: 'Ready to activate',
+    ACTIVE: 'Connected',
+  }
+
+  return labels[status] || status || ''
 }
 
 function AdminStudioPage() {
@@ -465,7 +475,7 @@ function AdminStudioPage() {
                 : 'pending'
             }`}
           >
-            {connectorStatus}
+            {formatConnectorStatus(connectorStatus)}
           </span>
         )}
       </div>
@@ -481,12 +491,11 @@ function AdminStudioPage() {
       <section className="setu-content-card">
         <div className="setu-card-heading">
           <div>
-            <h2>Connector Onboarding</h2>
+            <h2>Connect a government system</h2>
 
             <p>
-              Sample source data, generate deterministic canonical
-              mapping, validate the connector, and activate it
-              against a live journey step.
+              Follow the live onboarding workflow from source sample
+              through mapping validation and activation.
             </p>
           </div>
         </div>
@@ -510,12 +519,12 @@ function AdminStudioPage() {
         <div className="setu-studio-form">
           {currentStep === 0 && (
             <>
-              <h3>Select System</h3>
+              <h3>Choose connected system</h3>
 
               <p className="setu-form-help">
-                Studio currently demonstrates onboarding for the
-                Skills & Employment Registry connector used by
-                the Youth Enterprise journey.
+                Select the government source that will provide
+                information for the Youth Enterprise Support service.
+                This demo currently onboards the Skills & Employment Registry.
               </p>
 
               <label>
@@ -549,7 +558,7 @@ function AdminStudioPage() {
 
               <div className="setu-review-box">
                 <div>
-                  <span>System</span>
+                  <span>Connected system</span>
                   <strong>
                     {selectedSystem?.name ||
                       SKL_CONFIG.system_code}
@@ -557,37 +566,35 @@ function AdminStudioPage() {
                 </div>
 
                 <div>
-                  <span>Protocol</span>
+                  <span>Source format</span>
                   <strong>
                     {selectedSystem?.protocol || 'CSV'}
                   </strong>
                 </div>
 
                 <div>
-                  <span>Connector</span>
+                  <span>Connected source</span>
                   <strong>
-                    {SKL_CONFIG.name}
+                    Skills &amp; Employment Registry
                   </strong>
                 </div>
 
                 <div>
-                  <span>Target entity</span>
+                  <span>Information type</span>
                   <strong>
-                    {SKL_CONFIG.entity}
+                    Training record
                   </strong>
                 </div>
 
                 <div>
-                  <span>Journey step</span>
+                  <span>Service journey</span>
                   <strong>
-                    {journeyStep
-                      ? `${JOURNEY_ID} / ${STEP_ID}`
-                      : 'Loading...'}
+                    Youth Enterprise Support
                   </strong>
                 </div>
 
                 <div>
-                  <span>Journey link</span>
+                  <span>Service link</span>
                   <strong>
                     {journeyConnectorMatches
                       ? 'Matched'
@@ -608,33 +615,32 @@ function AdminStudioPage() {
 
           {currentStep === 1 && (
             <>
-              <h3>Sample Data</h3>
+              <h3>Load source sample</h3>
 
               <p className="setu-form-help">
-                SETU will query the configured Skills Registry
-                using the demo identity and display the actual
-                source response returned by the connector.
+                MAHA SETU will read the real Skills &amp; Employment Registry
+                source using the demo identity and show the returned record.
               </p>
 
               <div className="setu-review-box">
                 <div>
-                  <span>Mobile</span>
+                  <span>Test identity · mobile</span>
                   <strong>
                     {DEMO_IDENTITY.mobile}
                   </strong>
                 </div>
 
                 <div>
-                  <span>Date of birth</span>
+                  <span>Test identity · date of birth</span>
                   <strong>
                     {DEMO_IDENTITY.dob}
                   </strong>
                 </div>
 
                 <div>
-                  <span>Connector</span>
+                  <span>Connected source</span>
                   <strong>
-                    {connectorName || SKL_CONFIG.name}
+                    Skills &amp; Employment Registry
                   </strong>
                 </div>
               </div>
@@ -679,12 +685,12 @@ function AdminStudioPage() {
 
           {currentStep === 2 && (
             <>
-              <h3>Suggested Mapping</h3>
+              <h3>Review data mapping</h3>
 
               <p className="setu-form-help">
-                SETU generated this mapping deterministically
-                from the live source structure. The mapping is
-                saved before the connector can be tested.
+                MAHA SETU generated this mapping from the live source
+                structure. The mapping is saved before the connection
+                can be tested.
               </p>
 
               {mapping ? (
@@ -711,7 +717,7 @@ function AdminStudioPage() {
 
                   <div className="setu-review-box">
                     <div>
-                      <span>Canonical fields</span>
+                      <span>MAHA SETU information fields</span>
                       <strong>
                         {Object.keys(mapping).length}
                       </strong>
@@ -743,24 +749,24 @@ function AdminStudioPage() {
 
           {currentStep === 3 && (
             <>
-              <h3>Test Mapping</h3>
+              <h3>Test connection</h3>
 
               <p className="setu-form-help">
-                The saved mapping is now executed against the
-                same real source identity. SETU validates the
-                resulting canonical record before activation.
+                The saved mapping is run against the same real source
+                identity. MAHA SETU validates the resulting information
+                before activation.
               </p>
 
               <div className="setu-review-box">
                 <div>
                   <span>Connector</span>
                   <strong>
-                    {connectorName || SKL_CONFIG.name}
+                    Skills &amp; Employment Registry
                   </strong>
                 </div>
 
                 <div>
-                  <span>Mapping fields</span>
+                  <span>Mapped information fields</span>
                   <strong>
                     {mapping
                       ? Object.keys(mapping).length
@@ -769,7 +775,7 @@ function AdminStudioPage() {
                 </div>
 
                 <div>
-                  <span>Source identity</span>
+                  <span>Test identity</span>
                   <strong>
                     {DEMO_IDENTITY.mobile}
                   </strong>
@@ -820,11 +826,11 @@ function AdminStudioPage() {
 
           {currentStep === 4 && (
             <>
-              <h3>Activate Connector</h3>
+              <h3>Activate connection</h3>
 
               <p className="setu-form-help">
-                Activate the tested connector against the live
-                Youth Enterprise journey step.
+                Activate the validated source so the Youth Enterprise
+                Support journey can use it during application processing.
               </p>
 
               <div className="setu-review-box">

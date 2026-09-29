@@ -1,6 +1,89 @@
 import { useEffect, useMemo, useState } from 'react'
 import { apiRequest } from '../api/client.js'
 
+const JOURNEY_STATUS_LABELS = {
+  ACTIVE: 'Active',
+  DRAFT: 'Draft',
+  INACTIVE: 'Inactive',
+}
+
+const STEP_TYPE_LABELS = {
+  fetch: 'Information check',
+  decision: 'Eligibility decision',
+  submit: 'Submit application',
+  notify: 'Notification',
+  wait: 'Waiting stage',
+}
+
+const STEP_TITLE_LABELS = {
+  fetch_income: 'Verify income',
+  fetch_enrolment: 'Verify education record',
+  fetch_training: 'Verify training record',
+  evaluate_eligibility: 'Check eligibility',
+  submit_bss: 'Submit application',
+  await_decision: 'Await decision',
+}
+
+const ENTITY_LABELS = {
+  income_certificate: 'Income information',
+  enrolment: 'Education record',
+  training_record: 'Training record',
+}
+
+const CONNECTOR_LABELS = {
+  rev_income: 'Revenue Department',
+  edu_enrolment: 'Education Department',
+  bss_scholarship: 'Benefit service',
+  skl_training: 'Skills & Employment Registry',
+}
+
+function humanizeToken(value) {
+  if (value == null || value === '') {
+    return '—'
+  }
+
+  return String(value)
+    .replace(/[_-]+/g, ' ')
+    .replace(/\b\w/g, (character) => character.toUpperCase())
+}
+
+function journeyStatusLabel(value) {
+  return (
+    JOURNEY_STATUS_LABELS[value] ||
+    humanizeToken(value)
+  )
+}
+
+function stepTypeLabel(value) {
+  return (
+    STEP_TYPE_LABELS[value] ||
+    humanizeToken(value)
+  )
+}
+
+function stepTitleLabel(value, entity) {
+  if (STEP_TITLE_LABELS[value]) {
+    return STEP_TITLE_LABELS[value]
+  }
+
+  if (entity && ENTITY_LABELS[entity]) {
+    return `Check ${ENTITY_LABELS[entity].toLowerCase()}`
+  }
+
+  return humanizeToken(value)
+}
+
+function entityLabel(value) {
+  return ENTITY_LABELS[value] || humanizeToken(value)
+}
+
+function connectorLabel(value) {
+  return (
+    CONNECTOR_LABELS[value] ||
+    humanizeToken(value)
+  )
+}
+
 function AdminJourneysPage() {
   const [journeys, setJourneys] = useState([])
   const [selectedId, setSelectedId] = useState('')
@@ -16,7 +99,12 @@ function AdminJourneysPage() {
     setJourneys(normalized)
 
     setSelectedId((current) => {
-      if (current && normalized.some((journey) => journey.id === current)) {
+      if (
+        current &&
+        normalized.some(
+          (journey) => journey.id === current,
+        )
+      ) {
         return current
       }
 
@@ -29,20 +117,32 @@ function AdminJourneysPage() {
 
     apiRequest('/api/journeys')
       .then((data) => {
-        if (cancelled) return
+        if (cancelled) {
+          return
+        }
 
-        const normalized = Array.isArray(data) ? data : []
+        const normalized = Array.isArray(data)
+          ? data
+          : []
 
         setJourneys(normalized)
         setSelectedId(normalized[0]?.id || '')
       })
       .catch((err) => {
-        if (cancelled) return
+        if (cancelled) {
+          return
+        }
 
-        setError(err.message || 'Failed to load journeys')
+        setError(
+          err.message ||
+            'Unable to load service journeys.',
+        )
       })
       .finally(() => {
-        if (cancelled) return
+        if (cancelled) {
+          return
+        }
+
         setLoading(false)
       })
 
@@ -58,7 +158,10 @@ function AdminJourneysPage() {
     try {
       await loadJourneys()
     } catch (err) {
-      setError(err.message || 'Failed to refresh journeys')
+      setError(
+        err.message ||
+          'Unable to refresh service journeys.',
+      )
     } finally {
       setRefreshing(false)
     }
@@ -67,7 +170,9 @@ function AdminJourneysPage() {
   const filteredJourneys = useMemo(() => {
     const query = search.trim().toLowerCase()
 
-    if (!query) return journeys
+    if (!query) {
+      return journeys
+    }
 
     return journeys.filter((journey) => {
       const haystack = [
@@ -93,20 +198,25 @@ function AdminJourneysPage() {
   }, [journeys, search])
 
   const selectedJourney =
-    journeys.find((journey) => journey.id === selectedId) ||
+    journeys.find(
+      (journey) => journey.id === selectedId,
+    ) ||
     filteredJourneys[0] ||
     null
 
   const activeJourneys = journeys.filter(
     (journey) =>
-      String(journey.status || '').toUpperCase() === 'ACTIVE',
+      String(journey.status || '').toUpperCase() ===
+      'ACTIVE',
   ).length
 
   const configuredSteps = journeys.reduce(
     (total, journey) =>
       total +
       (Array.isArray(journey.steps)
-        ? journey.steps.filter((step) => step.configured).length
+        ? journey.steps.filter(
+            (step) => step.configured,
+          ).length
         : 0),
     0,
   )
@@ -114,23 +224,25 @@ function AdminJourneysPage() {
   const totalSteps = journeys.reduce(
     (total, journey) =>
       total +
-      (Array.isArray(journey.steps) ? journey.steps.length : 0),
+      (Array.isArray(journey.steps)
+        ? journey.steps.length
+        : 0),
     0,
   )
 
   return (
-    <main className="setu-dashboard-page">
+    <main className="setu-dashboard-page setu-journey-page">
       <div className="setu-page-heading">
         <div>
           <div className="setu-breadcrumb">
             Home / Admin / Journey Management
           </div>
 
-          <h1>Journey Management</h1>
+          <h1>Service Journeys</h1>
 
           <p>
-            Inspect the live citizen-service journeys that orchestrate
-            interoperability across connected government systems.
+            Review how citizen services move through
+            connected government systems.
           </p>
         </div>
 
@@ -146,43 +258,46 @@ function AdminJourneysPage() {
 
       {error && (
         <section className="setu-content-card">
-          <p className="setu-error-message">{error}</p>
+          <p className="setu-error-message">
+            {error}
+          </p>
         </section>
       )}
 
       <section className="setu-stat-grid">
         <article className="setu-stat-card">
-          <span>Total Journeys</span>
+          <span>Service journeys</span>
           <strong>{journeys.length}</strong>
-          <small>Live journey registry</small>
+          <small>Available in the live registry</small>
         </article>
 
         <article className="setu-stat-card">
-          <span>Active Journeys</span>
+          <span>Active journeys</span>
           <strong>{activeJourneys}</strong>
-          <small>Currently active</small>
+          <small>Currently available for use</small>
         </article>
 
         <article className="setu-stat-card">
-          <span>Processing Steps</span>
+          <span>Service stages</span>
           <strong>{totalSteps}</strong>
-          <small>Across configured journeys</small>
+          <small>Across the configured journeys</small>
         </article>
 
         <article className="setu-stat-card">
-          <span>Configured Steps</span>
+          <span>Ready stages</span>
           <strong>{configuredSteps}</strong>
-          <small>Ready for execution</small>
+          <small>Configured for execution</small>
         </article>
       </section>
 
       <section className="setu-journey-config">
         <div className="setu-journey-config-header">
           <div>
-            <h2>Service Journeys</h2>
+            <h2>Available services</h2>
+
             <p>
-              Select a journey to inspect its orchestration path and
-              connector dependencies.
+              Select a service to review its processing
+              stages and connected information sources.
             </p>
           </div>
 
@@ -190,28 +305,33 @@ function AdminJourneysPage() {
             className="setu-input"
             type="search"
             value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search journeys, connectors or entities..."
-            aria-label="Search journeys"
+            onChange={(event) =>
+              setSearch(event.target.value)
+            }
+            placeholder="Search services or connected systems..."
+            aria-label="Search service journeys"
           />
         </div>
 
         {loading ? (
           <div className="setu-empty-state">
-            Loading journey registry...
+            Loading service journeys...
           </div>
         ) : filteredJourneys.length === 0 ? (
           <div className="setu-empty-state">
-            No journeys match the current search.
+            No service journeys match the current search.
           </div>
         ) : (
           <div className="setu-journey-layout">
             <aside className="setu-journey-step-list">
               {filteredJourneys.map((journey) => {
                 const active =
-                  journey.id === selectedJourney?.id
+                  journey.id ===
+                  selectedJourney?.id
 
-                const steps = Array.isArray(journey.steps)
+                const steps = Array.isArray(
+                  journey.steps,
+                )
                   ? journey.steps
                   : []
 
@@ -222,31 +342,36 @@ function AdminJourneysPage() {
                     className={`setu-journey-item ${
                       active ? 'active' : ''
                     }`}
-                    onClick={() => setSelectedId(journey.id)}
+                    onClick={() =>
+                      setSelectedId(journey.id)
+                    }
                   >
                     <div className="setu-journey-item-top">
                       <strong>{journey.name}</strong>
 
                       <span
                         className={`setu-status ${
-                          String(journey.status).toUpperCase() ===
-                          'ACTIVE'
+                          String(
+                            journey.status,
+                          ).toUpperCase() === 'ACTIVE'
                             ? 'success'
                             : 'pending'
                         }`}
                       >
-                        {journey.status}
+                        {journeyStatusLabel(
+                          journey.status,
+                        )}
                       </span>
                     </div>
 
                     <small>
-                      v{journey.version} · {steps.length} step
-                      {steps.length === 1 ? '' : 's'}
+                      Configuration version{' '}
+                      {journey.version} · {steps.length}{' '}
+                      stage
+                      {steps.length === 1
+                        ? ''
+                        : 's'}
                     </small>
-
-                    <span className="setu-journey-item-id">
-                      {journey.id}
-                    </span>
                   </button>
                 )
               })}
@@ -255,58 +380,74 @@ function AdminJourneysPage() {
             <section className="setu-journey-detail">
               {!selectedJourney ? (
                 <div className="setu-empty-state">
-                  Select a journey to inspect its configuration.
+                  Select a service to inspect its journey.
                 </div>
               ) : (
                 <>
                   <div className="setu-section-heading">
                     <div>
                       <span className="setu-kicker">
-                        {selectedJourney.id}
+                        Service journey
                       </span>
 
-                      <h2>{selectedJourney.name}</h2>
+                      <h2>
+                        {selectedJourney.name}
+                      </h2>
 
                       <p>
-                        Journey version {selectedJourney.version}
+                        Configuration version{' '}
+                        {selectedJourney.version}
                       </p>
                     </div>
 
                     <span
                       className={`setu-status ${
-                        String(selectedJourney.status).toUpperCase() ===
-                        'ACTIVE'
+                        String(
+                          selectedJourney.status,
+                        ).toUpperCase() === 'ACTIVE'
                           ? 'success'
                           : 'pending'
                       }`}
                     >
-                      {selectedJourney.status}
+                      {journeyStatusLabel(
+                        selectedJourney.status,
+                      )}
                     </span>
                   </div>
 
                   <div className="setu-journey-summary">
                     <div>
-                      <span>Version</span>
+                      <span>
+                        Configuration version
+                      </span>
+
                       <strong>
                         {selectedJourney.version}
                       </strong>
                     </div>
 
                     <div>
-                      <span>Steps</span>
+                      <span>Service stages</span>
+
                       <strong>
-                        {Array.isArray(selectedJourney.steps)
+                        {Array.isArray(
+                          selectedJourney.steps,
+                        )
                           ? selectedJourney.steps.length
                           : 0}
                       </strong>
                     </div>
 
                     <div>
-                      <span>Configured</span>
+                      <span>Ready stages</span>
+
                       <strong>
-                        {Array.isArray(selectedJourney.steps)
+                        {Array.isArray(
+                          selectedJourney.steps,
+                        )
                           ? selectedJourney.steps.filter(
-                              (step) => step.configured,
+                              (step) =>
+                                step.configured,
                             ).length
                           : 0}
                       </strong>
@@ -314,76 +455,140 @@ function AdminJourneysPage() {
                   </div>
 
                   <div className="setu-journey-steps">
-                    {Array.isArray(selectedJourney.steps) &&
+                    {Array.isArray(
+                      selectedJourney.steps,
+                    ) &&
                     selectedJourney.steps.length > 0 ? (
-                      selectedJourney.steps.map((step, index) => (
-                        <article
-                          className="setu-journey-step"
-                          key={step.id || `${selectedJourney.id}-${index}`}
-                        >
-                          <div className="setu-journey-step-number">
-                            {index + 1}
-                          </div>
+                      selectedJourney.steps.map(
+                        (step, index) => (
+                          <article
+                            className="setu-journey-step"
+                            key={
+                              step.id ||
+                              `${selectedJourney.id}-${index}`
+                            }
+                          >
+                            <div className="setu-journey-step-number">
+                              {index + 1}
+                            </div>
 
-                          <div className="setu-journey-step-content">
-                            <div className="setu-journey-step-heading">
-                              <div>
-                                <span className="setu-kicker">
-                                  {step.type || 'PROCESSING STEP'}
+                            <div className="setu-journey-step-content">
+                              <div className="setu-journey-step-heading">
+                                <div>
+                                  <span className="setu-kicker">
+                                    {stepTypeLabel(
+                                      step.type,
+                                    )}
+                                  </span>
+
+                                  <h3>
+                                    {stepTitleLabel(
+                                      step.id,
+                                      step.entity,
+                                    )}
+                                  </h3>
+                                </div>
+
+                                <span
+                                  className={`setu-status ${
+                                    step.configured
+                                      ? 'success'
+                                      : 'pending'
+                                  }`}
+                                >
+                                  {step.configured
+                                    ? 'Ready'
+                                    : 'Needs configuration'}
                                 </span>
-
-                                <h3>
-                                  {step.entity ||
-                                    step.id ||
-                                    'Untitled step'}
-                                </h3>
                               </div>
 
-                              <span
-                                className={`setu-status ${
-                                  step.configured
-                                    ? 'success'
-                                    : 'pending'
-                                }`}
-                              >
-                                {step.configured
-                                  ? 'Configured'
-                                  : 'Needs configuration'}
-                              </span>
+                              <div className="setu-journey-step-meta">
+                                {step.entity && (
+                                  <div>
+                                    <span>
+                                      Information used
+                                    </span>
+
+                                    <strong>
+                                      {entityLabel(
+                                        step.entity,
+                                      )}
+                                    </strong>
+                                  </div>
+                                )}
+
+                                {step.connector && (
+                                  <div>
+                                    <span>
+                                      Connected system
+                                    </span>
+
+                                    <strong>
+                                      {connectorLabel(
+                                        step.connector,
+                                      )}
+                                    </strong>
+                                  </div>
+                                )}
+                              </div>
+
+                              <details className="setu-journey-technical-details">
+                                <summary>
+                                  Technical configuration
+                                </summary>
+
+                                <div className="setu-journey-technical-grid">
+                                  <div>
+                                    <span>Step ID</span>
+                                    <strong>
+                                      {step.id || '—'}
+                                    </strong>
+                                  </div>
+
+                                  <div>
+                                    <span>Step type</span>
+                                    <strong>
+                                      {step.type || '—'}
+                                    </strong>
+                                  </div>
+
+                                  <div>
+                                    <span>Connector ID</span>
+                                    <strong>
+                                      {step.connector || '—'}
+                                    </strong>
+                                  </div>
+
+                                  <div>
+                                    <span>Entity key</span>
+                                    <strong>
+                                      {step.entity || '—'}
+                                    </strong>
+                                  </div>
+                                </div>
+                              </details>
                             </div>
-
-                            <div className="setu-journey-step-meta">
-                              <div>
-                                <span>Connector</span>
-                                <strong>
-                                  {step.connector || 'Not specified'}
-                                </strong>
-                              </div>
-
-                              <div>
-                                <span>Step ID</span>
-                                <strong>
-                                  {step.id || 'Not specified'}
-                                </strong>
-                              </div>
-                            </div>
-                          </div>
-                        </article>
-                      ))
+                          </article>
+                        ),
+                      )
                     ) : (
                       <div className="setu-empty-state">
-                        This journey currently has no configured steps.
+                        This service currently has no
+                        configured stages.
                       </div>
                     )}
                   </div>
 
                   <div className="setu-info-banner">
-                    <strong>Read-only configuration view</strong>
+                    <strong>
+                      Read-only service configuration
+                    </strong>
+
                     <span>
-                      Journey creation and modification are not exposed by
-                      the current SETU backend contract. This screen therefore
-                      reflects the live registry without presenting
-                      unsupported controls.
+                      This view reflects the live service
+                      registry. The current backend does
+                      not expose journey creation or
+                      modification controls.
                     </span>
                   </div>
                 </>
@@ -394,7 +599,7 @@ function AdminJourneysPage() {
       </section>
 
       <footer className="setu-page-footer">
-        Live journey registry — SETU prototype
+        Live service registry · MAHA SETU prototype
       </footer>
     </main>
   )

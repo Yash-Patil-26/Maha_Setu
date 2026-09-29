@@ -2,6 +2,43 @@ import { useCallback, useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { apiRequest } from '../api/client.js'
 
+function formatOfficerScheme(value) {
+  const labels = {
+    scholarship_v1: 'Scholarship Service',
+    youth_enterprise_v1: 'Youth Enterprise Service',
+  }
+
+  return labels[value] || value
+}
+
+function formatOfficerStatus(value) {
+  const labels = {
+    CREATED: 'Application started',
+    IN_PROGRESS: 'In progress',
+    BLOCKED_CONSENT: 'Consent required',
+    PAUSED_EXCEPTION: 'Processing paused',
+    NEEDS_REVIEW: 'Needs review',
+    SUBMITTED: 'Submitted',
+    APPROVED: 'Approved',
+    REJECTED: 'Not approved',
+    NOT_ELIGIBLE: 'Not eligible',
+  }
+
+  return labels[value] || value
+}
+
+function formatOfficerStep(value) {
+  const labels = {
+    fetch_income: 'Verifying income',
+    fetch_enrolment: 'Verifying education record',
+    evaluate_eligibility: 'Checking eligibility',
+    submit_bss: 'Submitted to benefit service',
+    await_decision: 'Awaiting decision',
+  }
+
+  return labels[value] || value
+}
+
 function OfficerApplicationPage() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -176,8 +213,7 @@ function OfficerApplicationPage() {
           <h1>Application Details</h1>
 
           <p>
-            Review live application state and continue through the connected
-            BSS decision workflow.
+            Review this application and continue it through the connected benefit service.
           </p>
         </div>
 
@@ -202,7 +238,7 @@ function OfficerApplicationPage() {
               .toLowerCase()
               .replaceAll(' ', '-')}`}
           >
-            {application.status}
+            {formatOfficerStatus(application.status)}
           </span>
         </div>
       </section>
@@ -212,20 +248,22 @@ function OfficerApplicationPage() {
           <div>
             <h2>Application Context</h2>
             <p>
-              Live fields returned by the SETU application service.
+              Key information for reviewing this application.
             </p>
           </div>
         </div>
 
         <div className="setu-detail-grid">
           <div>
-            <span>Applicant Reference</span>
+            <span>Applicant</span>
             <strong>{application.name}</strong>
           </div>
 
           <div>
-            <span>Journey</span>
-            <strong>{application.journey_id}</strong>
+            <span>Service</span>
+            <strong>
+              {formatOfficerScheme(application.journey_id)}
+            </strong>
           </div>
 
           <div>
@@ -234,33 +272,29 @@ function OfficerApplicationPage() {
           </div>
 
           <div>
-            <span>Current Step</span>
-            <strong>{application.current_step || 'Not available'}</strong>
-          </div>
-
-          <div>
-            <span>Journey Version</span>
+            <span>Current Stage</span>
             <strong>
-              {application.journey_version ?? 'Not available'}
+              {formatOfficerStep(application.current_step) ||
+                'Not available'}
             </strong>
           </div>
 
           <div>
             <span>Outcome</span>
-            <strong>{application.outcome || 'Pending'}</strong>
-          </div>
-
-          <div>
-            <span>Correlation ID</span>
             <strong>
-              {application.correlation_id || 'Not available'}
+              {application.outcome
+                ? application.outcome
+                    .toLowerCase()
+                    .replace(/_/g, ' ')
+                    .replace(/\b\w/g, (char) => char.toUpperCase())
+                : 'Pending'}
             </strong>
           </div>
 
           <div>
-            <span>Master ID</span>
+            <span>Service Version</span>
             <strong>
-              {application.master_id || 'Not assigned'}
+              {application.journey_version ?? 'Not available'}
             </strong>
           </div>
         </div>
@@ -271,8 +305,7 @@ function OfficerApplicationPage() {
           <div>
             <h2>Interoperability Context</h2>
             <p>
-              Evidence of the connected processing state carried by this
-              application.
+              Connected systems and processing evidence associated with this application.
             </p>
           </div>
         </div>
@@ -289,21 +322,41 @@ function OfficerApplicationPage() {
           </div>
 
           <div>
-            <span>External References</span>
+            <span>Connected References</span>
             <strong>{externalReferenceCount}</strong>
           </div>
 
           <div>
-            <span>Data Source</span>
-            <strong>SETU Connected Systems</strong>
+            <span>Information Source</span>
+            <strong>Connected government systems</strong>
           </div>
         </div>
+
+        <details className="setu-technical-details">
+          <summary>Technical traceability</summary>
+
+          <div className="setu-technical-grid">
+            <div>
+              <span>Correlation ID</span>
+              <strong>
+                {application.correlation_id || 'Not available'}
+              </strong>
+            </div>
+
+            <div>
+              <span>Citizen Reference</span>
+              <strong>
+                {application.master_id || 'Not assigned'}
+              </strong>
+            </div>
+          </div>
+        </details>
       </section>
 
       <section className="setu-content-card">
         <div className="setu-section-heading">
           <div>
-            <h2>Connected Decision Workflow</h2>
+            <h2>Connected Decision Process</h2>
             <p>
               The officer review remains in BSS while SETU coordinates the
               application state and receives the signed result.
@@ -315,9 +368,9 @@ function OfficerApplicationPage() {
           <div>
             <span className="setu-check">1</span>
             <div>
-              <strong>SETU SSO Handoff</strong>
+              <strong>Open the connected system</strong>
               <small>
-                SETU issues the authenticated BSS access URL.
+                SETU signs you into the connected benefit system without another login.
               </small>
             </div>
           </div>
@@ -325,9 +378,9 @@ function OfficerApplicationPage() {
           <div>
             <span className="setu-check">2</span>
             <div>
-              <strong>BSS Decision</strong>
+              <strong>Complete the decision</strong>
               <small>
-                The connected officer system performs the decision action.
+                Review the application and record the decision in the connected system.
               </small>
             </div>
           </div>
@@ -335,9 +388,9 @@ function OfficerApplicationPage() {
           <div>
             <span className="setu-check">3</span>
             <div>
-              <strong>Signed Webhook Return</strong>
+              <strong>Decision returned to MAHA SETU</strong>
               <small>
-                BSS sends the signed decision back to SETU for state update.
+                The completed decision is securely returned to MAHA SETU and the application status is updated.
               </small>
             </div>
           </div>
@@ -349,7 +402,7 @@ function OfficerApplicationPage() {
           <div>
             <h2>Officer Decision</h2>
             <p>
-              Complete the decision in BSS through the SETU SSO handoff.
+              Open the connected benefit system to review and complete this application decision.
             </p>
           </div>
         </div>
@@ -386,11 +439,7 @@ function OfficerApplicationPage() {
           )}
         </div>
       </section>
-
-      <footer className="page-footer">
-        Synthetic data — SETU prototype
-      </footer>
-    </main>
+</main>
   )
 }
 

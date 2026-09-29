@@ -173,6 +173,245 @@ def get_application_status(bss_ref: str) -> dict[str, Any]:
     }
 
 
+
+BSS_OFFICER_CSS = r"""
+<style>
+:root {
+    color-scheme: light;
+    font-family:
+        Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+}
+
+html,
+body {
+    min-height: 100%;
+}
+
+body.bss-page {
+    margin: 0;
+    min-height: 100vh;
+    background: linear-gradient(180deg, #f4f8fd 0%, #eef3f9 100%);
+    color: #132238;
+    overflow-x: auto;
+}
+
+.bss-shell {
+    width: min(1180px, calc(100% - 48px));
+    margin: 0 auto;
+    padding: 34px 0 48px;
+}
+
+.bss-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 24px;
+    padding: 24px 26px;
+    background: #ffffff;
+    border: 1px solid #dbe5f0;
+    border-radius: 16px;
+    box-shadow: 0 10px 28px rgba(20, 54, 95, 0.07);
+}
+
+.bss-eyebrow {
+    display: block;
+    margin-bottom: 7px;
+    color: #2767bd;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.bss-header h1 {
+    margin: 0;
+    color: #12366f;
+    font-size: clamp(28px, 4vw, 36px);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+}
+
+.bss-header p {
+    margin: 8px 0 0;
+    color: #64748b;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.bss-badge {
+    flex: 0 0 auto;
+    padding: 8px 12px;
+    border: 1px solid #c9dbf2;
+    border-radius: 999px;
+    background: #edf5ff;
+    color: #245fae;
+    font-size: 11px;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.bss-card {
+    background: #ffffff;
+    border: 1px solid #dbe5f0;
+    border-radius: 16px;
+    box-shadow: 0 10px 28px rgba(20, 54, 95, 0.06);
+    overflow: hidden;
+}
+
+.bss-card-heading {
+    padding: 22px 24px 16px;
+    border-bottom: 1px solid #e7eef6;
+}
+
+.bss-card-heading h2 {
+    margin: 0 0 5px;
+    color: #173b72;
+    font-size: 19px;
+}
+
+.bss-card-heading p {
+    margin: 0;
+    color: #718096;
+    font-size: 13px;
+}
+
+.bss-table-wrap {
+    overflow-x: auto;
+}
+
+.bss-table {
+    width: 100%;
+    min-width: 860px;
+    border-collapse: collapse;
+    background: #ffffff;
+}
+
+.bss-table th {
+    padding: 13px 16px;
+    background: #f6f9fc;
+    border-bottom: 1px solid #dbe5f0;
+    color: #5c7088;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    text-align: left;
+    text-transform: uppercase;
+}
+
+.bss-table td {
+    padding: 16px;
+    border-bottom: 1px solid #e7eef6;
+    color: #24364d;
+    font-size: 13px;
+    vertical-align: middle;
+}
+
+.bss-table tr:last-child td {
+    border-bottom: 0;
+}
+
+.bss-table tbody tr:hover {
+    background: #fbfdff;
+}
+
+.bss-status {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 9px;
+    border-radius: 999px;
+    background: #edf5ff;
+    border: 1px solid #cfe0f5;
+    color: #255da6;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+}
+
+.bss-decision-form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 8px;
+}
+
+.bss-decision-form:last-child {
+    margin-bottom: 0;
+}
+
+.bss-decision-form input[name="remarks"] {
+    min-width: 190px;
+    padding: 9px 10px;
+    border: 1px solid #c9d6e5;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #22334a;
+    font: inherit;
+    font-size: 12px;
+    outline: none;
+}
+
+.bss-decision-form input[name="remarks"]:focus {
+    border-color: #4d8edc;
+    box-shadow: 0 0 0 3px rgba(77, 142, 220, 0.12);
+}
+
+.bss-button {
+    min-height: 36px;
+    padding: 8px 14px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    color: #ffffff;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.bss-button:hover {
+    filter: brightness(0.97);
+    transform: translateY(-1px);
+}
+
+.bss-button.approve {
+    background: #18865a;
+    border-color: #18865a;
+}
+
+.bss-button.reject {
+    background: #c63f4a;
+    border-color: #c63f4a;
+}
+
+.bss-footer {
+    margin-top: 18px;
+    padding: 0 4px;
+    color: #8a9aad;
+    font-size: 11px;
+    line-height: 1.5;
+    text-align: center;
+}
+
+@media (max-width: 760px) {
+    .bss-shell {
+        width: min(100% - 24px, 1180px);
+        padding-top: 18px;
+    }
+
+    .bss-header {
+        flex-direction: column;
+        padding: 20px;
+    }
+
+    .bss-badge {
+        align-self: flex-start;
+    }
+}
+</style>
+"""
+
 @app.post("/officer/applications/{bss_ref}/decision")
 def officer_decision(
     bss_ref: str,
@@ -283,10 +522,13 @@ def officer_page(request: Request):
             <tr>
                 <td>{application["bss_ref"]}</td>
                 <td>{application["scheme_code"]}</td>
-                <td>{application["status"]}</td>
+                <td>
+                    <span class="bss-status">{application["status"]}</span>
+                </td>
                 <td>{application["remarks"] or ""}</td>
                 <td>
-                    <form method="post"
+                    <form class="bss-decision-form"
+                          method="post"
                           action="/officer/applications/{application["bss_ref"]}/decision">
 
                         <input type="hidden"
@@ -296,12 +538,16 @@ def officer_page(request: Request):
                         <input name="remarks"
                                placeholder="Remarks">
 
-                        <button type="submit">
+                        <button
+                            class="bss-button approve"
+                            type="submit"
+                        >
                             Approve
                         </button>
                     </form>
 
-                    <form method="post"
+                    <form class="bss-decision-form"
+                          method="post"
                           action="/officer/applications/{application["bss_ref"]}/decision">
 
                         <input type="hidden"
@@ -311,7 +557,10 @@ def officer_page(request: Request):
                         <input name="remarks"
                                placeholder="Remarks">
 
-                        <button type="submit">
+                        <button
+                            class="bss-button reject"
+                            type="submit"
+                        >
                             Reject
                         </button>
                     </form>
@@ -324,24 +573,71 @@ def officer_page(request: Request):
         f"""
         <html>
         <head>
-            <title>BSS Officer</title>
+            <meta charset="utf-8">
+            <meta
+                name="viewport"
+                content="width=device-width, initial-scale=1"
+            >
+            <title>Benefit Scheme System</title>
+            {BSS_OFFICER_CSS}
         </head>
 
-        <body>
-            <h1>BSS Officer Queue</h1>
+        <body class="bss-page">
+            <div class="bss-shell">
+                <header class="bss-header">
+                    <div>
+                        <span class="bss-eyebrow">
+                            Connected Benefit Service
+                        </span>
 
-            <table border="1" cellpadding="8">
-                <tr>
-                    <th>BSS Ref</th>
-                    <th>Scheme</th>
-                    <th>Status</th>
-                    <th>Remarks</th>
-                    <th>Decision</th>
-                </tr>
+                        <h1>Benefit Scheme System</h1>
 
-                {''.join(rows)}
+                        <p>
+                            Officer decision workspace connected through
+                            MAHA SETU.
+                        </p>
+                    </div>
 
-            </table>
+                    <span class="bss-badge">
+                        Officer Workspace
+                    </span>
+                </header>
+
+                <section class="bss-card">
+                    <div class="bss-card-heading">
+                        <h2>Application Decision Queue</h2>
+
+                        <p>
+                            Review submitted benefit applications and record
+                            the decision.
+                        </p>
+                    </div>
+
+                    <div class="bss-table-wrap">
+                        <table class="bss-table">
+                            <thead>
+                                <tr>
+                                    <th>BSS Reference</th>
+                                    <th>Scheme</th>
+                                    <th>Status</th>
+                                    <th>Remarks</th>
+                                    <th>Decision</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                {''.join(rows)}
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <div class="bss-footer">
+                    Synthetic interoperability workspace ·
+                    MAHA SETU conceptual prototype ·
+                    Not an official government site
+                </div>
+            </div>
         </body>
         </html>
         """

@@ -1,9 +1,122 @@
 import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import Timeline from './Timeline'
 import DataCard from './DataCard'
 import OnceOnlyMeter from './OnceOnlyMeter'
 import { apiRequest } from '../api/client.js'
+
+const SERVICE_META = {
+  scholarship_v1: {
+    title: 'Post-Matric Scholarship',
+    description:
+      'Track your scholarship application and its connected verification journey.',
+  },
+  youth_enterprise_v1: {
+    title: 'Youth Enterprise Support',
+    description:
+      'Track your connected application and eligibility review.',
+  },
+}
+
+const STATUS_LABELS = {
+  CREATED: 'Application started',
+  IN_PROGRESS: 'In progress',
+  BLOCKED_CONSENT: 'Consent required',
+  PAUSED_EXCEPTION: 'Processing paused',
+  NEEDS_REVIEW: 'Needs review',
+  SUBMITTED: 'Submitted',
+  APPROVED: 'Approved',
+  REJECTED: 'Not approved',
+  NOT_ELIGIBLE: 'Not eligible',
+}
+
+const STEP_LABELS = {
+  fetch_income: 'Income verified',
+  fetch_enrolment: 'Education record verified',
+  evaluate_eligibility: 'Eligibility checked',
+  submit_bss: 'Application submitted',
+  await_decision: 'Decision pending',
+}
+
+function humanizeToken(value) {
+  if (value == null || value === '') {
+    return '—'
+  }
+
+  return String(value)
+    .replace(/[_-]+/g, ' ')
+    .replace(/\b\w/g, (character) => character.toUpperCase())
+}
+
+function formatService(value) {
+  return (
+    SERVICE_META[value]?.title ||
+    humanizeToken(value)
+  )
+}
+
+function formatStatus(value) {
+  return STATUS_LABELS[value] || humanizeToken(value)
+}
+
+function formatStep(value) {
+  return STEP_LABELS[value] || humanizeToken(value)
+}
+
+function formatDateTime(value) {
+  if (!value) {
+    return '—'
+  }
+
+  const date = new Date(value)
+
+  if (Number.isNaN(date.getTime())) {
+    return String(value)
+  }
+
+  return date.toLocaleString('en-IN', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
+function getStatusMessage(status, currentStep, outcome) {
+  if (status === 'APPROVED') {
+    return 'Your application has been approved.'
+  }
+
+  if (status === 'REJECTED') {
+    return 'A decision has been recorded for this application.'
+  }
+
+  if (status === 'NOT_ELIGIBLE') {
+    return 'The eligibility checks for this application are complete.'
+  }
+
+  if (status === 'PAUSED_EXCEPTION') {
+    return 'Processing is paused and may need attention.'
+  }
+
+  if (status === 'BLOCKED_CONSENT') {
+    return 'Consent is needed before processing can continue.'
+  }
+
+  if (
+    status === 'SUBMITTED' &&
+    currentStep === 'await_decision'
+  ) {
+    return 'Your application has been submitted and a decision is pending from the connected service.'
+  }
+
+  if (outcome === 'ELIGIBLE') {
+    return 'The connected eligibility checks are complete and your application has moved to the next stage.'
+  }
+
+  return 'Your application is being processed through the connected service journey.'
+}
 
 function normalizeApplication(raw) {
   return {
@@ -19,6 +132,7 @@ function normalizeApplication(raw) {
       documents_not_uploaded: 0,
       systems_queried: 0,
     },
+    external_refs: raw.external_refs || {},
   }
 }
 
@@ -46,7 +160,7 @@ function CitizenApplicationPage() {
         if (active) {
           setError(
             err.message ||
-              'Unable to load application.',
+              'Unable to load this application.',
           )
         }
       }
@@ -64,106 +178,267 @@ function CitizenApplicationPage() {
 
   if (error) {
     return (
-      <main>
-        <header className="page-header">
-          <p>Citizen Dashboard / Applications</p>
+      <main className="setu-application-page">
+        <div className="setu-application-breadcrumb">
+          <Link to="/citizen">
+            Citizen Dashboard
+          </Link>
+          <span aria-hidden="true">&gt;</span>
+          <span>Application</span>
+        </div>
+
+        <section className="setu-application-error">
+          <p className="setu-application-eyebrow">
+            Application
+          </p>
+
           <h1>Application unavailable</h1>
-        </header>
 
-        <p className="form-error" role="alert">
-          {error}
-        </p>
+          <p className="form-error" role="alert">
+            {error}
+          </p>
 
-        <a className="button button-secondary" href="/citizen">
-          Back to dashboard
-        </a>
+          <Link
+            className="button button-secondary"
+            to="/citizen"
+          >
+            Back to dashboard
+          </Link>
+        </section>
       </main>
     )
   }
 
   if (!application) {
     return (
-      <main>
-        <header className="page-header">
-          <p>Citizen Dashboard / Applications</p>
-          <h1>Loading application…</h1>
-          <p>
-            SETU is retrieving the latest application state.
-          </p>
-        </header>
+      <main className="setu-application-page">
+        <div className="setu-application-breadcrumb">
+          <Link to="/citizen">
+            Citizen Dashboard
+          </Link>
+          <span aria-hidden="true">&gt;</span>
+          <span>Application</span>
+        </div>
 
-        <section className="card">
+        <section className="setu-application-loading">
+          <p className="setu-application-eyebrow">
+            Application
+          </p>
+
+          <h1>Loading your application</h1>
+
           <p aria-live="polite">
-            Please wait while the application journey is loaded.
+            Please wait while the latest application
+            information is retrieved.
           </p>
         </section>
       </main>
     )
   }
 
+  const serviceTitle = formatService(
+    application.journey_id,
+  )
+
+  const statusLabel = formatStatus(
+    application.status,
+  )
+
+  const currentStage = formatStep(
+    application.current_step,
+  )
+
+  const statusMessage = getStatusMessage(
+    application.status,
+    application.current_step,
+    application.outcome,
+  )
+
   return (
-    <main>
-      <header className="page-header">
-        <p>
-          Citizen Dashboard / Applications
-        </p>
+    <main className="setu-application-page">
+      <div className="setu-application-breadcrumb">
+        <Link to="/citizen">
+          Citizen Dashboard
+        </Link>
 
-        <h1>
-          Application {application.id}
-        </h1>
+        <span aria-hidden="true">&gt;</span>
 
-        <p>
-          Live application state from SETU.
-        </p>
+        <span>Applications</span>
+
+        <span aria-hidden="true">&gt;</span>
+
+        <span>{serviceTitle}</span>
+      </div>
+
+      <header className="setu-application-header">
+        <div>
+          <p className="setu-application-eyebrow">
+            Service application
+          </p>
+
+          <h1>{serviceTitle}</h1>
+
+          <p className="setu-application-subtitle">
+            Application #{application.id}
+            {' · '}
+            {statusLabel}
+          </p>
+        </div>
+
+        <Link
+          className="button button-secondary"
+          to="/citizen"
+        >
+          Back to applications
+        </Link>
       </header>
 
-      <section className="card application-summary">
-        <div>
-          <span className="status-badge">
-            {application.status}
+      <section className="setu-application-hero">
+        <div className="setu-application-hero-copy">
+          <span className="setu-application-status">
+            {statusLabel}
           </span>
 
-          <h2>Application ID</h2>
-
-          <p className="application-id">
-            {application.id}
-          </p>
+          <h2>
+            {currentStage}
+          </h2>
 
           <p>
-            Correlation:{' '}
-            {application.correlation_id || '—'}
+            {statusMessage}
           </p>
+        </div>
 
-          <p>
-            Current step:{' '}
-            {application.current_step || '—'}
-          </p>
+        <div className="setu-application-reference">
+          <div>
+            <span>Reference number</span>
 
-          {application.outcome && (
-            <p>
-              Outcome: {application.outcome}
-            </p>
-          )}
+            <strong>
+              {application.correlation_id || '—'}
+            </strong>
+          </div>
+
+          <div>
+            <span>Submitted</span>
+
+            <strong>
+              {formatDateTime(application.created_at)}
+            </strong>
+          </div>
         </div>
       </section>
 
-      <section className="card">
-        <h2>Application progress</h2>
-        <Timeline steps={application.steps} />
-      </section>
+      <div className="setu-application-grid">
+        <div className="setu-application-main">
+          <section className="setu-application-card">
+            <div className="setu-application-card-heading">
+              <div>
+                <p className="setu-application-eyebrow">
+                  Application journey
+                </p>
 
-      <DataCard
-        canonical={application.canonical}
-        provenance={application.provenance}
-      />
+                <h2>Application progress</h2>
 
-      <OnceOnlyMeter
-        metrics={application.metrics}
-      />
+                <p>
+                  Follow each stage as your application
+                  moves through the connected service.
+                </p>
+              </div>
+            </div>
 
-      <footer className="page-footer">
-        Synthetic data — SETU prototype
-      </footer>
+            <Timeline steps={application.steps} />
+          </section>
+
+          <DataCard
+            canonical={application.canonical}
+            provenance={application.provenance}
+          />
+        </div>
+
+        <aside className="setu-application-sidebar">
+          <section className="setu-application-card">
+            <p className="setu-application-eyebrow">
+              At a glance
+            </p>
+
+            <h2>Application summary</h2>
+
+            <div className="setu-application-summary">
+              <div>
+                <span>Service</span>
+                <strong>{serviceTitle}</strong>
+              </div>
+
+              <div>
+                <span>Current stage</span>
+                <strong>{currentStage}</strong>
+              </div>
+
+              <div>
+                <span>Outcome</span>
+                <strong>
+                  {application.outcome
+                    ? humanizeToken(application.outcome)
+                    : 'Pending'}
+                </strong>
+              </div>
+
+              <div>
+                <span>Last updated</span>
+                <strong>
+                  {formatDateTime(
+                    application.updated_at,
+                  )}
+                </strong>
+              </div>
+            </div>
+          </section>
+
+          <OnceOnlyMeter
+            metrics={application.metrics}
+          />
+        </aside>
+      </div>
+
+      <details className="setu-technical-details setu-application-technical">
+        <summary>
+          Technical details
+        </summary>
+
+        <div className="setu-technical-grid">
+          <div>
+            <span>Application ID</span>
+            <strong>{application.id}</strong>
+          </div>
+
+          <div>
+            <span>Citizen reference</span>
+            <strong>{application.master_id || '—'}</strong>
+          </div>
+
+          <div>
+            <span>Service version</span>
+            <strong>
+              {application.journey_version ?? '—'}
+            </strong>
+          </div>
+
+          <div>
+            <span>Correlation ID</span>
+            <strong>
+              {application.correlation_id || '—'}
+            </strong>
+          </div>
+
+          {Object.entries(
+            application.external_refs || {},
+          ).map(([key, value]) => (
+            <div key={key}>
+              <span>{humanizeToken(key)}</span>
+              <strong>{String(value)}</strong>
+            </div>
+          ))}
+        </div>
+      </details>
     </main>
   )
 }

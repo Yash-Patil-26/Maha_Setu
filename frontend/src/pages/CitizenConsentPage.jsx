@@ -6,14 +6,111 @@ import {
 import { Link } from 'react-router-dom'
 import { apiRequest } from '../api/client.js'
 
+const SERVICE_LABELS = {
+  scholarship_v1: 'Post-Matric Scholarship',
+  youth_enterprise_v1: 'Youth Enterprise Support',
+}
+
+const PURPOSE_LABELS = {
+  scholarship_eligibility:
+    'Eligibility information',
+  youth_enterprise_eligibility:
+    'Eligibility information',
+}
+
+const SYSTEM_LABELS = {
+  REV: 'Revenue Department',
+  EDU: 'Education Department',
+  BSS: 'Benefit service',
+  SKL: 'Skills & Employment Registry',
+}
+
+const FIELD_LABELS = {
+  annual_income_inr: 'Annual income',
+  cert_no: 'Certificate number',
+  course_code: 'Course',
+  dob: 'Date of birth',
+  enrolment_id: 'Enrolment ID',
+  holder_name: 'Certificate holder',
+  institution_code: 'Institution',
+  issue_date: 'Issue date',
+  issuing_authority: 'Issuing authority',
+  last_updated: 'Last updated',
+  status: 'Record status',
+  student_name: 'Student name',
+  valid_until: 'Valid until',
+  year_of_study: 'Year of study',
+}
+
+const OUTCOME_LABELS = {
+  ALLOWED: 'Access allowed',
+  DENIED: 'Access denied',
+  ERROR: 'Access could not be completed',
+}
+
 function labelize(value) {
-  return String(value || '')
-    .replace(/_/g, ' ')
+  if (!value) {
+    return '—'
+  }
+
+  return String(value)
+    .replace(/[_-]+/g, ' ')
     .replace(/\b\w/g, (char) => char.toUpperCase())
 }
 
+function serviceLabel(value) {
+  return (
+    SERVICE_LABELS[value] ||
+    labelize(value)
+  )
+}
+
+function purposeLabel(value) {
+  return (
+    PURPOSE_LABELS[value] ||
+    labelize(value)
+  )
+}
+
+function systemLabel(value) {
+  return (
+    SYSTEM_LABELS[value] ||
+    labelize(value)
+  )
+}
+
+function fieldLabel(value) {
+  return (
+    FIELD_LABELS[value] ||
+    labelize(value)
+  )
+}
+
+function outcomeLabel(value) {
+  return (
+    OUTCOME_LABELS[value] ||
+    labelize(value)
+  )
+}
+
+function statusLabel(value) {
+  const labels = {
+    ACTIVE: 'Active',
+    REVOKED: 'Stopped',
+    EXPIRED: 'Expired',
+  }
+
+  return labels[value] || labelize(value)
+}
+
+function statusClass(status) {
+  return String(status || '').toLowerCase()
+}
+
 function formatDate(value) {
-  if (!value) return '—'
+  if (!value) {
+    return '—'
+  }
 
   const date = new Date(value)
 
@@ -21,24 +118,29 @@ function formatDate(value) {
     return String(value)
   }
 
-  return new Intl.DateTimeFormat(undefined, {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  }).format(date)
-}
-
-function statusClass(status) {
-  return String(status || '').toLowerCase()
+  return new Intl.DateTimeFormat(
+    'en-IN',
+    {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    },
+  ).format(date)
 }
 
 export default function CitizenConsentPage() {
   const [consents, setConsents] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [busyConsentId, setBusyConsentId] = useState(null)
-  const [expandedConsentId, setExpandedConsentId] = useState(null)
+  const [busyConsentId, setBusyConsentId] =
+    useState(null)
+  const [expandedConsentId, setExpandedConsentId] =
+    useState(null)
   const [accessLogs, setAccessLogs] = useState({})
-  const [accessLoadingId, setAccessLoadingId] = useState(null)
+  const [accessLoadingId, setAccessLoadingId] =
+    useState(null)
   const [accessErrors, setAccessErrors] = useState({})
 
   const loadConsents = useCallback(async () => {
@@ -47,11 +149,13 @@ export default function CitizenConsentPage() {
 
     try {
       const result = await apiRequest('/api/consents')
-      setConsents(Array.isArray(result) ? result : [])
+      setConsents(
+        Array.isArray(result) ? result : [],
+      )
     } catch (err) {
       setError(
         err.message ||
-          'Unable to load consent records.',
+          'Unable to load your permissions.',
       )
     } finally {
       setLoading(false)
@@ -64,7 +168,7 @@ export default function CitizenConsentPage() {
 
   async function handleRevoke(consent) {
     const confirmed = window.confirm(
-      `Revoke data-sharing consent for "${labelize(consent.purpose)}"?`,
+      `Stop sharing information for "${serviceLabel(consent.journey_id)}"? You can grant permission again when you next apply.`,
     )
 
     if (!confirmed) {
@@ -94,7 +198,7 @@ export default function CitizenConsentPage() {
     } catch (err) {
       setError(
         err.message ||
-          'Unable to revoke consent.',
+          'Unable to stop sharing this information.',
       )
     } finally {
       setBusyConsentId(null)
@@ -144,61 +248,71 @@ export default function CitizenConsentPage() {
   }
 
   return (
-    <main>
-      <header className="page-header">
-        <p>Citizen Dashboard / Privacy</p>
+    <main className="setu-consent-page">
+      <div className="setu-flow-breadcrumb">
+        <Link to="/citizen">Citizen Dashboard</Link>
+        <span aria-hidden="true">&gt;</span>
+        <span>Consent &amp; Data</span>
+      </div>
 
-        <div className="dashboard-header">
-          <div>
-            <h1>My Consents</h1>
+      <header className="setu-flow-header">
+        <div>
+          <p className="setu-flow-eyebrow">
+            Privacy &amp; control
+          </p>
 
-            <p>
-              Review and manage the data-sharing
-              permissions you have granted to SETU.
-            </p>
-          </div>
+          <h1>Consent &amp; Data</h1>
 
-          <Link
-            className="consent-back-link"
-            to="/citizen"
-          >
-            Back to dashboard
-          </Link>
+          <p>
+            Review the information you have allowed MAHA SETU
+            to use, where it comes from, and when it was accessed.
+          </p>
         </div>
+
+        <Link
+          className="button button-secondary"
+          to="/citizen"
+        >
+          Back to dashboard
+        </Link>
       </header>
 
       {error && (
-        <p
-          className="form-error"
-          role="alert"
-        >
+        <p className="form-error setu-flow-error-message" role="alert">
           {error}
         </p>
       )}
 
       {loading ? (
-        <section className="card consent-empty-state">
+        <section className="setu-flow-card">
           <p aria-live="polite">
-            Loading your consent records…
+            Loading your permissions…
           </p>
         </section>
       ) : consents.length === 0 ? (
-        <section className="card consent-empty-state">
-          <h2>No consent records</h2>
-
-          <p>
-            You have not granted any data-sharing
-            permissions yet.
+        <section className="setu-flow-card setu-consent-empty">
+          <p className="setu-flow-eyebrow">
+            Your permissions
           </p>
 
-          <Link to="/citizen">
-            Browse available services
+          <h2>No active permissions</h2>
+
+          <p>
+            You have not allowed any service to use
+            connected government information yet.
+          </p>
+
+          <Link
+            className="button"
+            to="/citizen"
+          >
+            Browse services
           </Link>
         </section>
       ) : (
         <section
-          className="consent-list"
-          aria-label="Consent records"
+          className="setu-consent-list"
+          aria-label="Your data-sharing permissions"
         >
           {consents.map((consent) => {
             const logs =
@@ -215,20 +329,26 @@ export default function CitizenConsentPage() {
 
             return (
               <article
-                className="card consent-card"
+                className="setu-flow-card setu-consent-card"
                 key={consent.id}
               >
-                <div className="consent-card-header">
+                <div className="setu-consent-card-header">
                   <div>
-                    <p className="consent-eyebrow">
-                      {labelize(
-                        consent.journey_id,
-                      )}
+                    <p className="setu-flow-eyebrow">
+                      Service permission
                     </p>
 
                     <h2>
-                      {labelize(consent.purpose)}
+                      {serviceLabel(
+                        consent.journey_id,
+                      )}
                     </h2>
+
+                    <p>
+                      Allows MAHA SETU to use information
+                      needed for{' '}
+                      {purposeLabel(consent.purpose).toLowerCase()}.
+                    </p>
                   </div>
 
                   <span
@@ -236,14 +356,13 @@ export default function CitizenConsentPage() {
                       consent.status,
                     )}`}
                   >
-                    {consent.status}
+                    {statusLabel(consent.status)}
                   </span>
                 </div>
 
-                <div className="consent-meta-grid">
+                <div className="setu-consent-meta">
                   <div>
-                    <span>Granted</span>
-
+                    <span>Permission started</span>
                     <strong>
                       {formatDate(
                         consent.granted_at,
@@ -252,8 +371,7 @@ export default function CitizenConsentPage() {
                   </div>
 
                   <div>
-                    <span>Expires</span>
-
+                    <span>Valid until</span>
                     <strong>
                       {formatDate(
                         consent.expires_at,
@@ -263,8 +381,7 @@ export default function CitizenConsentPage() {
 
                   {consent.revoked_at && (
                     <div>
-                      <span>Revoked</span>
-
+                      <span>Stopped</span>
                       <strong>
                         {formatDate(
                           consent.revoked_at,
@@ -274,38 +391,38 @@ export default function CitizenConsentPage() {
                   )}
                 </div>
 
-                <div className="consent-section">
-                  <h3>Source systems</h3>
+                <div className="setu-consent-section">
+                  <h3>Information sources</h3>
 
-                  <div className="consent-chip-list">
+                  <div className="setu-consent-chip-list">
                     {consent.source_systems.map(
                       (system) => (
                         <span
-                          className="consent-chip"
+                          className="setu-flow-source-chip"
                           key={system}
                         >
-                          {system}
+                          {systemLabel(system)}
                         </span>
                       ),
                     )}
                   </div>
                 </div>
 
-                <div className="consent-section">
-                  <h3>Permitted fields</h3>
+                <div className="setu-consent-section">
+                  <h3>Information that may be used</h3>
 
-                  <div className="consent-field-list">
+                  <div className="setu-consent-field-list">
                     {consent.fields.map(
                       (field) => (
                         <span key={field}>
-                          {labelize(field)}
+                          {fieldLabel(field)}
                         </span>
                       ),
                     )}
                   </div>
                 </div>
 
-                <div className="consent-actions">
+                <div className="setu-consent-actions">
                   <button
                     className="secondary-button"
                     type="button"
@@ -339,20 +456,24 @@ export default function CitizenConsentPage() {
                     >
                       {busyConsentId ===
                       consent.id
-                        ? 'Revoking…'
-                        : 'Revoke consent'}
+                        ? 'Stopping…'
+                        : 'Stop sharing this information'}
                     </button>
                   )}
                 </div>
 
                 {isExpanded && (
-                  <div className="consent-access-panel">
+                  <div className="setu-consent-access-panel">
                     <div>
+                      <p className="setu-flow-eyebrow">
+                        Transparency
+                      </p>
+
                       <h3>Access history</h3>
 
                       <p>
-                        Records of SETU accessing
-                        data for this consent purpose.
+                        See when connected services accessed
+                        information for this permission.
                       </p>
                     </div>
 
@@ -367,26 +488,29 @@ export default function CitizenConsentPage() {
 
                     {!accessError &&
                       logs.length === 0 && (
-                        <p>
-                          No access has been
-                          recorded yet.
+                        <p className="setu-consent-note">
+                          No access has been recorded yet.
                         </p>
                       )}
 
                     {logs.length > 0 && (
-                      <div className="access-log-list">
+                      <div className="setu-access-log-list">
                         {logs.map((log) => (
                           <article
-                            className="access-log-item"
+                            className="setu-access-log-item"
                             key={log.id}
                           >
                             <div>
                               <strong>
-                                {log.system_code}
+                                {systemLabel(
+                                  log.system_code,
+                                )}
                               </strong>
 
                               <span>
-                                {log.outcome}
+                                {outcomeLabel(
+                                  log.outcome,
+                                )}
                               </span>
                             </div>
 
@@ -395,18 +519,17 @@ export default function CitizenConsentPage() {
                             </small>
 
                             <p>
-                              Fields:{' '}
+                              Information used:{' '}
                               {log.fields?.length
                                 ? log.fields
-                                    .map(labelize)
+                                    .map(fieldLabel)
                                     .join(', ')
                                 : 'None'}
                             </p>
 
                             {log.application_id && (
                               <small>
-                                Application{' '}
-                                {log.application_id}
+                                Application #{log.application_id}
                               </small>
                             )}
                           </article>
@@ -420,11 +543,6 @@ export default function CitizenConsentPage() {
           })}
         </section>
       )}
-
-      <footer className="page-footer">
-        Consent records are stored by SETU and
-        scoped to your authenticated identity.
-      </footer>
     </main>
   )
 }

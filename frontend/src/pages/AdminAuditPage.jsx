@@ -1,6 +1,36 @@
 import { useEffect, useMemo, useState } from 'react'
 import { apiRequest } from '../api/client.js'
 
+function formatAuditAction(action) {
+  const labels = {
+    'System Outage Simulation': 'System outage simulated',
+    'System Restore': 'System connection restored',
+  }
+
+  return labels[action] || action || 'Activity'
+}
+
+function formatAuditResource(resource) {
+  const labels = {
+    REV: 'Revenue Department',
+    EDU: 'Education Department',
+    BSS: 'Benefit Scheme Service',
+    SKL: 'Skills & Employment Registry',
+  }
+
+  return labels[resource] || resource || 'MAHA SETU'
+}
+
+function formatAuditStatus(status) {
+  const labels = {
+    Success: 'Completed',
+    Completed: 'Completed',
+    Failed: 'Failed',
+  }
+
+  return labels[status] || status || 'Recorded'
+}
+
 function AdminAuditPage() {
   const [logs, setLogs] = useState([])
   const [filter, setFilter] = useState('All')
@@ -66,7 +96,8 @@ function AdminAuditPage() {
           <h1>Access Log</h1>
 
           <p>
-            Monitor user activity, system access and data operations.
+            Review recent activity across MAHA SETU and its connected
+            government systems.
           </p>
         </div>
 
@@ -115,8 +146,8 @@ function AdminAuditPage() {
       <section className="setu-content-card">
         <div className="setu-card-heading">
           <div>
-            <h2>Activity Log</h2>
-            <p>Recent activity across the MahaSetu platform.</p>
+            <h2>Recent activity</h2>
+            <p>Latest recorded actions from users and connected systems.</p>
           </div>
 
           <select
@@ -141,9 +172,9 @@ function AdminAuditPage() {
               <tr>
                 <th>User</th>
                 <th>Role</th>
-                <th>Action</th>
-                <th>Resource</th>
-                <th>Status</th>
+                <th>Activity</th>
+                <th>Connected system</th>
+                <th>Result</th>
                 <th>Time</th>
               </tr>
             </thead>
@@ -170,13 +201,22 @@ function AdminAuditPage() {
 
                     <td>{log.role}</td>
 
-                    <td>{log.action}</td>
+                    <td>
+                      <strong>{formatAuditAction(log.action)}</strong>
+                    </td>
 
-                    <td>{log.resource}</td>
+                    <td>{formatAuditResource(log.resource)}</td>
 
                     <td>
-                      <span className="setu-status success">
-                        {log.status}
+                      <span
+                        className={`setu-status ${
+                          log.status === 'Success' ||
+                          log.status === 'Completed'
+                            ? 'success'
+                            : 'pending'
+                        }`}
+                      >
+                        {formatAuditStatus(log.status)}
                       </span>
                     </td>
 
@@ -190,7 +230,7 @@ function AdminAuditPage() {
       </section>
 
       <footer className="setu-page-footer">
-        Live audit data — SETU prototype
+        Live activity log · MAHA SETU prototype
       </footer>
     </div>
   )

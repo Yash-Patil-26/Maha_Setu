@@ -76,14 +76,13 @@ function CitizenDashboard() {
     }
   }
 
-  function goToLastApplication() {
-    const applicationId = localStorage.getItem(
-      'last_citizen_application_id',
-    )
-
-    if (applicationId) {
-      navigate(`/citizen/applications/${applicationId}`)
-    }
+  function goToApplicationList() {
+    document
+      .getElementById('applications-heading')
+      ?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      })
   }
 
   const text = {
@@ -401,7 +400,6 @@ function CitizenDashboard() {
 
           {/* APPLICATIONS */}
           <div className="section-heading application-heading">
-
             <div>
               <h2>
                 {text.yourApplications}
@@ -415,56 +413,106 @@ function CitizenDashboard() {
             <button
               className="text-link"
               type="button"
-              onClick={goToLastApplication}
+              onClick={goToApplicationList}
+              disabled={applications.length === 0}
             >
               {text.viewAll} &gt;
             </button>
-
           </div>
 
           <section className="application-list">
-
-            <article className="application-row">
-
-              <div className="application-service-icon">
-                &#9733;
+            {!loading && !error && applications.length === 0 && (
+              <div className="empty-application-note">
+                {text.emptyApplication}
               </div>
+            )}
 
-              <div className="application-info">
+            {!loading && !error && applications.length > 0 && (
+              applications.map((application) => {
+                const service =
+                  SERVICE_META[application.journey_id]
 
-                <strong>
-                  {text.postMatric}
-                </strong>
+                const serviceTitle =
+                  service?.title || 'Government Service'
 
-                <span>
-                  {text.scholarshipApplication}
-                </span>
+                const applicationTitle =
+                  `${serviceTitle} Application`
 
-              </div>
+                const statusLabels = {
+                  CREATED: 'Application started',
+                  IN_PROGRESS: 'In Progress',
+                  BLOCKED_CONSENT: 'Consent required',
+                  PAUSED_EXCEPTION: 'Processing paused',
+                  NEEDS_REVIEW: 'Needs review',
+                  SUBMITTED: 'Submitted',
+                  APPROVED: 'Approved',
+                  REJECTED: 'Not approved',
+                  NOT_ELIGIBLE: 'Not eligible',
+                }
 
-              <span className="status-pill status-progress">
-                {text.inProgress}
-              </span>
+                const status =
+                  statusLabels[application.status] ||
+                  application.status ||
+                  'Processing'
 
-              <span className="application-date">
-                {text.updatedToday}
-              </span>
+                let updatedLabel = 'Recently updated'
 
-              <button
-                className="application-arrow"
-                type="button"
-                onClick={goToLastApplication}
-                aria-label="Open application"
-              >
-                &gt;
-              </button>
+                if (application.updated_at) {
+                  const updatedAt = new Date(
+                    application.updated_at,
+                  )
 
-            </article>
+                  if (!Number.isNaN(updatedAt.getTime())) {
+                    updatedLabel =
+                      `Updated ${updatedAt.toLocaleDateString(
+                        'en-IN',
+                        {
+                          day: '2-digit',
+                          month: 'short',
+                          year: 'numeric',
+                        },
+                      )}`
+                  }
+                }
 
-            <div className="empty-application-note">
-              {text.emptyApplication}
-            </div>
+                return (
+                  <article
+                    className="application-row"
+                    key={application.id}
+                  >
+                    <div className="application-service-icon">
+                      {serviceTitle.charAt(0)}
+                    </div>
 
+                    <div className="application-info">
+                      <strong>
+                        {serviceTitle}
+                      </strong>
+
+                      <span>
+                        {applicationTitle}
+                      </span>
+                    </div>
+
+                    <span className="status-pill status-progress">
+                      {status}
+                    </span>
+
+                    <span className="application-date">
+                      {updatedLabel}
+                    </span>
+
+                    <Link
+                      className="application-arrow"
+                      to={`/citizen/applications/${application.id}`}
+                      aria-label={`Open ${applicationTitle}`}
+                    >
+                      &gt;
+                    </Link>
+                  </article>
+                )
+              })
+            )}
           </section>
 
           {/* QUICK INFO */}

@@ -246,15 +246,7 @@ function OfficerDashboard() {
           </table>
         </div>
       </section>
-
-
-
-
-
-      <footer className="page-footer">
-        Synthetic data — SETU prototype
-      </footer>
-    </main>
+</main>
   )
 }
 
