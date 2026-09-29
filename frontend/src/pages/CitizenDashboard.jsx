@@ -484,7 +484,7 @@ function CitizenDashboard() {
             {!loading && !error && applications.length > 0 && (
               <div className="application-list">
                 {applications.map((application) => {
-                  const applicationId = application.application_id
+                  const applicationId = application.id
 
                   return (
                     <article
