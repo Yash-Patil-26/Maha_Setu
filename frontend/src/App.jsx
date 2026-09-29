@@ -23,13 +23,18 @@ function App() {
       <Route path="/login" element={<LoginPage />} />
 
       <Route element={<ProtectedRoute roles={['citizen']} />}>
-        <Route path="/citizen" element={<CitizenDashboard />} />
-        <Route path="/citizen/apply/:journeyId" element={<CitizenApplyPage />} />
-        <Route
-          path="/citizen/applications/:id"
-          element={<CitizenApplicationPage />}
-        />
-        <Route path="/citizen/consents" element={<CitizenConsentPage />} />
+        <Route element={<DashboardLayout />}>
+          <Route path="/citizen" element={<CitizenDashboard />} />
+          <Route
+            path="/citizen/apply/:journeyId"
+            element={<CitizenApplyPage />}
+          />
+          <Route
+            path="/citizen/applications/:id"
+            element={<CitizenApplicationPage />}
+          />
+          <Route path="/citizen/consents" element={<CitizenConsentPage />} />
+        </Route>
       </Route>
 
 

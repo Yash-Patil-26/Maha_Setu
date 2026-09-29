@@ -1384,3 +1384,370 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ============================================================
+   MAHASETU-VISUAL-UNIFICATION-V1
+   Shared application shell.
+   Functional/API behavior is unchanged.
+   ============================================================ */
+
+:root {
+  --maha-primary: #0b5db7;
+  --maha-primary-dark: #08468a;
+  --maha-navy: #10346b;
+  --maha-accent: #f2a900;
+
+  --maha-bg: #f5f8fc;
+  --maha-surface: #ffffff;
+  --maha-text: #10243e;
+  --maha-muted: #64748b;
+  --maha-border: #dce5ef;
+
+  --maha-success: #16803c;
+  --maha-warning: #a15c00;
+  --maha-danger: #b42318;
+
+  --maha-radius-sm: 8px;
+  --maha-radius-md: 12px;
+  --maha-radius-lg: 16px;
+}
+
+.setu-app-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--maha-bg);
+  color: var(--maha-text);
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+}
+
+.setu-topbar {
+  min-height: 72px;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  background: linear-gradient(135deg, #084b96, #0b63c4);
+  color: #fff;
+  border-bottom: 1px solid rgba(255,255,255,0.14);
+  box-shadow: 0 2px 12px rgba(8,62,120,0.18);
+  position: relative;
+  z-index: 20;
+}
+
+.setu-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.setu-brand-mark {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.32);
+  color: #fff;
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.setu-brand-copy strong {
+  display: block;
+  font-size: 20px;
+  line-height: 1.05;
+  letter-spacing: 0.015em;
+}
+
+.setu-brand-copy span {
+  display: block;
+  margin-top: 4px;
+  color: rgba(255,255,255,0.78);
+  font-size: 12px;
+}
+
+.setu-topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  min-width: 0;
+}
+
+.setu-language {
+  color: rgba(255,255,255,0.88);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.setu-user {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+}
+
+.setu-avatar {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #fff;
+  color: var(--maha-primary);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.setu-user-info {
+  min-width: 0;
+}
+
+.setu-user-info strong,
+.setu-user-info span {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.setu-user-info strong {
+  max-width: 180px;
+  color: #fff;
+  font-size: 13px;
+}
+
+.setu-user-info span {
+  margin-top: 2px;
+  color: rgba(255,255,255,0.72);
+  font-size: 11px;
+}
+
+.setu-logout {
+  padding: 8px 13px;
+  border: 1px solid rgba(255,255,255,0.4);
+  border-radius: 8px;
+  background: transparent;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.setu-logout:hover {
+  background: rgba(255,255,255,0.10);
+}
+
+.setu-body {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 236px minmax(0, 1fr);
+}
+
+.setu-sidebar {
+  min-height: calc(100vh - 72px);
+  display: flex;
+  flex-direction: column;
+  background: var(--maha-surface);
+  border-right: 1px solid var(--maha-border);
+  padding: 18px 0 0;
+}
+
+.setu-sidebar-role {
+  padding: 0 18px 15px;
+  border-bottom: 1px solid #edf2f7;
+}
+
+.setu-sidebar-role span {
+  display: block;
+  color: var(--maha-muted);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.setu-sidebar-role strong {
+  display: block;
+  margin-top: 4px;
+  color: var(--maha-text);
+  font-size: 14px;
+}
+
+.setu-sidebar-nav {
+  display: grid;
+  gap: 4px;
+  padding: 13px 10px;
+}
+
+.setu-nav-item {
+  min-height: 43px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 9px 12px;
+  border-radius: 9px;
+  color: #52657d;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.setu-nav-item:hover {
+  background: #eef5fd;
+  color: var(--maha-primary);
+}
+
+.setu-nav-item.active {
+  background: #e7f0ff;
+  color: var(--maha-primary);
+}
+
+.setu-nav-icon {
+  width: 22px;
+  flex: 0 0 auto;
+  text-align: center;
+  font-size: 16px;
+}
+
+.setu-sidebar-footer {
+  margin-top: auto;
+  padding: 14px 18px;
+  border-top: 1px solid #edf2f7;
+}
+
+.setu-sidebar-footer strong,
+.setu-sidebar-footer small {
+  display: block;
+}
+
+.setu-sidebar-footer strong {
+  color: var(--maha-text);
+  font-size: 12px;
+}
+
+.setu-sidebar-footer small {
+  margin-top: 3px;
+  color: var(--maha-muted);
+  font-size: 11px;
+}
+
+.setu-main-content {
+  min-width: 0;
+  min-height: calc(100vh - 72px);
+  width: auto !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: var(--maha-bg);
+  overflow-x: clip;
+}
+
+.setu-shell-footer {
+  min-height: 44px;
+  padding: 10px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-top: 1px solid var(--maha-border);
+  background: #fff;
+  color: var(--maha-muted);
+  font-size: 11px;
+}
+
+.citizen-dashboard-page {
+  width: min(100%, 1440px);
+  margin: 0 auto;
+  padding: 28px 30px 38px;
+}
+
+.citizen-dashboard-page .citizen-content {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+}
+
+.citizen-dashboard-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 10px;
+}
+
+.setu-language-toggle {
+  padding: 7px 11px;
+  border: 1px solid var(--maha-border);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--maha-primary);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+@media (max-width: 900px) {
+  .setu-body {
+    grid-template-columns: 1fr;
+  }
+
+  .setu-sidebar {
+    min-height: auto;
+    border-right: 0;
+    border-bottom: 1px solid var(--maha-border);
+  }
+
+  .setu-sidebar-nav {
+    display: flex;
+    overflow-x: auto;
+    padding-bottom: 11px;
+  }
+
+  .setu-nav-item {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+
+  .setu-sidebar-footer {
+    display: none;
+  }
+
+  .setu-user-info {
+    display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .setu-topbar {
+    padding: 0 14px;
+  }
+
+  .setu-language {
+    display: none;
+  }
+
+  .setu-brand-copy span {
+    display: none;
+  }
+
+  .setu-shell-footer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .citizen-dashboard-page {
+    padding: 20px 16px 28px;
+  }
+}
+
+/* MAHASETU-VISUAL-UNIFICATION-V1 END */

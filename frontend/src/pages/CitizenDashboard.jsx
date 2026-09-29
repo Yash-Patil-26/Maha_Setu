@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { apiRequest } from '../api/client.js'
 import { useNavigate } from 'react-router-dom'
 
-import { clearAuthSession, getAuthUser } from '../auth/storage'
+import { getAuthUser } from '../auth/storage'
 
 import '../citizen-ui.css'
 
@@ -63,10 +63,6 @@ function CitizenDashboard() {
 
   const isEnglish = language === 'en'
 
-  function handleLogout() {
-    clearAuthSession()
-    navigate('/login')
-  }
 
   function goToService(journeyId) {
     navigate(`/citizen/apply/${journeyId}`)
@@ -200,41 +196,12 @@ function CitizenDashboard() {
   }
 
   return (
-    <main className="citizen-page">
+    <div className="setu-dashboard-page citizen-dashboard-page">
+      <section className="citizen-content">
 
-      {/* TOP HEADER */}
-      <header className="citizen-topbar">
-
-        <div className="citizen-brand">
-          <div className="citizen-gov-mark">
-            MS
-          </div>
-
-          <div>
-            <div className="citizen-gov-name">
-              MahaSetu
-            </div>
-
-            <div className="citizen-gov-subtitle">
-              Digital Service Prototype
-            </div>
-          </div>
-        </div>
-
-        <div className="citizen-logo">
-          <strong>
-            Maha<span>Setu</span>
-          </strong>
-
-          <small>
-            Unified Platform for Government Services
-          </small>
-        </div>
-
-        <div className="citizen-top-actions">
-
+        <div className="citizen-dashboard-toolbar">
           <button
-            className="citizen-language"
+            className="setu-language-toggle"
             type="button"
             onClick={() =>
               setLanguage((current) =>
@@ -243,147 +210,9 @@ function CitizenDashboard() {
             }
             title="Change language"
           >
-            {isEnglish ? 'EN | \u092e\u0930\u093e\u0920\u0940' : '\u092e\u0930\u093e\u0920\u0940 | EN'}
+            {isEnglish ? 'EN | मराठी' : 'मराठी | EN'}
           </button>
-
-          <button
-            className="citizen-icon-button"
-            type="button"
-            aria-label="Notifications"
-            title="Notifications"
-          >
-            &#128276;
-            <span className="notification-dot" />
-          </button>
-
-          <div className="citizen-user-menu">
-            <div className="citizen-avatar">
-              {displayName.charAt(0).toUpperCase()}
-            </div>
-
-            <span>{displayName}</span>
-
-            <span className="user-chevron">
-              &#9662;
-            </span>
-          </div>
-
         </div>
-      </header>
-
-      <div className="citizen-layout">
-
-        {/* SIDEBAR */}
-        <aside className="citizen-sidebar">
-
-          <div className="sidebar-profile">
-            <div className="sidebar-avatar">
-              {displayName.charAt(0).toUpperCase()}
-            </div>
-
-            <div>
-              <strong>{displayName}</strong>
-              <span>{text.citizen}</span>
-            </div>
-          </div>
-
-          <nav className="citizen-nav">
-
-            <button
-              className="citizen-nav-item active"
-              type="button"
-              onClick={() => navigate('/citizen')}
-            >
-              <span className="citizen-nav-icon">
-                &#8962;
-              </span>
-
-              <div>
-                <strong>{text.dashboard}</strong>
-                <small />
-              </div>
-            </button>
-
-            <button
-              className="citizen-nav-item"
-              type="button"
-              onClick={goToFirstService}
-            >
-              <span className="citizen-nav-icon">
-                &#9633;
-              </span>
-
-              <div>
-                <strong>{text.apply}</strong>
-                <small />
-              </div>
-            </button>
-
-            <button
-              className="citizen-nav-item"
-              type="button"
-              onClick={goToLastApplication}
-            >
-              <span className="citizen-nav-icon">
-                &#9776;
-              </span>
-
-              <div>
-                <strong>{text.applications}</strong>
-                <small />
-              </div>
-            </button>
-
-            <button
-              className="citizen-nav-item"
-              type="button"
-              onClick={() => navigate('/citizen/consents')}
-            >
-              <span className="citizen-nav-icon">
-                &#9671;
-              </span>
-
-              <div>
-                <strong>{text.consent}</strong>
-                <small />
-              </div>
-            </button>
-
-            <button
-              className="citizen-nav-item"
-              type="button"
-              onClick={() => window.alert(
-                isEnglish
-                  ? 'Help & Support will be available soon.'
-                  : '??? ??? ?????? ????? ?????? ????.',
-              )}
-            >
-              <span className="citizen-nav-icon">
-                ?
-              </span>
-
-              <div>
-                <strong>{text.help}</strong>
-                <small />
-              </div>
-            </button>
-
-          </nav>
-
-          <div className="sidebar-bottom">
-            <button
-              className="sidebar-logout"
-              type="button"
-              onClick={handleLogout}
-            >
-              {text.logout}
-            </button>
-          </div>
-
-        </aside>
-
-        {/* MAIN CONTENT */}
-        <section className="citizen-content">
 
           <div className="citizen-breadcrumb">
             {text.dashboard}
@@ -697,26 +526,8 @@ function CitizenDashboard() {
 
           </section>
 
-          <footer className="citizen-footer">
-
-            <div>
-              <span>{text.about}</span>
-              <span>{text.terms}</span>
-              <span>{text.privacy}</span>
-              <span>{text.help}</span>
-            </div>
-
-            <small>
-              {text.digitalPrototype}
-            </small>
-
-          </footer>
-
         </section>
-
-      </div>
-
-    </main>
+    </div>
   )
 }
 

@@ -4,85 +4,107 @@ import { clearAuthSession, getAuthUser } from '../auth/storage'
 function DashboardLayout() {
   const navigate = useNavigate()
   const user = getAuthUser()
-
   const role = user?.role || 'citizen'
 
   const navigation = {
     citizen: [
-      { label: 'Dashboard', icon: '⌂', path: '/citizen' },
-      { label: 'Apply for Schemes', icon: '▣', path: '/citizen' },
-      { label: 'My Applications', icon: '▤', path: '/citizen' },
-      { label: 'Consent & Data', icon: '◈', path: '/citizen/consents' },
-      { label: 'Help & Support', icon: '?', path: '/citizen' },
+      {
+        label: 'Home',
+        icon: '⌂',
+        path: '/citizen',
+      },
+      {
+        label: 'Consent & Data',
+        icon: '◈',
+        path: '/citizen/consents',
+      },
     ],
 
     officer: [
-      { label: 'Dashboard', icon: '⌂', path: '/officer' },
-      { label: 'Applications', icon: '▤', path: '/officer' },
-      { label: 'Verify & Approve', icon: '✓', path: '/officer' },
-      { label: 'Reports', icon: '▥', path: '/officer' },
-      { label: 'System Status', icon: '◉', path: '/officer' },
+      {
+        label: 'Dashboard',
+        icon: '⌂',
+        path: '/officer',
+      },
+      {
+        label: 'Applications',
+        icon: '▤',
+        path: '/officer',
+      },
     ],
 
     admin: [
-      { label: 'Dashboard', icon: '⌂', path: '/admin' },
-      { label: 'Manage Systems', icon: '▣', path: '/admin/systems' },
-      { label: 'Onboarding Studio', icon: '⚙', path: '/admin/studio' },
-      { label: 'Journey Management', icon: '↔', path: '/admin/journeys' },
-      { label: 'Access Log', icon: '▤', path: '/admin/audit' },
-      { label: 'Reports', icon: '▥', path: '/admin' },
-    ],
-
-    recruiter: [
-      { label: 'Dashboard', icon: '⌂', path: '/recruiter' },
-      { label: 'Candidates', icon: '♙', path: '/recruiter' },
-      { label: 'Applications', icon: '▤', path: '/recruiter' },
-      { label: 'Matching', icon: '◎', path: '/recruiter' },
-      { label: 'Reports', icon: '▥', path: '/recruiter' },
+      {
+        label: 'Dashboard',
+        icon: '⌂',
+        path: '/admin',
+      },
+      {
+        label: 'Connected Systems',
+        icon: '▣',
+        path: '/admin/systems',
+      },
+      {
+        label: 'Onboarding Studio',
+        icon: '⚙',
+        path: '/admin/studio',
+      },
+      {
+        label: 'Service Journeys',
+        icon: '↔',
+        path: '/admin/journeys',
+      },
+      {
+        label: 'Access Log',
+        icon: '▤',
+        path: '/admin/audit',
+      },
     ],
   }
 
   const items = navigation[role] || navigation.citizen
+
+  const roleName = {
+    citizen: 'Citizen',
+    officer: 'Government Official',
+    admin: 'Administrator',
+  }[role] || 'User'
 
   function handleLogout() {
     clearAuthSession()
     navigate('/login', { replace: true })
   }
 
-  const roleName = {
-    citizen: 'Citizen',
-    officer: 'Government Official',
-    admin: 'Administrator',
-    recruiter: 'Recruiter',
-  }[role] || 'User'
-
   return (
     <div className="setu-app-shell">
       <header className="setu-topbar">
         <div className="setu-brand">
-          <div className="setu-brand-mark">MS</div>
+          <div className="setu-brand-mark" aria-hidden="true">
+            MS
+          </div>
 
-          <div>
-            <strong>MahaSetu</strong>
-            <span>Unified Digital Services</span>
+          <div className="setu-brand-copy">
+            <strong>MAHA SETU</strong>
+            <span>Unified Government Services</span>
           </div>
         </div>
 
         <div className="setu-topbar-right">
-          <span className="setu-language">EN | मराठी</span>
-          <button className="setu-notification" type="button">
-            ♢
-          </button>
+          <span className="setu-language">
+            EN | मराठी
+          </span>
 
           <div className="setu-user">
-            <div className="setu-avatar">
+            <div className="setu-avatar" aria-hidden="true">
               {(user?.display_name || user?.username || 'U')
                 .charAt(0)
                 .toUpperCase()}
             </div>
 
             <div className="setu-user-info">
-              <strong>{user?.display_name || user?.username || 'User'}</strong>
+              <strong>
+                {user?.display_name || user?.username || 'User'}
+              </strong>
               <span>{roleName}</span>
             </div>
           </div>
@@ -104,7 +126,10 @@ function DashboardLayout() {
             <strong>{roleName}</strong>
           </div>
 
-          <nav className="setu-sidebar-nav">
+          <nav
+            className="setu-sidebar-nav"
+            aria-label="Primary navigation"
+          >
             {items.map((item) => (
               <NavLink
                 key={`${item.label}-${item.path}`}
@@ -114,14 +139,20 @@ function DashboardLayout() {
                   `setu-nav-item ${isActive ? 'active' : ''}`
                 }
               >
-                <span className="setu-nav-icon">{item.icon}</span>
+                <span
+                  className="setu-nav-icon"
+                  aria-hidden="true"
+                >
+                  {item.icon}
+                </span>
+
                 <span>{item.label}</span>
               </NavLink>
             ))}
           </nav>
 
           <div className="setu-sidebar-footer">
-            <span>SETU Prototype</span>
+            <strong>MAHA SETU</strong>
             <small>Unified Government Services</small>
           </div>
         </aside>
@@ -130,6 +161,16 @@ function DashboardLayout() {
           <Outlet />
         </main>
       </div>
+
+      <footer className="setu-shell-footer">
+        <span>
+          MAHA SETU · Unified Government Services
+        </span>
+
+        <span>
+          Conceptual prototype — not affiliated with Government of Maharashtra.
+        </span>
+      </footer>
     </div>
   )
 }
