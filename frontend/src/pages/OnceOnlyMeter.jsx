@@ -7,6 +7,23 @@ function OnceOnlyMeter({ metrics }) {
   const documentsNotUploaded =
     Number(metrics?.documents_not_uploaded) || 0
 
+  if (!total) {
+    return (
+      <section className="setu-application-card setu-once-only-card">
+        <p className="setu-application-eyebrow">
+          Faster applications
+        </p>
+
+        <h2>Information provided once</h2>
+
+        <p>
+          Reuse details will appear here when connected government
+          records are available for this application.
+        </p>
+      </section>
+    )
+  }
+
   const percentage = total
     ? Math.min(
         100,

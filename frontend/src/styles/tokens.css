@@ -1,0 +1,461 @@
+:root {
+  /* ==========================================================
+     MAHA SETU UI/UX AUDIT — SINGLE DESIGN TOKEN FOUNDATION
+     Additive only. Existing UI remains visually unchanged.
+     ========================================================== */
+
+  /* Brand */
+  --color-primary: #1d4ed8;
+  --color-primary-dark: #1e3a8a;
+  --color-accent: #d97706;
+  --color-accent-soft: #fff7ed;
+  --color-accent-ink: #92400e;
+
+  /* Surfaces */
+  --color-bg: #f8fafc;
+  --color-surface: #ffffff;
+  --color-surface-subtle: #f8fafc;
+  --color-border: #e2e8f0;
+  --color-border-strong: #cbd5e1;
+
+  /* Text */
+  --color-text: #0f172a;
+  --color-text-secondary: #475569;
+  --color-text-muted: #64748b;
+
+  /* Semantic states */
+  --color-success-bg: #dcfce7;
+  --color-success-text: #166534;
+
+  --color-warning-bg: #fef3c7;
+  --color-warning-text: #92400e;
+
+  --color-danger-bg: #fee2e2;
+  --color-danger-text: #b91c1c;
+
+  --color-info-bg: #dbeafe;
+  --color-info-text: #1e40af;
+
+  --color-neutral-bg: #f1f5f9;
+  --color-neutral-text: #475569;
+
+  /* Typography */
+  --font-family:
+    Inter,
+    "Noto Sans Devanagari",
+    "Noto Sans",
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+
+  --text-page-title: 700 clamp(24px, 3vw, 32px) / 1.2 var(--font-family);
+  --text-section-heading: 700 20px / 1.3 var(--font-family);
+  --text-subsection: 600 16px / 1.4 var(--font-family);
+  --text-body: 400 15px / 1.6 var(--font-family);
+  --text-label: 600 13px / 1.4 var(--font-family);
+  --text-caption: 400 12px / 1.4 var(--font-family);
+  --text-stat: 700 32px / 1.1 var(--font-family);
+
+  /* Spacing: 4px base */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+
+  /* Radius */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-pill: 999px;
+
+  /* Elevation */
+  --shadow-1: 0 1px 3px rgba(15, 23, 42, 0.06);
+  --shadow-2: 0 8px 24px rgba(15, 23, 42, 0.08);
+
+  /* Layout */
+  --sidebar-width: 248px;
+  --header-height: 72px;
+  --content-max-width: 1380px;
+
+  /* Responsive */
+  --breakpoint-tablet: 768px;
+  --breakpoint-desktop: 1200px;
+}
+
+/* BEGIN LEGACY EXACT-COLOR ALIASES */
+:root {
+  --color-focus: var(--color-primary);
+}
+/* END LEGACY EXACT-COLOR ALIASES */
+
+/* Generated compatibility aliases for migrated legacy colors. */
+:root {
+  --legacy-hex-1d4ed8: #1d4ed8;
+  --legacy-hex-1e3a8a: #1e3a8a;
+  --legacy-hex-f8fafc: #f8fafc;
+  --legacy-hex-ffffff: #ffffff;
+  --legacy-hex-0f172a: #0f172a;
+  --legacy-hex-64748b: #64748b;
+  --legacy-hex-e2e8f0: #e2e8f0;
+  --legacy-hex-b91c1c: #b91c1c;
+  --legacy-hex-fff: #fff;
+  --legacy-hex-dbeafe: #dbeafe;
+  --legacy-hex-fecaca: #fecaca;
+  --legacy-hex-fef2f2: #fef2f2;
+  --legacy-hex-f4f7fb: #f4f7fb;
+  --legacy-hex-0754a5: #0754a5;
+  --legacy-hex-0068bd: #0068bd;
+  --legacy-hex-20b9f4: #20b9f4;
+  --legacy-hex-0875d1: #0875d1;
+  --legacy-hex-f7f9fc: #f7f9fc;
+  --legacy-hex-edf2f8: #edf2f8;
+  --legacy-hex-172b4d: #172b4d;
+  --legacy-hex-1479eb: #1479eb;
+  --legacy-hex-0e2160: #0e2160;
+  --legacy-hex-475569: #475569;
+  --legacy-hex-d6dee9: #d6dee9;
+  --legacy-hex-526582: #526582;
+  --legacy-hex-0879e8: #0879e8;
+  --legacy-hex-075fbd: #075fbd;
+  --legacy-hex-0874df: #0874df;
+  --legacy-hex-d9e0e9: #d9e0e9;
+  --legacy-hex-9ca9ff: #9ca9ff;
+  --legacy-hex-4038d9: #4038d9;
+  --legacy-hex-334155: #334155;
+  --legacy-hex-4f46e5: #4f46e5;
+  --legacy-hex-dce4ee: #dce4ee;
+  --legacy-hex-eef3f8: #eef3f8;
+  --legacy-hex-e0e7ff: #e0e7ff;
+  --legacy-hex-fee2e2: #fee2e2;
+  --legacy-hex-eef2ff: #eef2ff;
+  --legacy-hex-eaf3fa: #eaf3fa;
+  --legacy-hex-12365c: #12365c;
+  --legacy-hex-075da8: #075da8;
+  --legacy-hex-075ba4: #075ba4;
+  --legacy-hex-07559b: #07559b;
+  --legacy-hex-2eb3f5: #2eb3f5;
+  --legacy-hex-78c7ee: #78c7ee;
+  --legacy-hex-d9effb: #d9effb;
+  --legacy-hex-f2f7fb: #f2f7fb;
+  --legacy-hex-edf4f9: #edf4f9;
+  --legacy-hex-e5ebf1: #e5ebf1;
+  --legacy-hex-5e7186: #5e7186;
+  --legacy-hex-126fc6: #126fc6;
+  --legacy-hex-0a70cf: #0a70cf;
+  --legacy-hex-1683e8: #1683e8;
+  --legacy-hex-1378d4: #1378d4;
+  --legacy-hex-102f59: #102f59;
+  --legacy-hex-66788c: #66788c;
+  --legacy-hex-e4c1c5: #e4c1c5;
+  --legacy-hex-fff5f5: #fff5f5;
+  --legacy-hex-9e343d: #9e343d;
+  --legacy-hex-29415e: #29415e;
+  --legacy-hex-d8e1e9: #d8e1e9;
+  --legacy-hex-1982de: #1982de;
+  --legacy-hex-718399: #718399;
+  --legacy-hex-193452: #193452;
+  --legacy-hex-8c9cad: #8c9cad;
+  --legacy-hex-2174c1: #2174c1;
+  --legacy-hex-1389ec: #1389ec;
+  --legacy-hex-0873d3: #0873d3;
+  --legacy-hex-718397: #718397;
+  --legacy-hex-116ec4: #116ec4;
+  --legacy-hex-1765b0: #1765b0;
+  --legacy-hex-76879a: #76879a;
+  --legacy-hex-edf1f5: #edf1f5;
+  --legacy-hex-fbfcfe: #fbfcfe;
+  --legacy-hex-6d7e91: #6d7e91;
+  --legacy-hex-dbe4ec: #dbe4ec;
+  --legacy-hex-607187: #607187;
+  --legacy-hex-176dbb: #176dbb;
+  --legacy-hex-dce5ed: #dce5ed;
+  --legacy-hex-65788c: #65788c;
+  --legacy-hex-f0f4f8: #f0f4f8;
+  --legacy-hex-496177: #496177;
+  --legacy-hex-dce9f3: #dce9f3;
+  --legacy-hex-f5faff: #f5faff;
+  --legacy-hex-155f9f: #155f9f;
+  --legacy-hex-61768a: #61768a;
+  --legacy-hex-107bdc: #107bdc;
+  --legacy-hex-8996a4: #8996a4;
+  --legacy-hex-76c9ef: #76c9ef;
+  --legacy-hex-79c9ee: #79c9ee;
+  --legacy-hex-c5e7f7: #c5e7f7;
+  --legacy-hex-eaf4fa: #eaf4fa;
+  --legacy-hex-e5f0f7: #e5f0f7;
+  --legacy-hex-e6ebf0: #e6ebf0;
+  --legacy-hex-5f7185: #5f7185;
+  --legacy-hex-096fce: #096fce;
+  --legacy-hex-d6e0e9: #d6e0e9;
+  --legacy-hex-718196: #718196;
+  --legacy-hex-687b8f: #687b8f;
+  --legacy-hex-d6e1ea: #d6e1ea;
+  --legacy-hex-cfdbe6: #cfdbe6;
+  --legacy-hex-456078: #456078;
+  --legacy-hex-f7fafc: #f7fafc;
+  --legacy-hex-126fc5: #126fc5;
+  --legacy-hex-728398: #728398;
+  --legacy-hex-e0e7ee: #e0e7ee;
+  --legacy-hex-cbd8eb: #cbd8eb;
+  --legacy-hex-f8fbff: #f8fbff;
+  --legacy-hex-4f1fd2: #4f1fd2;
+  --legacy-hex-f2f7ff: #f2f7ff;
+  --legacy-hex-aebfdb: #aebfdb;
+  --legacy-hex-6d32e8: #6d32e8;
+  --legacy-hex-718197: #718197;
+  --legacy-hex-0f2f68: #0f2f68;
+  --legacy-hex-12366f: #12366f;
+  --legacy-hex-eaf2ff: #eaf2ff;
+  --legacy-hex-1456b8: #1456b8;
+  --legacy-hex-dcfce7: #dcfce7;
+  --legacy-hex-166534: #166534;
+  --legacy-hex-fef3c7: #fef3c7;
+  --legacy-hex-92400e: #92400e;
+  --legacy-hex-0f3f8d: #0f3f8d;
+  --legacy-hex-cbd5e1: #cbd5e1;
+  --legacy-hex-93c5fd: #93c5fd;
+  --legacy-hex-dbe7f5: #dbe7f5;
+  --legacy-hex-bbf7d0: #bbf7d0;
+  --legacy-hex-f0fdf4: #f0fdf4;
+  --legacy-hex-dbe5f0: #dbe5f0;
+  --legacy-hex-1769e0: #1769e0;
+  --legacy-hex-38bdf8: #38bdf8;
+  --legacy-hex-94a3b8: #94a3b8;
+  --legacy-hex-b9cceb: #b9cceb;
+  --legacy-hex-fff1f2: #fff1f2;
+  --legacy-hex-be123c: #be123c;
+  --legacy-hex-fff7ed: #fff7ed;
+  --legacy-hex-c2410c: #c2410c;
+  --legacy-hex-eff6ff: #eff6ff;
+  --legacy-hex-bfdbfe: #bfdbfe;
+  --legacy-hex-fde68a: #fde68a;
+  --legacy-hex-fffbeb: #fffbeb;
+  --legacy-hex-a16207: #a16207;
+  --legacy-hex-15803d: #15803d;
+  --legacy-hex-1554b5: #1554b5;
+  --legacy-hex-991b1b: #991b1b;
+  --legacy-hex-dbe3ee: #dbe3ee;
+  --legacy-hex-0b5db7: #0b5db7;
+  --legacy-hex-08468a: #08468a;
+  --legacy-hex-10346b: #10346b;
+  --legacy-hex-f2a900: #f2a900;
+  --legacy-hex-f5f8fc: #f5f8fc;
+  --legacy-hex-10243e: #10243e;
+  --legacy-hex-dce5ef: #dce5ef;
+  --legacy-hex-16803c: #16803c;
+  --legacy-hex-a15c00: #a15c00;
+  --legacy-hex-b42318: #b42318;
+  --legacy-hex-084b96: #084b96;
+  --legacy-hex-0b63c4: #0b63c4;
+  --legacy-hex-edf2f7: #edf2f7;
+  --legacy-hex-52657d: #52657d;
+  --legacy-hex-eef5fd: #eef5fd;
+  --legacy-hex-e7f0ff: #e7f0ff;
+  --legacy-hex-7b91ad: #7b91ad;
+  --legacy-hex-5b80b7: #5b80b7;
+  --legacy-hex-7b8da5: #7b8da5;
+  --legacy-hex-e7eef6: #e7eef6;
+  --legacy-hex-5e728a: #5e728a;
+  --legacy-hex-7b91a8: #7b91a8;
+  --legacy-hex-e2eaf3: #e2eaf3;
+  --legacy-hex-7c8fa5: #7c8fa5;
+  --legacy-hex-42566d: #42566d;
+  --legacy-hex-7086a3: #7086a3;
+  --legacy-hex-416990: #416990;
+  --legacy-hex-123b70: #123b70;
+  --legacy-hex-1664b4: #1664b4;
+  --legacy-hex-7185a0: #7185a0;
+  --legacy-hex-dbe8f5: #dbe8f5;
+  --legacy-hex-f3f8ff: #f3f8ff;
+  --legacy-hex-e7f1ff: #e7f1ff;
+  --legacy-hex-165aa0: #165aa0;
+  --legacy-hex-143b6b: #143b6b;
+  --legacy-hex-607691: #607691;
+  --legacy-hex-d9e6f3: #d9e6f3;
+  --legacy-hex-7890ac: #7890ac;
+  --legacy-hex-173f6e: #173f6e;
+  --legacy-hex-dfe9f4: #dfe9f4;
+  --legacy-hex-70859f: #70859f;
+  --legacy-hex-e6edf5: #e6edf5;
+  --legacy-hex-dfe8f2: #dfe8f2;
+  --legacy-hex-cfdeec: #cfdeec;
+  --legacy-hex-7890a9: #7890a9;
+  --legacy-hex-8bc7ad: #8bc7ad;
+  --legacy-hex-edf9f2: #edf9f2;
+  --legacy-hex-19724c: #19724c;
+  --legacy-hex-7eaee3: #7eaee3;
+  --legacy-hex-edf5ff: #edf5ff;
+  --legacy-hex-1764ab: #1764ab;
+  --legacy-hex-657e98: #657e98;
+  --legacy-hex-70859e: #70859e;
+  --legacy-hex-5e7692: #5e7692;
+  --legacy-hex-8397ad: #8397ad;
+  --legacy-hex-4b6784: #4b6784;
+  --legacy-hex-e3ebf4: #e3ebf4;
+  --legacy-hex-f8fbfe: #f8fbfe;
+  --legacy-hex-2a5079: #2a5079;
+  --legacy-hex-1d446e: #1d446e;
+  --legacy-hex-8193a7: #8193a7;
+  --legacy-hex-73879f: #73879f;
+  --legacy-hex-71859e: #71859e;
+  --legacy-hex-164d87: #164d87;
+  --legacy-hex-7188a1: #7188a1;
+  --legacy-hex-2c72cf: #2c72cf;
+  --legacy-hex-71859d: #71859d;
+  --legacy-hex-dce8f4: #dce8f4;
+  --legacy-hex-f2f8ff: #f2f8ff;
+  --legacy-hex-6f849e: #6f849e;
+  --legacy-hex-d8e5f2: #d8e5f2;
+  --legacy-hex-7890aa: #7890aa;
+  --legacy-hex-275e93: #275e93;
+  --legacy-hex-eaf6ef: #eaf6ef;
+  --legacy-hex-24764f: #24764f;
+  --legacy-hex-72869e: #72869e;
+  --legacy-hex-315678: #315678;
+  --legacy-hex-70859d: #70859d;
+  --legacy-hex-2764a0: #2764a0;
+  --legacy-hex-8294a9: #8294a9;
+  --legacy-hex-e6edf4: #e6edf4;
+  --legacy-hex-8295aa: #8295aa;
+  --legacy-hex-254d74: #254d74;
+  --legacy-hex-e2eaf2: #e2eaf2;
+  --legacy-hex-f9fbfd: #f9fbfd;
+  --legacy-hex-526d89: #526d89;
+  --legacy-hex-e4ebf3: #e4ebf3;
+  --legacy-hex-8798ab: #8798ab;
+  --legacy-hex-7890a8: #7890a8;
+  --legacy-hex-e8eef5: #e8eef5;
+  --legacy-hex-5d7691: #5d7691;
+  --legacy-hex-8a9caf: #8a9caf;
+  --legacy-hex-506b86: #506b86;
+  --legacy-hex-dce6f1: #dce6f1;
+  --legacy-hex-efd8b2: #efd8b2;
+  --legacy-hex-fffdf8: #fffdf8;
+  --legacy-hex-cfe0f6: #cfe0f6;
+  --legacy-hex-1558af: #1558af;
+  --legacy-hex-65778f: #65778f;
+  --legacy-hex-e5ebf3: #e5ebf3;
+  --legacy-hex-708198: #708198;
+  --legacy-hex-193b70: #193b70;
+  --legacy-hex-efd9b5: #efd9b5;
+  --legacy-hex-fff8ea: #fff8ea;
+  --legacy-hex-805714: #805714;
+  --legacy-hex-876e46: #876e46;
+  --legacy-hex-e3eaf3: #e3eaf3;
+  --legacy-hex-29466f: #29466f;
+  --legacy-hex-173d76: #173d76;
+  --legacy-hex-10264d: #10264d;
+  --legacy-hex-064a9b: #064a9b;
+  --legacy-hex-075db9: #075db9;
+  --legacy-hex-f7c948: #f7c948;
+  --legacy-hex-17467c: #17467c;
+  --legacy-hex-a9d7ff: #a9d7ff;
+  --legacy-hex-ef4444: #ef4444;
+  --legacy-hex-0756a8: #0756a8;
+  --legacy-hex-dce6f2: #dce6f2;
+  --legacy-hex-eaf3ff: #eaf3ff;
+  --legacy-hex-0759ad: #0759ad;
+  --legacy-hex-15345f: #15345f;
+  --legacy-hex-506783: #506783;
+  --legacy-hex-376fae: #376fae;
+  --legacy-hex-8a9bb0: #8a9bb0;
+  --legacy-hex-eef6ff: #eef6ff;
+  --legacy-hex-075bc0: #075bc0;
+  --legacy-hex-1476dc: #1476dc;
+  --legacy-hex-d8ebff: #d8ebff;
+  --legacy-hex-5b6e86: #5b6e86;
+  --legacy-hex-f7faff: #f7faff;
+  --legacy-hex-7d8fa7: #7d8fa7;
+  --legacy-hex-b0bdcc: #b0bdcc;
+  --legacy-hex-f7fbff: #f7fbff;
+  --legacy-hex-eef7ff: #eef7ff;
+  --legacy-hex-1464b6: #1464b6;
+  --legacy-hex-102c55: #102c55;
+  --legacy-hex-6d8098: #6d8098;
+  --legacy-hex-2b70b7: #2b70b7;
+  --legacy-hex-e1efff: #e1efff;
+  --legacy-hex-1767b8: #1767b8;
+  --legacy-hex-16355f: #16355f;
+  --legacy-hex-7b8da3: #7b8da3;
+  --legacy-hex-0966c3: #0966c3;
+  --legacy-hex-dce7f2: #dce7f2;
+  --legacy-hex-f0f7ff: #f0f7ff;
+  --legacy-hex-eaf4ff: #eaf4ff;
+  --legacy-hex-edf6ff: #edf6ff;
+  --legacy-hex-1768b6: #1768b6;
+  --legacy-hex-173762: #173762;
+  --legacy-hex-72849a: #72849a;
+  --legacy-hex-0867c8: #0867c8;
+  --legacy-hex-0754a4: #0754a4;
+  --legacy-hex-18385f: #18385f;
+  --legacy-hex-8595a9: #8595a9;
+  --legacy-hex-e5f7e9: #e5f7e9;
+  --legacy-hex-16813d: #16813d;
+  --legacy-hex-def7e7: #def7e7;
+  --legacy-hex-8796aa: #8796aa;
+  --legacy-hex-0866bd: #0866bd;
+  --legacy-hex-8998aa: #8998aa;
+  --legacy-hex-dfe8f1: #dfe8f1;
+  --legacy-hex-173862: #173862;
+  --legacy-hex-8291a5: #8291a5;
+  --legacy-hex-dce8f3: #dce8f3;
+  --legacy-hex-eee5ff: #eee5ff;
+  --legacy-hex-12345f: #12345f;
+  --legacy-hex-8b9aac: #8b9aac;
+  --legacy-hex-ccd8e6: #ccd8e6;
+  --legacy-hex-0965bb: #0965bb;
+  --legacy-hex-0a68c4: #0a68c4;
+  --legacy-hex-16365f: #16365f;
+  --legacy-hex-8494a8: #8494a8;
+  --legacy-hex-f4f9ff: #f4f9ff;
+  --legacy-hex-e1edf9: #e1edf9;
+  --legacy-hex-75869b: #75869b;
+  --legacy-hex-29466b: #29466b;
+  --legacy-hex-8a99aa: #8a99aa;
+  --legacy-hex-e3f7ea: #e3f7ea;
+  --legacy-hex-1a8043: #1a8043;
+  --legacy-hex-0765c4: #0765c4;
+  --legacy-hex-0b78dc: #0b78dc;
+  --legacy-hex-0755a6: #0755a6;
+  --legacy-hex-eaf8ee: #eaf8ee;
+  --legacy-hex-1c7d40: #1c7d40;
+  --legacy-hex-25466c: #25466c;
+  --legacy-hex-8898aa: #8898aa;
+  --legacy-hex-d7e6f4: #d7e6f4;
+  --legacy-hex-dff5e7: #dff5e7;
+  --legacy-hex-188244: #188244;
+  --legacy-hex-15365f: #15365f;
+  --legacy-hex-eee6ff: #eee6ff;
+  --legacy-hex-15375f: #15375f;
+  --legacy-hex-7c8da2: #7c8da2;
+  --legacy-hex-1767b5: #1767b5;
+  --legacy-hex-8a99ab: #8a99ab;
+  --legacy-hex-63768e: #63768e;
+  --legacy-hex-d2deeb: #d2deeb;
+  --legacy-hex-8494a7: #8494a7;
+  --legacy-hex-17a24c: #17a24c;
+  --legacy-hex-178342: #178342;
+  --legacy-hex-0870d0: #0870d0;
+  --legacy-hex-0967ba: #0967ba;
+  --legacy-hex-27a957: #27a957;
+  --legacy-hex-74869c: #74869c;
+  --legacy-hex-7b8ca0: #7b8ca0;
+  --legacy-hex-29496f: #29496f;
+  --legacy-hex-d9e8f5: #d9e8f5;
+  --legacy-hex-f1f8ff: #f1f8ff;
+  --legacy-hex-55708e: #55708e;
+  --legacy-hex-185a99: #185a99;
+  --legacy-hex-d5e1ed: #d5e1ed;
+  --legacy-hex-45627f: #45627f;
+  --legacy-hex-91b8dd: #91b8dd;
+  --legacy-hex-0965b9: #0965b9;
+  --legacy-hex-173760: #173760;
+  --legacy-hex-dce6f0: #dce6f0;
+}

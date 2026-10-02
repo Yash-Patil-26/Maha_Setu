@@ -861,7 +861,35 @@ function AdminStudioPage() {
                 <div>
                   <span>Requirement</span>
                   <strong>
-                    TESTED → ACTIVE
+                    TESTED{' '}
+                    <span
+                      className="setu-stage-arrow"
+                      aria-hidden="true"
+                    >
+                      <svg
+                        viewBox="0 0 20 20"
+                        width="14"
+                        height="14"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                        focusable="false"
+                      >
+                        <path
+                          d="M3 10h12"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          strokeLinecap="round"
+                        />
+                        <path
+                          d="m11 5 5 5-5 5"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </span>{' '}
+                    ACTIVE
                   </strong>
                 </div>
               </div>

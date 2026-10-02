@@ -1,16 +1,21 @@
 import DashboardLayout from './pages/DashboardLayout.jsx'
 import OfficerDashboard from './pages/OfficerDashboard.jsx'
 import OfficerApplicationPage from './pages/OfficerApplicationPage.jsx'
+import OfficerApplicationsPage from './pages/OfficerApplicationsPage.jsx'
+import OfficerDecisionsPage from './pages/OfficerDecisionsPage.jsx'
 import AdminDashboard from './pages/AdminDashboard.jsx'
 import AdminSystemsPage from './pages/AdminSystemsPage.jsx'
 import AdminStudioPage from './pages/AdminStudioPage.jsx'
 import AdminAuditPage from './pages/AdminAuditPage.jsx'
 import AdminJourneysPage from './pages/AdminJourneysPage.jsx'
-
+import AdminMetricsPage from './pages/AdminMetricsPage.jsx'
 import CitizenDashboard from './pages/CitizenDashboard.jsx'
+import CitizenServicesPage from './pages/CitizenServicesPage.jsx'
 import CitizenApplyPage from './pages/CitizenApplyPage.jsx'
+import CitizenApplicationsPage from './pages/CitizenApplicationsPage.jsx'
 import CitizenApplicationPage from './pages/CitizenApplicationPage.jsx'
 import CitizenConsentPage from './pages/CitizenConsentPage.jsx'
+import CitizenHelpPage from './pages/CitizenHelpPage.jsx'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import LoginPage from './pages/LoginPage.jsx'
 import ProtectedRoute from './auth/ProtectedRoute.jsx'
@@ -25,54 +30,53 @@ function App() {
       <Route element={<ProtectedRoute roles={['citizen']} />}>
         <Route element={<DashboardLayout />}>
           <Route path="/citizen" element={<CitizenDashboard />} />
+          <Route path="/citizen/apply" element={<CitizenServicesPage />} />
           <Route
             path="/citizen/apply/:journeyId"
             element={<CitizenApplyPage />}
+          />
+          <Route
+            path="/citizen/applications"
+            element={<CitizenApplicationsPage />}
           />
           <Route
             path="/citizen/applications/:id"
             element={<CitizenApplicationPage />}
           />
           <Route path="/citizen/consents" element={<CitizenConsentPage />} />
+          <Route path="/citizen/help" element={<CitizenHelpPage />} />
         </Route>
       </Route>
-
 
       <Route element={<ProtectedRoute roles={['officer']} />}>
         <Route element={<DashboardLayout />}>
           <Route path="/officer" element={<OfficerDashboard />} />
           <Route
+            path="/officer/applications"
+            element={<OfficerApplicationsPage />}
+          />
+          <Route
             path="/officer/applications/:id"
             element={<OfficerApplicationPage />}
+          />
+          <Route
+            path="/officer/decisions"
+            element={<OfficerDecisionsPage />}
           />
         </Route>
       </Route>
 
       <Route element={<ProtectedRoute roles={['admin']} />}>
         <Route element={<DashboardLayout />}>
-          <Route
-            path="/admin" element={<AdminDashboard />}
-          />
-
-          <Route
-            path="/admin/systems"
-            element={<AdminSystemsPage />}
-          />
-
-          <Route
-            path="/admin/studio"
-            element={<AdminStudioPage />}
-          />
-          <Route
-            path="/admin/audit"
-            element={<AdminAuditPage />}
-          />
-          <Route
-            path="/admin/journeys"
-            element={<AdminJourneysPage />}
-          />
+          <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/admin/systems" element={<AdminSystemsPage />} />
+          <Route path="/admin/studio" element={<AdminStudioPage />} />
+          <Route path="/admin/audit" element={<AdminAuditPage />} />
+          <Route path="/admin/journeys" element={<AdminJourneysPage />} />
+          <Route path="/admin/metrics" element={<AdminMetricsPage />} />
         </Route>
       </Route>
+
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   )

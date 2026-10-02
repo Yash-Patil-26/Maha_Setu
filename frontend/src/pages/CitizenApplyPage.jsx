@@ -1,32 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { apiRequest } from '../api/client.js'
-
-const SERVICE_META = {
-  scholarship_v1: {
-    title: 'Post-Matric Scholarship',
-    description:
-      'Apply using information already held by connected government departments.',
-    purpose: 'scholarship_eligibility',
-    sources: [
-      'Revenue Department',
-      'Education Department',
-    ],
-    information:
-      'Income and education records needed to check eligibility.',
-  },
-  youth_enterprise_v1: {
-    title: 'Youth Enterprise Support',
-    description:
-      'Apply using connected training and employment information.',
-    purpose: 'youth_enterprise_eligibility',
-    sources: [
-      'Skills & Employment Registry',
-    ],
-    information:
-      'Training and employment records needed to support eligibility.',
-  },
-}
+import { SERVICE_META } from '../constants/serviceCatalog.js'
 
 function CitizenApplyPage() {
   const { journeyId } = useParams()
@@ -236,7 +211,23 @@ function CitizenApplyPage() {
         <section className="setu-flow-card setu-flow-consent-card">
           <div className="setu-flow-card-heading">
             <div className="setu-flow-icon" aria-hidden="true">
-              ✓
+              <svg
+                viewBox="0 0 20 20"
+                width="20"
+                height="20"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                aria-hidden="true"
+                focusable="false"
+              >
+                <path
+                  d="m4 10 4 4 8-8"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
             </div>
 
             <div>
@@ -249,6 +240,15 @@ function CitizenApplyPage() {
               <p>
                 {service.information}
               </p>
+
+              <div className="setu-consent-data-summary">
+                <strong>You are sharing:</strong>
+                <ul className="setu-consent-data-list">
+                  {service.dataCategories.map((category) => (
+                    <li key={category}>{category}</li>
+                  ))}
+                </ul>
+              </div>
             </div>
           </div>
 
@@ -258,7 +258,7 @@ function CitizenApplyPage() {
             </strong>
 
             <p>
-              Your permission applies to this service.
+              Your permission applies only to this service.
               You can review or stop data sharing later
               from <Link to="/citizen/consents">Consent &amp; Data</Link>.
             </p>

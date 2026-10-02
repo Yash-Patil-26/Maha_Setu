@@ -4,23 +4,10 @@ import { apiRequest } from '../api/client.js'
 import { useNavigate } from 'react-router-dom'
 
 import { getAuthUser } from '../auth/storage'
+import { SERVICE_META } from '../constants/serviceCatalog.js'
+import StatusBadge from '../components/StatusBadge.jsx'
 
 import '../citizen-ui.css'
-
-const SERVICE_META = {
-  scholarship_v1: {
-    title: 'Post-Matric Scholarship',
-    marathi: 'पदव्युत्तर शिष्यवृत्ती',
-    description:
-      'Check eligibility and apply using consented Revenue and Education records.',
-  },
-  youth_enterprise_v1: {
-    title: 'Youth Enterprise Support',
-    marathi: 'युवा उद्योजक सहाय्य',
-    description:
-      'Use connected training records to support youth enterprise eligibility.',
-  },
-}
 
 function CitizenDashboard() {
   const navigate = useNavigate()
@@ -86,18 +73,18 @@ function CitizenDashboard() {
   }
 
   const text = {
-    dashboard: isEnglish ? 'Dashboard' : '????????',
-    apply: isEnglish ? 'Apply for Schemes' : '?????????? ????',
-    applications: isEnglish ? 'My Applications' : '???? ????',
-    consent: isEnglish ? 'Consent & Data' : '????? ? ????',
-    profile: isEnglish ? 'My Profile' : '???? ????????',
-    help: isEnglish ? 'Help & Support' : '??? ? ??????',
+    dashboard: isEnglish ? 'Dashboard' : 'डॅशबोर्ड',
+    apply: isEnglish ? 'Apply for Schemes' : 'सेवा अर्ज',
+    applications: isEnglish ? 'My Applications' : 'सुलभ सेवा',
+    consent: isEnglish ? 'Consent & Data' : 'संमती व डेटा',
+    profile: isEnglish ? 'My Profile' : 'माझे प्रोफाइल',
+    help: isEnglish ? 'Help & Support' : 'मदत व सहाय्य',
 
-    citizen: isEnglish ? 'Citizen' : '??????',
+    citizen: isEnglish ? 'Citizen' : 'कौशल्य',
 
     citizenServices: isEnglish
       ? 'Citizen Services'
-      : '?????? ????',
+      : 'नागरिक सेवा',
 
     greeting: isEnglish
       ? `Good Morning, ${displayName}`
@@ -105,71 +92,71 @@ function CitizenDashboard() {
 
     welcomeDescription: isEnglish
       ? 'Access government services, apply for schemes and track your applications from one place.'
-      : '?????? ???? ?????, ?????????? ???? ??? ??? ??????? ???????? ?????? ???? ?????? ????.',
+      : 'शासकीय सेवा मिळवा, योजनांसाठी अर्ज करा आणि तुमचे अर्ज एकाच ठिकाणी पाहा.',
 
     popularSchemes: isEnglish
       ? 'Popular Schemes'
-      : '???????? ?????',
+      : 'लोकप्रिय योजना',
 
     exploreServices: isEnglish
       ? 'Explore available government services'
-      : '?????? ?????? ???? ???',
+      : 'उपलब्ध शासकीय सेवा पहा',
 
     viewAll: isEnglish
       ? 'View All'
-      : '???? ???',
+      : 'सर्व पहा',
 
     applyNow: isEnglish
       ? 'Apply Now'
-      : '??? ???? ???',
+      : 'अर्ज करा',
 
     yourApplications: isEnglish
       ? 'Your Applications'
-      : '????? ????',
+      : 'तुमचे अर्ज',
 
     trackApplications: isEnglish
       ? 'Track the progress of your submitted applications'
-      : '??????? ???? ???????? ???????? ?????? ???',
+      : 'सादर केलेल्या अर्जांची प्रगती पाहा',
 
     postMatric: isEnglish
       ? 'Post Matric Scholarship'
-      : '???????????? ???????????',
+      : 'मॅट्रिकोत्तर शिष्यवृत्ती',
 
     scholarshipApplication: isEnglish
       ? 'Scholarship Application'
-      : '??????????? ????',
+      : 'शिष्यवृत्ती अर्ज',
 
     inProgress: isEnglish
       ? 'In Progress'
-      : '???????????',
+      : 'प्रगतीपथावर',
 
     updatedToday: isEnglish
       ? 'Last updated today'
-      : '?? ?????? ??????',
+      : 'आज अद्ययावत',
 
     emptyApplication: isEnglish
       ? 'Your latest application will appear here after submission.'
-      : '???? ???? ?????????? ????? ?????? ???? ???? ?????.',
+      : 'सादर केल्यानंतर तुमचा नवीन अर्ज येथे दिसेल.',
 
     dataControl: isEnglish
       ? 'Your Data, Your Control'
-      : '????? ????, ????? ????????',
+      : 'तुमचा डेटा, तुमचे नियंत्रण',
 
     dataControlDescription: isEnglish
       ? 'You control consent for accessing your information from government departments.'
-      : '?????? ??????????? ????? ?????? ???????????? ????? ???????? ???????? ?????????? ???.',
+      : 'शासकीय विभागांकडून तुमच्या माहितीच्या प्रवेशासाठी संमती तुम्ही नियंत्रित करता.',
 
     fasterApplications: isEnglish
       ? 'Faster Applications'
-      : '??? ???? ?????????',
+      : 'जलद अर्ज',
 
     fasterApplicationsDescription: isEnglish
       ? 'Reduce repeated document submission with secure data sharing.'
-      : '???????? ???? ??????????? ??????? ????????? ???? ???????? ??? ??? ???.',
+      : 'सुरक्षित डेटा शेअरिंगमुळे पुन्हा पुन्हा कागदपत्रे देण्याची गरज कमी करा.',
 
     transparentTracking: isEnglish
       ? 'Transparent Tracking'
-      : '???????? ????????',
+      : 'पारदर्शक प्रगती',
 
     transparentTrackingDescription: isEnglish
       ? 'Track your application status at every stage.'
@@ -177,21 +164,21 @@ function CitizenDashboard() {
 
     seamlessServices: isEnglish
       ? 'Seamless Services'
-      : '???? ????',
+      : 'सुलभ सेवा',
 
     strongerMaharashtra: isEnglish
       ? 'Stronger Maharashtra'
-      : '?????? ??????????',
+      : 'सक्षम महाराष्ट्र',
 
-    about: isEnglish ? 'About MahaSetu' : '??? ?????????',
-    terms: isEnglish ? 'Terms of Use' : '????????? ???',
-    privacy: isEnglish ? 'Privacy Policy' : '???????? ????',
+    about: isEnglish ? 'About MahaSetu' : 'महा सेतूबद्दल',
+    terms: isEnglish ? 'Terms of Use' : 'वापराच्या अटी',
+    privacy: isEnglish ? 'Privacy Policy' : 'गोपनीयता धोरण',
 
     digitalPrototype: isEnglish
       ? 'MahaSetu - Digital Service Integration Prototype'
       : '??? ???? - ?????? ???? ????????? ??????????',
 
-    logout: isEnglish ? 'Logout' : '????? ???',
+    logout: isEnglish ? 'Logout' : 'बाहेर पडा',
   }
 
   return (
@@ -257,7 +244,7 @@ function CitizenDashboard() {
           </section>
 
           {/* POPULAR SCHEMES */}
-          <div className="section-heading">
+          <div id="services-section" className="section-heading">
 
             <div>
               <h2>
@@ -281,72 +268,7 @@ function CitizenDashboard() {
 
           <section className="scheme-grid">
 
-            <section
-            className="setu-content-card"
-            aria-labelledby="applications-heading"
-          >
-            <div className="setu-card-heading">
-              <div>
-                <h2 id="applications-heading">My Applications</h2>
-                <p>Live application status from SETU.</p>
-              </div>
-            </div>
-
-            {loading && (
-              <p aria-live="polite">Loading your applications…</p>
-            )}
-
-            {!loading && error && (
-              <p className="form-error" role="alert">
-                {error}
-              </p>
-            )}
-
-            {!loading && !error && applications.length === 0 && (
-              <div className="setu-empty-state">
-                <h3>No applications yet</h3>
-                <p>Start a service application below.</p>
-              </div>
-            )}
-
-            {!loading && !error && applications.length > 0 && (
-              <div className="application-list">
-                {applications.map((application) => {
-                  const applicationId = application.id
-
-                  return (
-                    <article
-                      className="application-list-item"
-                      key={applicationId}
-                    >
-                      <div>
-                        <p className="setu-breadcrumb">SETU Application</p>
-                        <h3>Application #{applicationId}</h3>
-                        <p>
-                          Status:{' '}
-                          <strong>{application.status || 'UNKNOWN'}</strong>
-                        </p>
-                        {application.correlation_id && (
-                          <p>
-                            Reference: {application.correlation_id}
-                          </p>
-                        )}
-                      </div>
-
-                      <Link
-                        className="button button-secondary"
-                        to={`/citizen/applications/${applicationId}`}
-                      >
-                        View application
-                      </Link>
-                    </article>
-                  )
-                })}
-              </div>
-            )}
-          </section>
-
-          {Object.entries(SERVICE_META).map(([journeyId, service], index) => (
+            {Object.entries(SERVICE_META).map(([journeyId, service], index) => (
 
               <article
                 className={`scheme-card scheme-card-${index + 1}`}
@@ -365,14 +287,14 @@ function CitizenDashboard() {
                   {index === 0
                     ? isEnglish
                       ? 'Students'
-                      : '??????????'
+                      : 'विद्यार्थी'
                     : index === 1
                       ? isEnglish
                         ? 'Employment'
-                        : '??????'
+                        : 'कौशल्य'
                       : isEnglish
                         ? 'Skills'
-                        : '??????'}
+                        : 'कौशल्य'}
                 </span>
 
                 <h3>
@@ -399,7 +321,7 @@ function CitizenDashboard() {
           </section>
 
           {/* APPLICATIONS */}
-          <div className="section-heading application-heading">
+          <div id="applications-heading" className="section-heading application-heading">
             <div>
               <h2>
                 {text.yourApplications}
@@ -437,23 +359,6 @@ function CitizenDashboard() {
 
                 const applicationTitle =
                   `${serviceTitle} Application`
-
-                const statusLabels = {
-                  CREATED: 'Application started',
-                  IN_PROGRESS: 'In Progress',
-                  BLOCKED_CONSENT: 'Consent required',
-                  PAUSED_EXCEPTION: 'Processing paused',
-                  NEEDS_REVIEW: 'Needs review',
-                  SUBMITTED: 'Submitted',
-                  APPROVED: 'Approved',
-                  REJECTED: 'Not approved',
-                  NOT_ELIGIBLE: 'Not eligible',
-                }
-
-                const status =
-                  statusLabels[application.status] ||
-                  application.status ||
-                  'Processing'
 
                 let updatedLabel = 'Recently updated'
 
@@ -494,9 +399,10 @@ function CitizenDashboard() {
                       </span>
                     </div>
 
-                    <span className="status-pill status-progress">
-                      {status}
-                    </span>
+                    <StatusBadge
+                      status={application.status}
+                      className="citizen-application-status"
+                    />
 
                     <span className="application-date">
                       {updatedLabel}
@@ -521,7 +427,7 @@ function CitizenDashboard() {
             <article className="info-card">
 
               <span className="info-icon">
-                &#128274;
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true" focusable="false"><rect x="5" y="10" width="14" height="10" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /></svg>
               </span>
 
               <div>
@@ -539,7 +445,7 @@ function CitizenDashboard() {
             <article className="info-card">
 
               <span className="info-icon">
-                &#9889;
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true" focusable="false"><path d="M13 2 5 13h6l-1 9 8-11h-6l1-9Z" /></svg>
               </span>
 
               <div>
@@ -557,7 +463,7 @@ function CitizenDashboard() {
             <article className="info-card">
 
               <span className="info-icon">
-                &#10003;
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false"><path d="m5 12 4 4L19 6" /></svg>
               </span>
 
               <div>

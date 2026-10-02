@@ -107,7 +107,7 @@ function AdminAuditPage() {
           onClick={loadLogs}
           disabled={loading}
         >
-          {loading ? 'Refreshing...' : '↻ Refresh'}
+          {loading ? 'Refreshing...' : 'Refresh'}
         </button>
       </div>
 
@@ -160,7 +160,6 @@ function AdminAuditPage() {
             <option value="Government Official">
               Government Official
             </option>
-            <option value="Recruiter">Recruiter</option>
             <option value="System">System</option>
             <option value="Citizen">Citizen</option>
           </select>

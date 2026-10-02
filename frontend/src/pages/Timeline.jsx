@@ -1,47 +1,19 @@
-const STEP_LABELS = {
-  fetch_income: 'Income verified',
-  fetch_enrolment: 'Education record verified',
-  evaluate_eligibility: 'Eligibility checked',
-  submit_bss: 'Application submitted',
-  await_decision: 'Decision pending',
-}
-
-const STEP_STATUS_LABELS = {
-  PENDING: 'Not started',
-  RUNNING: 'In progress',
-  DONE: 'Completed',
-  FAILED: 'Could not complete',
-  WAITING: 'Waiting',
-  SKIPPED: 'Not required',
-}
-
-const SYSTEM_LABELS = {
-  REV: 'Revenue Department',
-  EDU: 'Education Department',
-  BSS: 'Benefit service',
-  SKL: 'Skills & Employment Registry',
-}
-
-function humanizeToken(value) {
-  if (value == null || value === '') {
-    return '—'
-  }
-
-  return String(value)
-    .replace(/[_-]+/g, ' ')
-    .replace(/\b\w/g, (character) => character.toUpperCase())
-}
+import {
+  getStepLabel,
+  getStepStatusLabel,
+} from '../constants/stepLabels.js'
+import { getSystemLabel } from '../constants/fieldLabels.js'
 
 function formatStep(value) {
-  return STEP_LABELS[value] || humanizeToken(value)
+  return getStepLabel(value)
 }
 
 function formatStatus(value) {
-  return STEP_STATUS_LABELS[value] || humanizeToken(value)
+  return getStepStatusLabel(value)
 }
 
 function formatSystem(value) {
-  return SYSTEM_LABELS[value] || humanizeToken(value)
+  return getSystemLabel(value)
 }
 
 function Timeline({ steps }) {
@@ -80,7 +52,27 @@ function Timeline({ steps }) {
               className="setu-timeline-marker"
               aria-hidden="true"
             >
-              {isDone ? '✓' : index + 1}
+              {isDone ? (
+                <svg
+                  viewBox="0 0 20 20"
+                  width="15"
+                  height="15"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  aria-hidden="true"
+                  focusable="false"
+                >
+                  <path
+                    d="m4 10 4 4 8-8"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              ) : (
+                index + 1
+              )}
             </div>
 
             <div className="setu-timeline-content">

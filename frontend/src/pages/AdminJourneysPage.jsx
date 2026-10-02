@@ -21,7 +21,7 @@ const STEP_TITLE_LABELS = {
   fetch_training: 'Verify training record',
   evaluate_eligibility: 'Check eligibility',
   submit_bss: 'Submit application',
-  await_decision: 'Await decision',
+  await_decision: 'Wait for officer decision',
 }
 
 const ENTITY_LABELS = {

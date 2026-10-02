@@ -1,13 +1,16 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { apiRequest } from '../api/client.js'
+import StatusBadge from '../components/StatusBadge.jsx'
+import { ATTENTION_STATUSES, getStatusLabel } from '../constants/statusLabels.js'
+import { getJourneyLabel } from '../constants/journeyLabels.js'
 
 const formatApplication = (application) => ({
   id: application.id,
-  name: 'Citizen applicant',
-  scheme: application.journey_id,
+  name: application.applicant_name || 'Citizen',
+  scheme: getJourneyLabel(application.journey_id),
   status: application.status,
-  priority: application.status === 'CREATED' ? 'High' : 'Medium',
+  priority: ATTENTION_STATUSES.has(application.status) ? 'High' : 'Medium',
   date: new Date(application.created_at).toLocaleDateString('en-GB', {
     day: '2-digit',
     month: 'short',
@@ -46,14 +49,14 @@ function OfficerDashboard() {
   }, [])
 
   const attentionItems = applications
-    .filter((application) => application.status === 'CREATED')
+    .filter((application) => ATTENTION_STATUSES.has(application.status))
     .slice(0, 3)
     .map((application) => ({
       id: application.id,
       priority: application.priority,
       type: 'Application',
       title: `${application.name} / ${application.scheme}`,
-      description: `Status: ${application.status}`,
+      description: getStatusLabel(application.status),
     }))
   return (
     <main className="setu-dashboard-page">
@@ -82,13 +85,13 @@ function OfficerDashboard() {
 
         <article className="setu-stat-card">
           <span>Pending</span>
-          <strong>{applications.filter((application) => application.status === 'CREATED').length}</strong>
+          <strong>{applications.filter((application) => ATTENTION_STATUSES.has(application.status)).length}</strong>
           <small>Need action</small>
         </article>
 
         <article className="setu-stat-card">
           <span>In Review</span>
-          <strong>{applications.filter((application) => application.status === 'IN_REVIEW').length}</strong>
+          <strong>{applications.filter((application) => application.status === 'NEEDS_REVIEW').length}</strong>
           <small>Currently processing</small>
         </article>
 
@@ -136,7 +139,7 @@ function OfficerDashboard() {
 
               <p>{item.description}</p>
 
-              <strong>{item.id}</strong>
+              <strong>APP-{String(item.id).padStart(6, '0')}</strong>
 
               <button
                 className="setu-view-button"
@@ -217,13 +220,7 @@ function OfficerDashboard() {
                     </td>
 
                     <td>
-                      <span
-                        className={`setu-status ${application.status
-                          .toLowerCase()
-                          .replaceAll(' ', '-')}`}
-                      >
-                        {application.status}
-                      </span>
+                      <StatusBadge status={application.status} />
                     </td>
 
                     <td>{application.date}</td>

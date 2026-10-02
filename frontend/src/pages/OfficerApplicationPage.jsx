@@ -1,43 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { apiRequest } from '../api/client.js'
-
-function formatOfficerScheme(value) {
-  const labels = {
-    scholarship_v1: 'Scholarship Service',
-    youth_enterprise_v1: 'Youth Enterprise Service',
-  }
-
-  return labels[value] || value
-}
-
-function formatOfficerStatus(value) {
-  const labels = {
-    CREATED: 'Application started',
-    IN_PROGRESS: 'In progress',
-    BLOCKED_CONSENT: 'Consent required',
-    PAUSED_EXCEPTION: 'Processing paused',
-    NEEDS_REVIEW: 'Needs review',
-    SUBMITTED: 'Submitted',
-    APPROVED: 'Approved',
-    REJECTED: 'Not approved',
-    NOT_ELIGIBLE: 'Not eligible',
-  }
-
-  return labels[value] || value
-}
-
-function formatOfficerStep(value) {
-  const labels = {
-    fetch_income: 'Verifying income',
-    fetch_enrolment: 'Verifying education record',
-    evaluate_eligibility: 'Checking eligibility',
-    submit_bss: 'Submitted to benefit service',
-    await_decision: 'Awaiting decision',
-  }
-
-  return labels[value] || value
-}
+import StatusBadge from '../components/StatusBadge.jsx'
+import { getJourneyLabel } from '../constants/journeyLabels.js'
+import { getStepLabel } from '../constants/stepLabels.js'
 
 function OfficerApplicationPage() {
   const { id } = useParams()
@@ -52,8 +18,8 @@ function OfficerApplicationPage() {
   const applyApplicationData = useCallback((data) => {
     setApplication({
       ...data,
-      name: 'Citizen applicant',
-      scheme: data.journey_id,
+      name: data.applicant_name || 'Citizen',
+      scheme: getJourneyLabel(data.journey_id),
       submitted: new Date(data.created_at).toLocaleDateString('en-GB', {
         day: '2-digit',
         month: 'short',
@@ -186,22 +152,6 @@ function OfficerApplicationPage() {
     )
   }
 
-  const stepCount = Array.isArray(application.steps)
-    ? application.steps.length
-    : 0
-
-  const provenanceCount =
-    application.provenance &&
-    typeof application.provenance === 'object'
-      ? Object.keys(application.provenance).length
-      : 0
-
-  const externalReferenceCount =
-    application.external_refs &&
-    typeof application.external_refs === 'object'
-      ? Object.keys(application.external_refs).length
-      : 0
-
   return (
     <main className="setu-dashboard-page">
       <div className="setu-page-heading">
@@ -222,7 +172,30 @@ function OfficerApplicationPage() {
           type="button"
           onClick={() => navigate('/officer')}
         >
-          ← Back to Applications
+          <svg
+            viewBox="0 0 20 20"
+            width="16"
+            height="16"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            aria-hidden="true"
+            focusable="false"
+          >
+            <path
+              d="M15 10H5"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+            />
+            <path
+              d="m9 5-5 5 5 5"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+          {' '}Back to Applications
         </button>
       </div>
 
@@ -233,13 +206,7 @@ function OfficerApplicationPage() {
             <h2>APP-{String(application.id).padStart(6, '0')}</h2>
           </div>
 
-          <span
-            className={`setu-status ${application.status
-              .toLowerCase()
-              .replaceAll(' ', '-')}`}
-          >
-            {formatOfficerStatus(application.status)}
-          </span>
+          <StatusBadge status={application.status} />
         </div>
       </section>
 
@@ -261,9 +228,7 @@ function OfficerApplicationPage() {
 
           <div>
             <span>Service</span>
-            <strong>
-              {formatOfficerScheme(application.journey_id)}
-            </strong>
+            <strong>{getJourneyLabel(application.journey_id)}</strong>
           </div>
 
           <div>
@@ -274,8 +239,7 @@ function OfficerApplicationPage() {
           <div>
             <span>Current Stage</span>
             <strong>
-              {formatOfficerStep(application.current_step) ||
-                'Not available'}
+              {getStepLabel(application.current_step) || 'Not available'}
             </strong>
           </div>
 
@@ -291,118 +255,16 @@ function OfficerApplicationPage() {
             </strong>
           </div>
 
-          <div>
-            <span>Service Version</span>
-            <strong>
-              {application.journey_version ?? 'Not available'}
-            </strong>
-          </div>
         </div>
       </section>
 
       <section className="setu-content-card">
         <div className="setu-section-heading">
           <div>
-            <h2>Interoperability Context</h2>
+            <h2>Ready for your decision</h2>
             <p>
-              Connected systems and processing evidence associated with this application.
-            </p>
-          </div>
-        </div>
-
-        <div className="setu-detail-grid">
-          <div>
-            <span>Journey Steps</span>
-            <strong>{stepCount}</strong>
-          </div>
-
-          <div>
-            <span>Data Provenance Entries</span>
-            <strong>{provenanceCount}</strong>
-          </div>
-
-          <div>
-            <span>Connected References</span>
-            <strong>{externalReferenceCount}</strong>
-          </div>
-
-          <div>
-            <span>Information Source</span>
-            <strong>Connected government systems</strong>
-          </div>
-        </div>
-
-        <details className="setu-technical-details">
-          <summary>Technical traceability</summary>
-
-          <div className="setu-technical-grid">
-            <div>
-              <span>Correlation ID</span>
-              <strong>
-                {application.correlation_id || 'Not available'}
-              </strong>
-            </div>
-
-            <div>
-              <span>Citizen Reference</span>
-              <strong>
-                {application.master_id || 'Not assigned'}
-              </strong>
-            </div>
-          </div>
-        </details>
-      </section>
-
-      <section className="setu-content-card">
-        <div className="setu-section-heading">
-          <div>
-            <h2>Connected Decision Process</h2>
-            <p>
-              The officer review remains in BSS while SETU coordinates the
-              application state and receives the signed result.
-            </p>
-          </div>
-        </div>
-
-        <div className="setu-verification-list">
-          <div>
-            <span className="setu-check">1</span>
-            <div>
-              <strong>Open the connected system</strong>
-              <small>
-                SETU signs you into the connected benefit system without another login.
-              </small>
-            </div>
-          </div>
-
-          <div>
-            <span className="setu-check">2</span>
-            <div>
-              <strong>Complete the decision</strong>
-              <small>
-                Review the application and record the decision in the connected system.
-              </small>
-            </div>
-          </div>
-
-          <div>
-            <span className="setu-check">3</span>
-            <div>
-              <strong>Decision returned to MAHA SETU</strong>
-              <small>
-                The completed decision is securely returned to MAHA SETU and the application status is updated.
-              </small>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="setu-content-card">
-        <div className="setu-section-heading">
-          <div>
-            <h2>Officer Decision</h2>
-            <p>
-              Open the connected benefit system to review and complete this application decision.
+              This application is ready for review. Opening it will take you to
+              the scheme system. You won't need to log in again.
             </p>
           </div>
         </div>
@@ -434,7 +296,7 @@ function OfficerApplicationPage() {
             >
               {actionLoading
                 ? 'Opening BSS…'
-                : 'Open BSS via SETU SSO'}
+                : 'Open scheme system'}
             </button>
           )}
         </div>

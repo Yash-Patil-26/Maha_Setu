@@ -273,6 +273,7 @@ def test_citizen_can_read_own_application(monkeypatch):
 
     body = response.json()
     assert body["id"] == application_id
+    assert body["applicant_name"] == "Rahul Patil"
     assert body["status"] == "SUBMITTED"
     assert body["external_refs"]["BSS"] == "BSS-2026-000045"
     assert body["steps"][0]["step_id"] == "fetch_income"

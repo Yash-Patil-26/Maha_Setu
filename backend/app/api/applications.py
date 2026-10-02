@@ -43,6 +43,7 @@ class ApplicationSummaryResponse(BaseModel):
     id: int
     journey_id: str
     master_id: str
+    applicant_name: str
     status: str
     current_step: str | None
     correlation_id: str
@@ -68,6 +69,7 @@ class ApplicationDetailResponse(BaseModel):
     journey_id: str
     journey_version: int
     master_id: str
+    applicant_name: str
     status: str
     current_step: str | None
     correlation_id: str
@@ -164,7 +166,11 @@ def _application_steps(
     ).all()
 
 
-def _application_response(application: Application) -> ApplicationDetailResponse:
+def _application_response(
+    application: Application,
+    *,
+    applicant_name: str,
+) -> ApplicationDetailResponse:
     metrics = dict(application.metrics_json or {})
     provenance = dict(metrics.get("provenance", {}))
 
@@ -200,6 +206,7 @@ def _application_response(application: Application) -> ApplicationDetailResponse
         journey_id=application.journey_id,
         journey_version=application.journey_version,
         master_id=application.master_id,
+        applicant_name=applicant_name,
         status=application.status,
         current_step=application.current_step,
         correlation_id=application.correlation_id,
@@ -339,7 +346,8 @@ def list_applications(
     db: Session = Depends(get_db),
 ) -> list[ApplicationSummaryResponse]:
     query = (
-        select(Application)
+        select(Application, User)
+        .outerjoin(User, User.master_id == Application.master_id)
         .order_by(Application.updated_at.desc())
         .offset(offset)
         .limit(limit)
@@ -361,13 +369,20 @@ def list_applications(
             Application.journey_id == journey_id
         )
 
-    rows = db.scalars(query).all()
+    rows = db.execute(query).all()
 
     return [
         ApplicationSummaryResponse(
             id=row.id,
             journey_id=row.journey_id,
             master_id=row.master_id,
+            applicant_name=(
+                user.display_name
+                if user and user.display_name
+                else user.full_name
+                if user and user.full_name
+                else "Citizen"
+            ),
             status=row.status,
             current_step=row.current_step,
             correlation_id=row.correlation_id,
@@ -375,7 +390,7 @@ def list_applications(
             updated_at=row.updated_at,
             outcome=row.outcome,
         )
-        for row in rows
+        for row, user in rows
     ]
 
 
@@ -394,7 +409,22 @@ def get_application(
         user=user,
     )
 
-    return _application_response(_attach_steps(db, application))
+    applicant = db.scalar(
+        select(User).where(User.master_id == application.master_id)
+    )
+
+    applicant_name = (
+        applicant.display_name
+        if applicant and applicant.display_name
+        else applicant.full_name
+        if applicant and applicant.full_name
+        else "Citizen"
+    )
+
+    return _application_response(
+        _attach_steps(db, application),
+        applicant_name=applicant_name,
+    )
 
 
 @router.post(

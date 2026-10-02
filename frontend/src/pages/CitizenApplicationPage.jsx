@@ -4,6 +4,11 @@ import Timeline from './Timeline'
 import DataCard from './DataCard'
 import OnceOnlyMeter from './OnceOnlyMeter'
 import { apiRequest } from '../api/client.js'
+import { getStatusLabel } from '../constants/statusLabels.js'
+import {
+  getJourneyLabel,
+} from '../constants/journeyLabels.js'
+import { getStepLabel } from '../constants/stepLabels.js'
 
 const SERVICE_META = {
   scholarship_v1: {
@@ -18,26 +23,6 @@ const SERVICE_META = {
   },
 }
 
-const STATUS_LABELS = {
-  CREATED: 'Application started',
-  IN_PROGRESS: 'In progress',
-  BLOCKED_CONSENT: 'Consent required',
-  PAUSED_EXCEPTION: 'Processing paused',
-  NEEDS_REVIEW: 'Needs review',
-  SUBMITTED: 'Submitted',
-  APPROVED: 'Approved',
-  REJECTED: 'Not approved',
-  NOT_ELIGIBLE: 'Not eligible',
-}
-
-const STEP_LABELS = {
-  fetch_income: 'Income verified',
-  fetch_enrolment: 'Education record verified',
-  evaluate_eligibility: 'Eligibility checked',
-  submit_bss: 'Application submitted',
-  await_decision: 'Decision pending',
-}
-
 function humanizeToken(value) {
   if (value == null || value === '') {
     return '—'
@@ -49,18 +34,15 @@ function humanizeToken(value) {
 }
 
 function formatService(value) {
-  return (
-    SERVICE_META[value]?.title ||
-    humanizeToken(value)
-  )
+  return SERVICE_META[value]?.title || getJourneyLabel(value)
 }
 
 function formatStatus(value) {
-  return STATUS_LABELS[value] || humanizeToken(value)
+  return getStatusLabel(value)
 }
 
 function formatStep(value) {
-  return STEP_LABELS[value] || humanizeToken(value)
+  return getStepLabel(value)
 }
 
 function formatDateTime(value) {
@@ -279,7 +261,7 @@ function CitizenApplicationPage() {
           <h1>{serviceTitle}</h1>
 
           <p className="setu-application-subtitle">
-            Application #{application.id}
+            Application APP-{String(application.id).padStart(6, '0')}
             {' · '}
             {statusLabel}
           </p>
@@ -310,10 +292,10 @@ function CitizenApplicationPage() {
 
         <div className="setu-application-reference">
           <div>
-            <span>Reference number</span>
+            <span>Application number</span>
 
             <strong>
-              {application.correlation_id || '—'}
+              APP-{String(application.id).padStart(6, '0')}
             </strong>
           </div>
 

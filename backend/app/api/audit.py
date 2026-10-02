@@ -26,7 +26,6 @@ def _role_label(role: str | None) -> str:
     return {
         "admin": "Administrator",
         "officer": "Government Official",
-        "recruiter": "Recruiter",
         "citizen": "Citizen",
         "system": "System",
     }.get(role or "", role or "Unknown")

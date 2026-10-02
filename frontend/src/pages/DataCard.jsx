@@ -1,56 +1,8 @@
-const SYSTEM_LABELS = {
-  REV: 'Revenue Department',
-  EDU: 'Education Department',
-  BSS: 'Benefit service',
-  SKL: 'Skills & Employment Registry',
-}
-
-function humanizeToken(value) {
-  if (value == null || value === '') {
-    return '—'
-  }
-
-  return String(value)
-    .replace(/[_-]+/g, ' ')
-    .replace(/\b\w/g, (character) => character.toUpperCase())
-}
-
-function formatField(field) {
-  const labels = {
-    annual_income_inr: 'Annual income',
-    issue_date: 'Issue date',
-    income_amount: 'Income amount',
-    income_certificate_number: 'Certificate number',
-    enrolment_id: 'Enrolment ID',
-    student_name: 'Student name',
-    dob: 'Date of birth',
-    institution_code: 'Institution',
-    course_code: 'Course',
-    year_of_study: 'Year of study',
-    status: 'Record status',
-    last_updated: 'Last updated',
-  }
-
-  return labels[field] || humanizeToken(field)
-}
-
-function formatSection(section) {
-  const labels = {
-    income_certificate: 'Income information',
-    education_record: 'Education information',
-    training_record: 'Training information',
-    applicant: 'Applicant information',
-  }
-
-  return labels[section] || humanizeToken(section)
-}
-
-function formatSource(value) {
-  return (
-    SYSTEM_LABELS[value] ||
-    humanizeToken(value)
-  )
-}
+import {
+  getFieldLabel,
+  getSectionLabel,
+  getSystemLabel,
+} from '../constants/fieldLabels.js'
 
 function formatValue(value) {
   if (value == null || value === '') {
@@ -107,7 +59,7 @@ function DataCard({ canonical, provenance }) {
                 key={section}
               >
                 <h3>
-                  {formatSection(section)}
+                  {getSectionLabel(section)}
                 </h3>
 
                 <div className="setu-data-rows">
@@ -126,15 +78,13 @@ function DataCard({ canonical, provenance }) {
                         >
                           <div>
                             <strong>
-                              {formatField(field)}
+                              {getFieldLabel(field)}
                             </strong>
 
                             {source?.source_system && (
                               <span>
                                 Source:{' '}
-                                {formatSource(
-                                  source.source_system,
-                                )}
+                                {getSystemLabel(source.source_system)}
                               </span>
                             )}
                           </div>

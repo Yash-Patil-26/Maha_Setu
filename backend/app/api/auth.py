@@ -6,6 +6,7 @@ import bcrypt
 import jwt
 from fastapi import APIRouter, Depends, Header, HTTPException, status
 from pydantic import BaseModel, ConfigDict, Field
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from ..db import SessionLocal
@@ -121,6 +122,24 @@ def _create_sso_token(user: User) -> tuple[str, int]:
     return token, SSO_TOKEN_TTL_MINUTES * 60
 
 
+class RegisterRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    username: str = Field(
+        min_length=3,
+        max_length=64,
+        pattern=r"^[a-z0-9][a-z0-9._-]{2,63}$",
+    )
+    display_name: str = Field(
+        min_length=2,
+        max_length=100,
+    )
+    password: str = Field(
+        min_length=8,
+        max_length=72,
+    )
+
+
 class LoginRequest(BaseModel):
     username: str = Field(min_length=1)
     password: str = Field(min_length=1)
@@ -162,6 +181,83 @@ def _auth_error() -> HTTPException:
                 "message": "Invalid username or password",
             }
         },
+    )
+
+
+@router.post(
+    "/register",
+    response_model=LoginResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def register(
+    payload: RegisterRequest,
+    db: Session = Depends(get_db),
+) -> LoginResponse:
+    username = payload.username.strip().lower()
+    display_name = " ".join(payload.display_name.split())
+
+    existing = (
+        db.query(User)
+        .filter(User.username == username)
+        .first()
+    )
+
+    if existing is not None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={
+                "error": {
+                    "code": "USERNAME_TAKEN",
+                    "message": "That username is already in use.",
+                }
+            },
+        )
+
+    user = User(
+        username=username,
+        password_hash=_hash_password(payload.password),
+        role="citizen",
+        display_name=display_name,
+    )
+
+    db.add(user)
+
+    try:
+        db.flush()
+
+        # Give every self-registered citizen a stable SETU
+        # citizen reference that can be used by later services.
+        user.master_id = f"SETU-CIT-{user.id:06d}"
+
+        db.commit()
+        db.refresh(user)
+
+    except IntegrityError as exc:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={
+                "error": {
+                    "code": "USERNAME_TAKEN",
+                    "message": "That username is already in use.",
+                }
+            },
+        ) from exc
+
+    token, expires_in = _create_hub_token(user)
+
+    return LoginResponse(
+        access_token=token,
+        token_type="bearer",
+        expires_in=expires_in,
+        user=UserResponse(
+            id=user.id,
+            username=user.username,
+            role=user.role,
+            display_name=user.display_name,
+            master_id=user.master_id,
+            locale=_default_locale(),
+        ),
     )
 
 

@@ -202,6 +202,87 @@ body.bss-page {
     padding: 34px 0 48px;
 }
 
+.bss-external-banner {
+    margin-bottom: 14px;
+    padding: 10px 14px;
+    border: 1px solid #d6e3f2;
+    border-radius: 10px;
+    background: #f4f8fd;
+    color: #52677f;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.bss-external-banner strong {
+    color: #173b72;
+}
+
+.bss-login-card {
+    max-width: 520px;
+    margin: 64px auto;
+    padding: 28px;
+    background: #ffffff;
+    border: 1px solid #dbe5f0;
+    border-radius: 16px;
+    box-shadow: 0 10px 28px rgba(20, 54, 95, 0.07);
+}
+
+.bss-login-card h1 {
+    margin: 0 0 8px;
+    color: #12366f;
+    font-size: 28px;
+}
+
+.bss-login-card p {
+    margin: 0 0 20px;
+    color: #64748b;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.bss-login-card label {
+    display: block;
+    margin: 0 0 6px;
+    color: #40536b;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.bss-login-card input {
+    box-sizing: border-box;
+    width: 100%;
+    margin: 0 0 16px;
+    padding: 10px 12px;
+    border: 1px solid #c9d6e5;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #22334a;
+    font: inherit;
+}
+
+.bss-login-card input:focus {
+    border-color: #4d8edc;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(77, 142, 220, 0.12);
+}
+
+.bss-login-card button {
+    min-height: 38px;
+    padding: 9px 16px;
+    border: 1px solid #1769b5;
+    border-radius: 8px;
+    background: #1769b5;
+    color: #ffffff;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.bss-login-card button:hover {
+    background: #145a9a;
+}
+
 .bss-header {
     display: flex;
     align-items: flex-start;
@@ -496,18 +577,57 @@ def officer_page(request: Request):
         return HTMLResponse(
             """
             <html>
-            <body>
-                <h2>BSS Officer Login</h2>
+            <head>
+                <meta charset="utf-8">
+                <meta
+                    name="viewport"
+                    content="width=device-width, initial-scale=1"
+                >
+                <title>Benefit Scheme System · Officer Sign In</title>
+                {BSS_OFFICER_CSS}
+            </head>
+            <body class="bss-page">
+                <div class="bss-shell">
+                    <div class="bss-external-banner">
+                        <strong>MAHA SETU</strong> has opened the connected
+                        scheme system for this review. You are leaving the
+                        MAHA SETU workspace and entering the benefit service.
+                    </div>
 
-                <form method="post" action="/officer/login">
-                    <label>Username:</label>
-                    <input name="username" value="officer"><br><br>
+                    <section class="bss-login-card">
+                        <span class="bss-eyebrow">
+                            Connected Benefit Service
+                        </span>
 
-                    <label>Password:</label>
-                    <input name="password" type="password"><br><br>
+                        <h1>Officer sign in</h1>
 
-                    <button type="submit">Login</button>
-                </form>
+                        <p>
+                            Continue to the benefit scheme decision workspace.
+                        </p>
+
+                        <form method="post" action="/officer/login">
+                            <label for="bss-username">Username</label>
+                            <input
+                                id="bss-username"
+                                name="username"
+                                value="officer"
+                                autocomplete="username"
+                            >
+
+                            <label for="bss-password">Password</label>
+                            <input
+                                id="bss-password"
+                                name="password"
+                                type="password"
+                                autocomplete="current-password"
+                            >
+
+                            <button type="submit">
+                                Continue
+                            </button>
+                        </form>
+                    </section>
+                </div>
             </body>
             </html>
             """,
@@ -584,6 +704,11 @@ def officer_page(request: Request):
 
         <body class="bss-page">
             <div class="bss-shell">
+                <div class="bss-external-banner">
+                    <strong>MAHA SETU</strong> connected you to this scheme
+                    system for the current application review.
+                </div>
+
                 <header class="bss-header">
                     <div>
                         <span class="bss-eyebrow">

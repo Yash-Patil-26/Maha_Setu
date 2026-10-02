@@ -529,7 +529,7 @@ export default function CitizenConsentPage() {
 
                             {log.application_id && (
                               <small>
-                                Application #{log.application_id}
+                                Application APP-{String(log.application_id).padStart(6, '0')}
                               </small>
                             )}
                           </article>
