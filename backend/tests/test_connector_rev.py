@@ -71,11 +71,11 @@ def test_rev_income_connector_formats_iso_dob_for_legacy_api(
         <CertificateResponse>
           <Status>FOUND</Status>
           <IncomeCertificate>
-            <CertNo>MH-INC-2026-000123</CertNo>
-            <Holder><Name>Patil Rahul Suresh</Name></Holder>
-            <IncomeDetails><AnnualIncome>2,10,000</AnnualIncome></IncomeDetails>
-            <IssueDate>15/04/2026</IssueDate>
-            <ValidUntil>14/04/2027</ValidUntil>
+            <CertNo>MH-INC-2026-000501</CertNo>
+            <Holder><Name>Bhagwat Shinde</Name></Holder>
+            <IncomeDetails><AnnualIncome>1,80,000</AnnualIncome></IncomeDetails>
+            <IssueDate>02/10/2026</IssueDate>
+            <ValidUntil>01/10/2027</ValidUntil>
             <IssuingAuthority>Tahsildar, Haveli</IssuingAuthority>
           </IncomeCertificate>
         </CertificateResponse>
@@ -91,13 +91,13 @@ def test_rev_income_connector_formats_iso_dob_for_legacy_api(
     connector.lookup["dob_format"] = "%d/%m/%Y"
 
     result = connector.fetch(
-        mobile="9876543210",
-        dob="2004-03-04",
+        mobile="7894561230",
+        dob="2004-12-23",
         correlation_id=str(uuid4()),
     )
 
-    assert captured["params"]["dob"] == "04/03/2004"
-    assert result["record"]["cert_no"] == "MH-INC-2026-000123"
+    assert captured["params"]["dob"] == "23/12/2004"
+    assert result["record"]["cert_no"] == "MH-INC-2026-000501"
 
 
 def test_rev_income_connector_fetches_canonical_record(
@@ -123,8 +123,8 @@ def test_rev_income_connector_fetches_canonical_record(
         )
 
         result = connector.fetch(
-            mobile="9876543210",
-            dob="04/03/2004",
+            mobile="7894561230",
+            dob="23/12/2004",
             correlation_id=str(uuid4()),
         )
 
@@ -133,11 +133,11 @@ def test_rev_income_connector_fetches_canonical_record(
     assert result["connector_id"] == 3
 
     assert result["record"] == {
-        "cert_no": "MH-INC-2026-000123",
-        "holder_name": "Patil Rahul Suresh",
-        "annual_income_inr": 210000,
-        "issue_date": "2026-04-15",
-        "valid_until": "2027-04-14",
+        "cert_no": "MH-INC-2026-000501",
+        "holder_name": "Bhagwat Shinde",
+        "annual_income_inr": 180000,
+        "issue_date": "2026-10-02",
+        "valid_until": "2027-10-01",
         "issuing_authority": "Tahsildar, Haveli",
     }
 

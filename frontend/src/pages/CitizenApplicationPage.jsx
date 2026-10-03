@@ -41,8 +41,8 @@ function formatStatus(value) {
   return getStatusLabel(value)
 }
 
-function formatStep(value) {
-  return getStepLabel(value)
+function formatStep(value, status) {
+  return getStepLabel(value, status)
 }
 
 function formatDateTime(value) {
@@ -228,6 +228,7 @@ function CitizenApplicationPage() {
 
   const currentStage = formatStep(
     application.current_step,
+    application.status,
   )
 
   const statusMessage = getStatusMessage(

@@ -93,7 +93,7 @@ def clean_database():
 
         db.add(
             User(
-                username="officer1",
+                username="officer",
                 password_hash=bcrypt.hashpw(
                     DEMO_PASSWORD.encode(),
                     bcrypt.gensalt(),
@@ -360,7 +360,7 @@ def test_officer_can_retry_paused_application(monkeypatch):
         fake_retry,
     )
 
-    token = login("officer1")
+    token = login("officer")
 
     with TestClient(app) as client:
         response = client.post(

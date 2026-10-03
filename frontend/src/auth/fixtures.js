@@ -6,14 +6,14 @@ export const AUTH_FIXTURES = {
     display_name: "Citizen User",
   },
   officer: {
-    id: "officer1",
-    username: "officer1",
+    id: "officer",
+    username: "officer",
     role: "officer",
     display_name: "Officer User",
   },
   admin: {
-    id: "admin1",
-    username: "admin1",
+    id: "admin",
+    username: "admin",
     role: "admin",
     display_name: "Admin User",
   },

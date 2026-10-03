@@ -18,6 +18,7 @@ import CitizenConsentPage from './pages/CitizenConsentPage.jsx'
 import CitizenHelpPage from './pages/CitizenHelpPage.jsx'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import LoginPage from './pages/LoginPage.jsx'
+import ProfilePage from './pages/ProfilePage.jsx'
 import ProtectedRoute from './auth/ProtectedRoute.jsx'
 import './App.css'
 import './ui-polish.css'
@@ -30,6 +31,7 @@ function App() {
       <Route element={<ProtectedRoute roles={['citizen']} />}>
         <Route element={<DashboardLayout />}>
           <Route path="/citizen" element={<CitizenDashboard />} />
+          <Route path="/citizen/profile" element={<ProfilePage />} />
           <Route path="/citizen/apply" element={<CitizenServicesPage />} />
           <Route
             path="/citizen/apply/:journeyId"
@@ -51,6 +53,7 @@ function App() {
       <Route element={<ProtectedRoute roles={['officer']} />}>
         <Route element={<DashboardLayout />}>
           <Route path="/officer" element={<OfficerDashboard />} />
+          <Route path="/officer/profile" element={<ProfilePage />} />
           <Route
             path="/officer/applications"
             element={<OfficerApplicationsPage />}
@@ -69,6 +72,7 @@ function App() {
       <Route element={<ProtectedRoute roles={['admin']} />}>
         <Route element={<DashboardLayout />}>
           <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/admin/profile" element={<ProfilePage />} />
           <Route path="/admin/systems" element={<AdminSystemsPage />} />
           <Route path="/admin/studio" element={<AdminStudioPage />} />
           <Route path="/admin/audit" element={<AdminAuditPage />} />

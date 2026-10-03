@@ -3533,3 +3533,686 @@ textarea:focus-visible {
   outline: 3px solid currentColor;
   outline-offset: 2px;
 }
+
+/* MAHASETU-TABLET-768-SHELL-FIX START */
+
+/*
+ * Tablet shell correction.
+ *
+ * The original shell breakpoint was 720px, which left a
+ * 768px viewport with the full desktop sidebar. At tablet
+ * widths the sidebar becomes a compact horizontal navigation
+ * strip so the content receives the full available width.
+ */
+
+@media (min-width: 641px) and (max-width: 900px) {
+  .setu-body {
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .setu-sidebar {
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+    flex: 0 0 auto;
+    box-sizing: border-box;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border-right: 0;
+    border-bottom: 1px solid var(--setu-border);
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
+  .setu-sidebar-role {
+    flex: 0 0 auto;
+    margin: 0;
+    padding: 4px 12px 4px 4px;
+    border-right: 1px solid var(--setu-border);
+    white-space: nowrap;
+  }
+
+  .setu-sidebar-nav {
+    flex: 0 0 auto;
+    min-width: max-content;
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+    padding: 0;
+  }
+
+  .setu-nav-item {
+    flex: 0 0 auto;
+    min-width: max-content;
+    white-space: nowrap;
+  }
+
+  .setu-sidebar-footer {
+    display: none;
+  }
+
+  .setu-main-content {
+    min-width: 0;
+    width: auto;
+    box-sizing: border-box;
+    padding: 20px 18px 28px;
+  }
+
+  .setu-app-shell .citizen-dashboard-page,
+  .setu-app-shell .citizen-dashboard-page .citizen-content {
+    min-width: 0;
+    width: 100%;
+  }
+}
+
+/* MAHASETU-TABLET-768-SHELL-FIX END */
+
+/* MAHASETU-DYNAMIC-NAVIGATION START */
+
+.setu-topbar .setu-brand {
+  color: inherit;
+  text-decoration: none;
+}
+
+.setu-topbar .setu-brand:focus-visible {
+  border-radius: 10px;
+}
+
+.setu-topbar-language {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 600;
+  padding: 7px 9px;
+}
+
+.setu-topbar-language:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+}
+
+.setu-notification-wrap {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.setu-notification-button {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  cursor: pointer;
+}
+
+.setu-notification-button:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.setu-notification-button:focus-visible {
+  outline: 3px solid currentColor;
+  outline-offset: 2px;
+}
+
+.setu-notification-count {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: #fff;
+  color: var(--setu-primary);
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.setu-notification-panel {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 60;
+  width: min(340px, calc(100vw - 24px));
+  border: 1px solid var(--setu-border);
+  border-radius: 14px;
+  background: var(--setu-surface);
+  color: var(--setu-text);
+  box-shadow: var(--shadow-2);
+  overflow: hidden;
+}
+
+.setu-notification-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--setu-border);
+  background: var(--setu-bg);
+}
+
+.setu-notification-panel-header > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.setu-notification-panel-header strong {
+  font-size: 14px;
+}
+
+.setu-notification-panel-header small {
+  color: var(--setu-muted);
+  font-size: 11px;
+}
+
+.setu-notification-refresh {
+  min-width: 34px;
+  height: 34px;
+  border: 1px solid var(--setu-border);
+  border-radius: 8px;
+  background: var(--setu-surface);
+  color: var(--setu-text);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+}
+
+.setu-notification-refresh:hover {
+  border-color: var(--setu-primary);
+  color: var(--setu-primary);
+}
+
+.setu-notification-list {
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.setu-notification-empty {
+  margin: 0;
+  padding: 24px 16px;
+  color: var(--setu-muted);
+  text-align: center;
+  font-size: 13px;
+}
+
+.setu-notification-item {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  gap: 5px;
+  padding: 14px 16px;
+  border: 0;
+  border-bottom: 1px solid var(--setu-border);
+  background: var(--setu-surface);
+  color: var(--setu-text);
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+}
+
+.setu-notification-item:last-child {
+  border-bottom: 0;
+}
+
+.setu-notification-item:hover {
+  background: var(--setu-bg);
+}
+
+.setu-notification-item:focus-visible {
+  outline: 3px solid var(--color-focus, var(--setu-primary));
+  outline-offset: -3px;
+}
+
+.setu-notification-item strong {
+  color: var(--setu-primary-dark);
+  font-size: 13px;
+}
+
+.setu-notification-item span {
+  color: var(--setu-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.setu-nav-item {
+  cursor: pointer;
+}
+
+@media (max-width: 900px) {
+  .setu-notification-panel {
+    right: -4px;
+  }
+}
+
+@media (max-width: 640px) {
+  .setu-topbar-language {
+    padding-inline: 5px;
+    font-size: 11px;
+  }
+
+  .setu-notification-panel {
+    position: fixed;
+    top: 68px;
+    right: 12px;
+    width: min(340px, calc(100vw - 24px));
+  }
+
+  .setu-notification-count {
+    top: -3px;
+    right: -3px;
+  }
+}
+
+/* MAHASETU-DYNAMIC-NAVIGATION END */
+
+/* MAHASETU-PROFILE-BRAND-UPGRADE START */
+
+.setu-brand-enhanced {
+  gap: 11px;
+  min-width: 0;
+}
+
+.setu-brand-mark-enhanced {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  border-radius: 13px;
+  color: #fff;
+  box-shadow:
+    0 6px 16px rgba(15, 23, 42, 0.16),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.setu-brand-mark-enhanced svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.setu-brand-copy-enhanced strong {
+  letter-spacing: 0.055em;
+  font-size: 16px;
+}
+
+.setu-brand-copy-enhanced span {
+  margin-top: 2px;
+  letter-spacing: 0.01em;
+}
+
+.setu-brand-enhanced:hover .setu-brand-mark-enhanced {
+  transform: translateY(-1px);
+}
+
+.setu-profile-menu {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.setu-profile-trigger {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 44px;
+  padding: 4px 8px 4px 5px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.setu-profile-trigger:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.setu-profile-trigger:focus-visible {
+  outline: 3px solid rgba(255, 255, 255, 0.82);
+  outline-offset: 2px;
+}
+
+.setu-profile-avatar {
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  background: #fff;
+  color: var(--setu-primary);
+  border: 2px solid rgba(255, 255, 255, 0.52);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.12);
+}
+
+.setu-profile-trigger .setu-user-info {
+  min-width: 0;
+}
+
+.setu-profile-trigger .setu-user-info strong,
+.setu-profile-trigger .setu-user-info span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.setu-profile-chevron {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  color: rgba(255, 255, 255, 0.82);
+  transition: transform 160ms ease;
+}
+
+.setu-profile-chevron svg {
+  width: 18px;
+  height: 18px;
+}
+
+.setu-profile-chevron.open {
+  transform: rotate(180deg);
+}
+
+.setu-profile-dropdown {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 70;
+  width: 270px;
+  overflow: hidden;
+  border: 1px solid var(--setu-border);
+  border-radius: 16px;
+  background: var(--setu-surface);
+  color: var(--setu-text);
+  box-shadow:
+    0 18px 42px rgba(15, 23, 42, 0.16),
+    0 4px 12px rgba(15, 23, 42, 0.08);
+}
+
+.setu-profile-dropdown-head {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 15px 16px 14px;
+  background: var(--setu-bg);
+}
+
+.setu-profile-mini-avatar {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  border-radius: 11px;
+  background: var(--setu-primary);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.setu-profile-dropdown-head div {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 2px;
+}
+
+.setu-profile-dropdown-head strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+}
+
+.setu-profile-dropdown-head span {
+  color: var(--setu-muted);
+  font-size: 11px;
+}
+
+.setu-profile-dropdown-divider {
+  height: 1px;
+  background: var(--setu-border);
+}
+
+.setu-profile-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 46px;
+  padding: 0 15px;
+  border: 0;
+  background: var(--setu-surface);
+  color: var(--setu-text);
+  text-decoration: none;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+}
+
+.setu-profile-menu-item:hover {
+  background: var(--setu-bg);
+}
+
+.setu-profile-menu-item:focus-visible {
+  outline: 3px solid var(--setu-primary);
+  outline-offset: -3px;
+}
+
+.setu-profile-menu-item > span:first-child {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  color: var(--setu-primary);
+}
+
+.setu-profile-menu-item > span:first-child svg {
+  width: 19px;
+  height: 19px;
+}
+
+.setu-profile-menu-danger,
+.setu-profile-menu-danger > span:first-child {
+  color: var(--setu-danger);
+}
+
+.setu-profile-page {
+  min-width: 0;
+}
+
+.setu-profile-layout {
+  display: grid;
+  gap: 18px;
+}
+
+.setu-profile-hero-card {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 24px 26px;
+  border: 1px solid var(--setu-border);
+  border-radius: 18px;
+  background: var(--setu-surface);
+  box-shadow: var(--shadow-1);
+}
+
+.setu-profile-page .setu-profile-avatar {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  flex: 0 0 72px;
+  border-radius: 19px;
+  background: var(--setu-primary);
+  color: #fff;
+  font-size: 26px;
+  font-weight: 800;
+  box-shadow: 0 10px 24px rgba(29, 78, 216, 0.2);
+}
+
+.setu-profile-hero-copy {
+  min-width: 0;
+}
+
+.setu-profile-kicker {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--setu-primary);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.setu-profile-hero-copy h2 {
+  margin: 0;
+  color: var(--setu-text);
+  font-size: 24px;
+  line-height: 1.2;
+}
+
+.setu-profile-hero-copy p {
+  margin: 5px 0 0;
+  color: var(--setu-muted);
+  font-size: 13px;
+}
+
+.setu-profile-details,
+.setu-profile-guidance {
+  min-width: 0;
+}
+
+.setu-profile-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  overflow: hidden;
+  border: 1px solid var(--setu-border);
+  border-radius: 14px;
+  background: var(--setu-border);
+}
+
+.setu-profile-detail-grid > div {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+  padding: 15px 16px;
+  background: var(--setu-surface);
+}
+
+.setu-profile-detail-grid span {
+  color: var(--setu-muted);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.setu-profile-detail-grid strong {
+  color: var(--setu-text);
+  overflow-wrap: anywhere;
+  font-size: 14px;
+}
+
+.setu-profile-guidance {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.setu-profile-guidance > div {
+  min-width: 0;
+}
+
+.setu-profile-guidance h2 {
+  margin: 0 0 7px;
+  font-size: 18px;
+}
+
+.setu-profile-guidance p {
+  max-width: 760px;
+  margin: 0;
+  color: var(--setu-muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+@media (max-width: 900px) {
+  .setu-user-info {
+    max-width: 145px;
+  }
+
+  .setu-profile-guidance {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 640px) {
+  .setu-brand-copy-enhanced span {
+    display: none;
+  }
+
+  .setu-brand-copy-enhanced strong {
+    font-size: 14px;
+  }
+
+  .setu-profile-trigger {
+    padding-right: 4px;
+  }
+
+  .setu-profile-trigger .setu-user-info {
+    display: none;
+  }
+
+  .setu-profile-chevron {
+    display: none;
+  }
+
+  .setu-profile-dropdown {
+    position: fixed;
+    top: 68px;
+    right: 12px;
+    width: min(290px, calc(100vw - 24px));
+  }
+
+  .setu-profile-hero-card {
+    padding: 20px;
+  }
+
+  .setu-profile-detail-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* MAHASETU-PROFILE-BRAND-UPGRADE END */
+
+/* MAHASETU-ADMIN-JOURNEYS-SIDEBAR-REMOVAL */
+.setu-journey-page .setu-journey-step-list {
+  display: none;
+}
+
+.setu-journey-page .setu-journey-layout {
+  grid-template-columns: minmax(0, 1fr);
+}

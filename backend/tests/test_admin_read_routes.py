@@ -32,7 +32,7 @@ def setup_function():
     try:
         db.add(
             User(
-                username="admin1",
+                username="admin",
                 password_hash=bcrypt.hashpw(
                     DEMO_PASSWORD.encode(),
                     bcrypt.gensalt(),
@@ -97,7 +97,7 @@ def admin_headers(client: TestClient) -> dict[str, str]:
     response = client.post(
         "/api/auth/login",
         json={
-            "username": "admin1",
+            "username": "admin",
             "password": DEMO_PASSWORD,
         },
     )

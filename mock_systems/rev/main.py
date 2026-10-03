@@ -17,40 +17,21 @@ REV_API_KEY = os.getenv("REV_API_KEY", "change-me")
 # Synthetic REV records
 REV_RECORDS = [
     {
-        "mobile": "9876543210",
-        "dob": "04/03/2004",
+        "mobile": '7894561230',
+        "dob": '23/12/2004',
         "income": {
-            "CertNo": "MH-INC-2026-000123",
-            "HolderName": "Patil Rahul Suresh",
-            "AnnualIncome": "2,10,000",
-            "IssueDate": "15/04/2026",
-            "ValidUntil": "14/04/2027",
-            "IssuingAuthority": "Tahsildar, Haveli",
-        },
-        "caste": {
-            "CertNo": "MH-CST-2024-004417",
-            "HolderName": "Patil Rahul Suresh",
-            "Category": "OBC",
-            "IssueDate": "02/08/2024",
-            "ValidUntil": "",
-        },
-    },
-    {
-        "mobile": "9822012346",
-        "dob": "12/11/2002",
-        "income": {
-            "CertNo": "MH-INC-2026-000124",
-            "HolderName": "Suresh Pawar",
+            "CertNo": "MH-INC-2026-000501",
+            "HolderName": 'Bhagwat Shinde',
             "AnnualIncome": "1,80,000",
-            "IssueDate": "15/04/2026",
-            "ValidUntil": "14/04/2027",
+            "IssueDate": "02/10/2026",
+            "ValidUntil": "01/10/2027",
             "IssuingAuthority": "Tahsildar, Haveli",
         },
         "caste": {
-            "CertNo": "MH-CST-2024-004418",
-            "HolderName": "Suresh Pawar",
+            "CertNo": "MH-CST-2026-000501",
+            "HolderName": 'Bhagwat Shinde',
             "Category": "OBC",
-            "IssueDate": "02/08/2024",
+            "IssueDate": "02/10/2026",
             "ValidUntil": "",
         },
     }

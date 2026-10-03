@@ -63,6 +63,8 @@ def test_register_creates_real_citizen_account():
             "username": "new.citizen",
             "display_name": "New Citizen",
             "password": "Secure@123",
+        "dob": "2000-01-01",
+        "mobile": "9000000000",
         },
     )
 
@@ -100,6 +102,8 @@ def test_registered_account_can_login():
             "username": "login.after.registration",
             "display_name": "Registered Citizen",
             "password": "Secure@123",
+        "dob": "2000-01-01",
+        "mobile": "9000000000",
         },
     )
 
@@ -129,6 +133,8 @@ def test_duplicate_username_is_rejected():
             "username": "existing.user",
             "display_name": "Another User",
             "password": "Secure@123",
+        "dob": "2000-01-01",
+        "mobile": "9000000000",
         },
     )
 
@@ -146,6 +152,8 @@ def test_invalid_registration_payload_is_rejected():
             "username": "ab",
             "display_name": "A",
             "password": "short",
+        "dob": "2000-01-01",
+        "mobile": "9000000000",
         },
     )
 

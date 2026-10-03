@@ -1022,10 +1022,10 @@ def main() -> int:
     print()
 
     try:
-        admin_token = login("admin1")
+        admin_token = login("admin")
         rahul_token = login("rahul.patil")
         suresh_token = login("suresh.pawar")
-        officer_token = login("officer1")
+        officer_token = login("officer")
     except Exception as exc:
         print("BOOTSTRAP                    FAIL")
         print(f"  {exc}")

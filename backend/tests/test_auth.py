@@ -68,7 +68,7 @@ def setup_function():
                 display_name="Citizen User",
             ),
             User(
-                username="officer1",
+                username="officer",
                 password_hash=bcrypt.hashpw(
                     DEMO_PASSWORD.encode(),
                     bcrypt.gensalt(),
@@ -77,7 +77,7 @@ def setup_function():
                 display_name="BSS Officer",
             ),
             User(
-                username="admin1",
+                username="admin",
                 password_hash=bcrypt.hashpw(
                     DEMO_PASSWORD.encode(),
                     bcrypt.gensalt(),
@@ -97,7 +97,7 @@ def test_login_success():
         response = client.post(
             "/api/auth/login",
             json={
-                "username": "officer1",
+                "username": "officer",
                 "password": DEMO_PASSWORD,
             },
         )
@@ -108,7 +108,7 @@ def test_login_success():
     assert body["token_type"] == "bearer"
     assert body["expires_in"] == 8 * 60 * 60
     assert body["access_token"]
-    assert body["user"]["username"] == "officer1"
+    assert body["user"]["username"] == "officer"
     assert body["user"]["role"] == "officer"
     assert body["user"]["locale"] == "en-IN"
 
@@ -118,7 +118,7 @@ def test_login_wrong_password_returns_401():
         response = client.post(
             "/api/auth/login",
             json={
-                "username": "officer1",
+                "username": "officer",
                 "password": "wrong-password",
             },
         )
@@ -155,7 +155,7 @@ def test_officer_can_issue_bss_sso_token(monkeypatch):
         login = client.post(
             "/api/auth/login",
             json={
-                "username": "officer1",
+                "username": "officer",
                 "password": DEMO_PASSWORD,
             },
         )
@@ -189,7 +189,7 @@ def test_auth_requires_default_locale(monkeypatch):
             client.post(
                 "/api/auth/login",
                 json={
-                    "username": "officer1",
+                    "username": "officer",
                     "password": DEMO_PASSWORD,
                 },
             )
@@ -206,7 +206,7 @@ def test_auth_requires_sso_secret(monkeypatch):
             client.post(
                 "/api/auth/login",
                 json={
-                    "username": "officer1",
+                    "username": "officer",
                     "password": DEMO_PASSWORD,
                 },
             )
@@ -219,7 +219,7 @@ def test_sso_token_requires_bss_base_url(monkeypatch):
         login = client.post(
             "/api/auth/login",
             json={
-                "username": "officer1",
+                "username": "officer",
                 "password": DEMO_PASSWORD,
             },
         )
@@ -246,7 +246,7 @@ def test_sso_token_rejects_wrong_audience():
         login = client.post(
             "/api/auth/login",
             json={
-                "username": "officer1",
+                "username": "officer",
                 "password": DEMO_PASSWORD,
             },
         )

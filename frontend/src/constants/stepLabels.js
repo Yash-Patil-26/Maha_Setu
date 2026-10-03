@@ -34,7 +34,14 @@ export const STEP_STATUS_LABELS = {
   SKIPPED: 'Not required',
 }
 
-export function getStepLabel(stepId) {
+export function getStepLabel(stepId, applicationStatus = '') {
+  if (
+    stepId === 'await_decision' &&
+    ['APPROVED', 'REJECTED'].includes(applicationStatus)
+  ) {
+    return 'Decision recorded'
+  }
+
   return (
     STEP_LABELS[stepId] ||
     String(stepId || 'Unknown')

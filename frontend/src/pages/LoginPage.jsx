@@ -5,7 +5,7 @@ import {
   getAuthUser,
   setAuthSession,
 } from '../auth/storage.js'
-import heroImage from '../assets/mahasetu-login-hero.png'
+import gatewayImage from '../assets/mahasetu-login-gateway.png'
 
 const LOGIN_MODES = {
   citizen: {
@@ -39,6 +39,8 @@ export default function LoginPage() {
   const [registerError, setRegisterError] = useState('')
   const [registerForm, setRegisterForm] = useState({
     displayName: '',
+    dob: '',
+    mobile: '',
     username: '',
     password: '',
     confirmPassword: '',
@@ -89,7 +91,6 @@ export default function LoginPage() {
     }
   }
 
-
   function openRegister() {
     setError('')
     setRegisterError('')
@@ -107,6 +108,8 @@ export default function LoginPage() {
 
     setRegisterForm({
       displayName: '',
+      dob: '',
+      mobile: '',
       username: '',
       password: '',
       confirmPassword: '',
@@ -129,14 +132,26 @@ export default function LoginPage() {
     setRegisterError('')
 
     const displayName = registerForm.displayName.trim()
-    const username = registerForm.username.trim().toLowerCase()
+    const dob = registerForm.dob
+    const mobile = registerForm.mobile.trim()
+    const newUsername = registerForm.username.trim().toLowerCase()
 
     if (displayName.length < 2) {
       setRegisterError('Enter your full name.')
       return
     }
 
-    if (!/^[a-z0-9][a-z0-9._-]{2,63}$/.test(username)) {
+    if (!dob) {
+      setRegisterError('Enter your date of birth.')
+      return
+    }
+
+    if (!/^\d{10}$/.test(mobile)) {
+      setRegisterError('Enter a valid 10-digit mobile number.')
+      return
+    }
+
+    if (!/^[a-z0-9][a-z0-9._-]{2,63}$/.test(newUsername)) {
       setRegisterError(
         'Username must be 3–64 characters using letters, numbers, dot, underscore or hyphen.',
       )
@@ -160,15 +175,13 @@ export default function LoginPage() {
         method: 'POST',
         body: JSON.stringify({
           display_name: displayName,
-          username,
+          dob,
+          mobile,
+          username: newUsername,
           password: registerForm.password,
         }),
       })
 
-      /*
-       * Registration returns the same authenticated session shape
-       * as login, so a real new citizen can continue immediately.
-       */
       setAuthSession(result.access_token, result.user)
       navigate('/citizen', { replace: true })
     } catch (err) {
@@ -182,29 +195,24 @@ export default function LoginPage() {
 
   return (
     <main className="mahasetu-login-page">
+      <img
+        className="mahasetu-login-background"
+        src={gatewayImage}
+        alt=""
+        aria-hidden="true"
+      />
+
+      <div
+        className="mahasetu-login-background-shade"
+        aria-hidden="true"
+      />
+
       <header className="mahasetu-login-header">
-        <div className="mahasetu-login-header-brand">
-          <div
-            className="mahasetu-login-ms-mark"
-            aria-hidden="true"
-          >
-            MS
-          </div>
-
-          <div className="mahasetu-login-header-brand-copy">
-            <strong>MAHA SETU</strong>
-            <span>Unified Digital Services</span>
-          </div>
-        </div>
-
         <div className="mahasetu-login-header-title">
           <strong>
             MAHA<span>SETU</span>
           </strong>
-
-          <span>
-            Unified Platform for Government Services
-          </span>
+          <span>Unified Platform for Government Services</span>
         </div>
 
         <nav
@@ -218,7 +226,7 @@ export default function LoginPage() {
           <a href="#services">Many Services</a>
 
           <span className="mahasetu-login-header-badge">
-            Citizen access
+            Citizen First
             <small>Unified access</small>
           </span>
         </nav>
@@ -226,28 +234,136 @@ export default function LoginPage() {
 
       <section className="mahasetu-login-main">
         <section
-          className="mahasetu-login-hero"
+          className="mahasetu-login-hero-copy"
           id="services"
-          aria-label="MAHA SETU services"
+          aria-label="About MAHA SETU"
         >
-          <img
-            className="mahasetu-login-hero-image"
-            src={heroImage}
-            alt="MAHA SETU unified platform for government services in Maharashtra"
-          />
-        </section>
+          <h1>
+            Maha<span>Setu</span>
+          </h1>
 
-        <div
-          className="mahasetu-login-hero-shade"
-          aria-hidden="true"
-        />
+          <p className="mahasetu-login-slogan">
+            सरल सेवा, <span>सुलभ शासन</span>
+          </p>
+
+          <div className="mahasetu-login-features">
+            <div className="mahasetu-login-feature">
+              <span className="mahasetu-login-feature-icon">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <rect x="4" y="10" width="16" height="10" rx="2" />
+                  <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+                  <circle cx="12" cy="15" r="1.2" />
+                </svg>
+              </span>
+              <span>
+                <strong>One login</strong>
+                <small>Access multiple services through one account</small>
+              </span>
+            </div>
+
+            <div className="mahasetu-login-feature">
+              <span className="mahasetu-login-feature-icon">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M6 3.5h9l4 4V20.5H6z" />
+                  <path d="M15 3.5v4h4M9 12h6M9 16h6" />
+                </svg>
+              </span>
+              <span>
+                <strong>Track your applications</strong>
+                <small>Follow progress from submission to decision</small>
+              </span>
+            </div>
+
+            <div className="mahasetu-login-feature">
+              <span className="mahasetu-login-feature-icon">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M4 20h16M6 20V9h12v11M8 9V6h8v3M10 6V4h4v2" />
+                  <path d="M9 13h1M14 13h1M9 16h1M14 16h1" />
+                </svg>
+              </span>
+              <span>
+                <strong>Multiple departments</strong>
+                <small>Connected services without fragmented journeys</small>
+              </span>
+            </div>
+
+            <div className="mahasetu-login-feature">
+              <span className="mahasetu-login-feature-icon">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="m12 3 7 3v5c0 4.3-2.7 7.7-7 10-4.3-2.3-7-5.7-7-10V6z" />
+                  <path d="m9 12 2 2 4-4" />
+                </svg>
+              </span>
+              <span>
+                <strong>Secure and hassle-free</strong>
+                <small>Role-aware access with a clear service journey</small>
+              </span>
+            </div>
+
+            <div className="mahasetu-login-feature">
+              <span className="mahasetu-login-feature-icon">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <circle cx="9" cy="8" r="3" />
+                  <circle cx="17" cy="9" r="2.5" />
+                  <path d="M3.5 19c.7-3.2 2.7-5 5.5-5s4.8 1.8 5.5 5" />
+                  <path d="M14 16c2.2-.2 4 .9 4.9 3" />
+                </svg>
+              </span>
+              <span>
+                <strong>Citizen First, Always</strong>
+                <small>One place to access connected government services</small>
+              </span>
+            </div>
+          </div>
+
+        </section>
 
         <section
           className="mahasetu-login-card-wrap"
           id="login"
           aria-label="MAHA SETU sign in"
         >
-          <div className="mahasetu-login-card">
+          <article className="mahasetu-login-card">
             <div
               className="mahasetu-login-tabs"
               role="tablist"
@@ -279,11 +395,13 @@ export default function LoginPage() {
             </div>
 
             <div className="mahasetu-login-form-content">
-              <span className="mahasetu-login-kicker">
-                {mode.kicker}
-              </span>
+              <div className="mahasetu-login-card-kicker">
+                <span>{mode.kicker}</span>
+                <i aria-hidden="true" />
+                <small>Secure access</small>
+              </div>
 
-              <h1>{mode.title}</h1>
+              <h2>{mode.title}</h2>
 
               <p className="mahasetu-login-subtitle">
                 {mode.subtitle}
@@ -298,20 +416,23 @@ export default function LoginPage() {
                 </p>
               )}
 
-              <form
-                onSubmit={handleSubmit}
-                noValidate
-              >
+              <form onSubmit={handleSubmit} noValidate>
                 <label className="mahasetu-login-field">
                   <span>{mode.label}</span>
 
                   <div className="mahasetu-login-input">
-                    <span
-                      className="mahasetu-login-field-icon"
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
                       aria-hidden="true"
                     >
-                      ●
-                    </span>
+                      <circle cx="12" cy="8" r="3.5" />
+                      <path d="M5 20c.8-3.2 3.1-5 7-5s6.2 1.8 7 5" />
+                    </svg>
 
                     <input
                       required
@@ -329,19 +450,23 @@ export default function LoginPage() {
                   <span>Password</span>
 
                   <div className="mahasetu-login-input">
-                    <span
-                      className="mahasetu-login-field-icon"
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
                       aria-hidden="true"
                     >
-                      ●
-                    </span>
+                      <rect x="5" y="10" width="14" height="10" rx="2" />
+                      <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+                    </svg>
 
                     <input
                       required
                       type={
-                        showPassword
-                          ? 'text'
-                          : 'password'
+                        showPassword ? 'text' : 'password'
                       }
                       value={password}
                       onChange={(event) =>
@@ -365,9 +490,7 @@ export default function LoginPage() {
                           : 'Show password'
                       }
                     >
-                      {showPassword
-                        ? 'Hide'
-                        : 'Show'}
+                      {showPassword ? 'Hide' : 'Show'}
                     </button>
                   </div>
                 </label>
@@ -376,7 +499,8 @@ export default function LoginPage() {
                   className="mahasetu-login-submit"
                   type="submit"
                 >
-                  Login
+                  <span>Login securely</span>
+                  <span aria-hidden="true">→</span>
                 </button>
               </form>
 
@@ -407,97 +531,48 @@ export default function LoginPage() {
                 type="button"
                 onClick={() =>
                   setInfoDialog({
-                    title: 'DigiLocker sign-in',
+                    title: 'DigiLocker access',
                     body:
-                      'DigiLocker authentication is not connected to the prototype.',
+                      'DigiLocker integration is represented as a prototype entry point in this demonstration.',
                     note:
                       'Use the MAHA SETU username and password flow for this demonstration.',
                   })
                 }
               >
-                <span
-                  className="mahasetu-login-digilocker-icon"
-                  aria-hidden="true"
-                >
-                  <svg
-                    viewBox="0 0 20 20"
-                    width="18"
-                    height="18"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                    aria-hidden="true"
-                    focusable="false"
-                  >
-                    <rect
-                      x="3"
-                      y="2.5"
-                      width="14"
-                      height="15"
-                      rx="2"
-                      stroke="currentColor"
-                      strokeWidth="1.7"
-                    />
-                    <path
-                      d="M7 7h6M7 10h6M7 13h3"
-                      stroke="currentColor"
-                      strokeWidth="1.6"
-                      strokeLinecap="round"
-                    />
-                  </svg>
+                <span className="mahasetu-login-digilocker-icon">
+                  D
                 </span>
-                Login with DigiLocker
+                <span>
+                  <strong>Continue with DigiLocker</strong>
+                  <small>Prototype integration entry point</small>
+                </span>
               </button>
 
               <div className="mahasetu-login-account-row">
-                <span>New User?</span>
-
+                <span>New to MAHA SETU?</span>
                 <button
                   type="button"
                   onClick={openRegister}
                 >
-                  Create an Account
+                  Create an account
                 </button>
               </div>
 
-              <div className="mahasetu-login-support">
-                <strong>One secure entry point</strong>
-
+              <div className="mahasetu-login-card-note">
+                <span className="mahasetu-login-card-note-icon">
+                  ✓
+                </span>
                 <span>
-                  Your MAHA SETU account determines the
-                  services and workspace available after
-                  sign-in.
+                  <strong>Prototype service access</strong>
+                  <small>
+                    Synthetic data and demonstration accounts are used.
+                  </small>
                 </span>
               </div>
             </div>
-
-            <div className="mahasetu-login-partners">
-              <span>Digital India</span>
-              <span>DigiLocker</span>
-              <span>MAHA SETU Services</span>
-            </div>
-
-            <div className="mahasetu-login-card-footer">
-              <span>Citizen</span>
-              <span>Government Official</span>
-              <span>Administrator</span>
-            </div>
-          </div>
+          </article>
         </section>
       </section>
-
-      <footer className="mahasetu-login-footer">
-        <div>
-          <a href="#login">About MAHA SETU</a>
-          <a href="#login">Terms of Use</a>
-          <a href="#login">Privacy</a>
-          <a href="#login">Help &amp; Support</a>
-        </div>
-
-        <span>
-          Conceptual prototype · Synthetic data · Not affiliated
-          with Government of Maharashtra
-        </span>
-      </footer>
 
       {infoDialog && (
         <div
@@ -513,13 +588,13 @@ export default function LoginPage() {
             className="mahasetu-login-modal"
             role="dialog"
             aria-modal="true"
-            aria-labelledby="login-info-title"
+            aria-labelledby="mahasetu-info-title"
           >
             <button
               className="mahasetu-login-modal-close"
               type="button"
-              aria-label="Close information"
               onClick={() => setInfoDialog(null)}
+              aria-label="Close dialog"
             >
               ×
             </button>
@@ -528,14 +603,14 @@ export default function LoginPage() {
               MAHA SETU ACCESS
             </span>
 
-            <h2 id="login-info-title">
+            <h2 id="mahasetu-info-title">
               {infoDialog.title}
             </h2>
 
             <p>{infoDialog.body}</p>
 
             <div className="mahasetu-login-modal-note">
-              <strong>Prototype status</strong>
+              <strong>Note</strong>
               <span>{infoDialog.note}</span>
             </div>
 
@@ -544,7 +619,7 @@ export default function LoginPage() {
               type="button"
               onClick={() => setInfoDialog(null)}
             >
-              Back to Login
+              Continue
             </button>
           </section>
         </div>
@@ -564,28 +639,29 @@ export default function LoginPage() {
             className="mahasetu-login-modal mahasetu-registration-modal"
             role="dialog"
             aria-modal="true"
-            aria-labelledby="create-account-title"
+            aria-labelledby="mahasetu-register-title"
           >
             <button
               className="mahasetu-login-modal-close"
               type="button"
-              aria-label="Close registration"
               onClick={closeRegister}
+              disabled={registering}
+              aria-label="Close registration"
             >
               ×
             </button>
 
             <span className="mahasetu-login-kicker">
-              NEW CITIZEN ACCOUNT
+              CITIZEN ACCOUNT
             </span>
 
-            <h2 id="create-account-title">
-              Create an Account
+            <h2 id="mahasetu-register-title">
+              Create your MAHA SETU account
             </h2>
 
-            <p>
+            <p className="mahasetu-login-modal-copy">
               Register once with MAHA SETU to access connected
-              government services through a single account.
+              government services through one identity.
             </p>
 
             {registerError && (
@@ -606,6 +682,7 @@ export default function LoginPage() {
                 <span>Full name</span>
                 <input
                   required
+                  type="text"
                   value={registerForm.displayName}
                   onChange={(event) =>
                     setRegisterForm((current) => ({
@@ -620,14 +697,54 @@ export default function LoginPage() {
               </label>
 
               <label className="mahasetu-registration-field">
+                <span>Date of birth</span>
+                <input
+                  required
+                  type="date"
+                  value={registerForm.dob}
+                  onChange={(event) =>
+                    setRegisterForm((current) => ({
+                      ...current,
+                      dob: event.target.value,
+                    }))
+                  }
+                  disabled={registering}
+                />
+              </label>
+
+              <label className="mahasetu-registration-field">
+                <span>Mobile number</span>
+                <input
+                  required
+                  type="tel"
+                  inputMode="numeric"
+                  maxLength={10}
+                  value={registerForm.mobile}
+                  onChange={(event) =>
+                    setRegisterForm((current) => ({
+                      ...current,
+                      mobile: event.target.value.replace(
+                        /\D/g,
+                        '',
+                      ),
+                    }))
+                  }
+                  autoComplete="tel"
+                  placeholder="10-digit mobile number"
+                  disabled={registering}
+                />
+              </label>
+
+              <label className="mahasetu-registration-field">
                 <span>Username</span>
                 <input
                   required
+                  type="text"
                   value={registerForm.username}
                   onChange={(event) =>
                     setRegisterForm((current) => ({
                       ...current,
-                      username: event.target.value,
+                      username: event.target.value.toLowerCase(),
                     }))
                   }
                   autoComplete="username"
@@ -649,7 +766,7 @@ export default function LoginPage() {
                     }))
                   }
                   autoComplete="new-password"
-                  placeholder="Create a password"
+                  placeholder="At least 8 characters"
                   disabled={registering}
                 />
               </label>
@@ -667,7 +784,7 @@ export default function LoginPage() {
                     }))
                   }
                   autoComplete="new-password"
-                  placeholder="Confirm your password"
+                  placeholder="Re-enter your password"
                   disabled={registering}
                 />
               </label>
@@ -679,7 +796,7 @@ export default function LoginPage() {
                   onClick={closeRegister}
                   disabled={registering}
                 >
-                  Back to Login
+                  Cancel
                 </button>
 
                 <button
@@ -688,20 +805,19 @@ export default function LoginPage() {
                   disabled={registering}
                 >
                   {registering
-                    ? 'Creating Account…'
-                    : 'Create Account'}
+                    ? 'Creating account…'
+                    : 'Create account'}
                 </button>
               </div>
             </form>
 
             <p className="mahasetu-login-modal-footnote">
-              New self-registered accounts receive the citizen role.
-              Government staff accounts are provisioned separately.
+              Registration creates a citizen account and starts an
+              authenticated MAHA SETU session.
             </p>
           </section>
         </div>
       )}
-
     </main>
   )
 }

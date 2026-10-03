@@ -239,7 +239,10 @@ function OfficerApplicationPage() {
           <div>
             <span>Current Stage</span>
             <strong>
-              {getStepLabel(application.current_step) || 'Not available'}
+              {getStepLabel(
+              application.current_step,
+              application.status,
+            ) || 'Not available'}
             </strong>
           </div>
 

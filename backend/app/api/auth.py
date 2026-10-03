@@ -1,5 +1,5 @@
 import os
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from urllib.parse import urlparse
 
 import bcrypt
@@ -134,6 +134,12 @@ class RegisterRequest(BaseModel):
         min_length=2,
         max_length=100,
     )
+    dob: date
+    mobile: str = Field(
+        min_length=10,
+        max_length=10,
+        pattern=r"^\d{10}$",
+    )
     password: str = Field(
         min_length=8,
         max_length=72,
@@ -218,6 +224,9 @@ def register(
         password_hash=_hash_password(payload.password),
         role="citizen",
         display_name=display_name,
+        full_name=display_name,
+        dob=payload.dob.isoformat(),
+        mobile=payload.mobile,
     )
 
     db.add(user)

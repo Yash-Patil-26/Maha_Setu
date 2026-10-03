@@ -80,7 +80,7 @@ Enums: application `status` = `CREATED, IN_PROGRESS, BLOCKED_CONSENT, PAUSED_EXC
 // Notification / Grievance / AuditEvent
 {"id":9,"title":"Application approved","body":"…","event_id":41,"read":false,"created_at":"…Z"}
 {"id":2,"application_id":12,"text":"…","status":"OPEN","created_at":"…Z","resolved_at":null}
-{"id":88,"ts":"…Z","actor":"officer1","action":"APPLICATION_RETRY","entity_type":"application","entity_id":"12","correlation_id":"…","detail":{…},"hash":null}
+{"id":88,"ts":"…Z","actor":"officer","action":"APPLICATION_RETRY","entity_type":"application","entity_id":"12","correlation_id":"…","detail":{…},"hash":null}
 ```
 
 ## 3. Hub endpoints
@@ -118,21 +118,22 @@ Enums: application `status` = `CREATED, IN_PROGRESS, BLOCKED_CONSENT, PAUSED_EXC
 ## 5. External mock-system contracts (owner: Dev C builds, Dev B consumes)
 
 ### 5.1 REV — Revenue certificates (XML over HTTP, port 8001)
-`GET /certificates?type=INCOME|CASTE&mobile=9876543210&dob=04/03/2004` — header `X-API-Key: <REV_API_KEY>`. Missing/wrong key → 401. No match → 404 with `<CertificateResponse><Status>NOT_FOUND</Status></CertificateResponse>`. Outage toggle → 503. `type` is required; `dob` is `DD/MM/YYYY`.
+`GET /certificates?type=INCOME|CASTE&mobile=7894561230&dob=23/12/2004` — header `X-API-Key: <REV_API_KEY>`. Missing/wrong key → 401. No match → 404 with `<CertificateResponse><Status>NOT_FOUND</Status></CertificateResponse>`. Outage toggle → 503. `type` is required; `dob` is `DD/MM/YYYY`.
+
 ```xml
 <CertificateResponse>
-  <Status>OK</Status>
-  <Certificate type="INCOME">
-    <CertNo>MH-INC-2026-000123</CertNo>
-    <ApplicantRef>REV-1000004521</ApplicantRef>
-    <Holder><Name>PATIL RAHUL SURESH</Name><DOB>04/03/2004</DOB><Mobile>9876543210</Mobile></Holder>
-    <IncomeDetails><AnnualIncome>2,10,000</AnnualIncome><Currency>INR</Currency></IncomeDetails>
-    <IssueDate>15/04/2026</IssueDate><ValidUntil>14/04/2027</ValidUntil>
+  <Status>FOUND</Status>
+  <IncomeCertificate>
+    <CertNo>MH-INC-2026-000501</CertNo>
+    <Holder><Name>Bhagwat Shinde</Name></Holder>
+    <IncomeDetails><AnnualIncome>1,80,000</AnnualIncome></IncomeDetails>
+    <IssueDate>02/10/2026</IssueDate>
+    <ValidUntil>01/10/2027</ValidUntil>
     <IssuingAuthority>Tahsildar, Haveli</IssuingAuthority>
-  </Certificate>
+  </IncomeCertificate>
 </CertificateResponse>
 ```
-CASTE variant: same envelope, `<Certificate type="CASTE">` with `<CasteDetails><Category>OBC</Category><CasteName>Kunbi</CasteName></CasteDetails>` instead of `IncomeDetails`; `<ValidUntil/>` is empty when there is no expiry. Connector `record_path` = `./Certificate`.
+CASTE variant: same envelope, `<CasteCertificate>` with `<CasteDetails><Category>OBC</Category></CasteDetails>`; the current synthetic record has `<ValidUntil/>` empty. Connector `record_path` = `./CasteCertificate`.
 
 ### 5.2 EDU — legacy Education database (no API), file `mock_systems/edu/edu_legacy.db`
 ```sql

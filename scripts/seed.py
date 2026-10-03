@@ -24,6 +24,8 @@ from app.models import Connector, JourneyDef, System, User  # noqa: E402
 
 
 DEMO_PASSWORD = "Demo@123"
+OFFICER_PASSWORD = "officer123"
+ADMIN_PASSWORD = "admin123"
 SKL_PATH = PROJECT_ROOT / "data_drop" / "skills_registry.csv"
 EDU_DB_PATH = PROJECT_ROOT / "mock_systems" / "edu" / "edu_legacy.db"
 JOURNEYS_DIR = BACKEND_DIR / "app" / "journeys"
@@ -156,14 +158,14 @@ def seed_users(session) -> None:
             mobile="9822012346",
         ),
         User(
-            username="officer1",
-            password_hash=password_hash(DEMO_PASSWORD),
+            username="officer",
+            password_hash=password_hash(OFFICER_PASSWORD),
             role="officer",
             display_name="BSS Officer",
         ),
         User(
-            username="admin1",
-            password_hash=password_hash(DEMO_PASSWORD),
+            username="admin",
+            password_hash=password_hash(ADMIN_PASSWORD),
             role="admin",
             display_name="SETU Administrator",
         ),

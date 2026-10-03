@@ -505,8 +505,8 @@ Seeded demonstration accounts:
 | -------------- | ------- | ---------- |
 | `rahul.patil`  | Citizen | `Demo@123` |
 | `suresh.pawar` | Citizen | `Demo@123` |
-| `officer1`     | Officer | `Demo@123` |
-| `admin1`       | Admin   | `Demo@123` |
+| `officer`     | Officer | `Demo@123` |
+| `admin`       | Admin   | `Demo@123` |
 
 Citizen master IDs:
 
