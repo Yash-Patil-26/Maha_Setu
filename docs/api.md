@@ -138,8 +138,8 @@ CASTE variant: same envelope, `<CasteCertificate>` with `<CasteDetails><Category
 ### 5.2 EDU — legacy Education database (no API), file `mock_systems/edu/edu_legacy.db`
 ```sql
 CREATE TABLE STUD_MST (
-  STUD_ID TEXT PRIMARY KEY,      -- EDU/2022/00451
-  STUD_NM TEXT NOT NULL,         -- UPPERCASE, surname first: 'PATIL RAHUL S'
+  STUD_ID TEXT PRIMARY KEY,      -- EDU/2026/00501
+  STUD_NM TEXT NOT NULL,         -- UPPERCASE canonical demo row: 'BHAGWAT SHINDE'
   DOB_STR TEXT NOT NULL,         -- DD-MM-YYYY
   MOB_NO TEXT NOT NULL,          -- 10 digits
   INST_CD TEXT NOT NULL, COURSE_CD TEXT NOT NULL,
@@ -158,7 +158,7 @@ Connector query: `SELECT STUD_ID, STUD_NM, DOB_STR, INST_CD, COURSE_CD, YR_OF_ST
 ### 5.4 SKL — Skills & Employment registry (CSV, no server)
 File `data_drop/skills_registry.csv`, UTF-8 with BOM (`utf-8-sig`), comma-delimited, header row:
 `TRAINEE_ID,TRAINEE_NAME,DOB,MOBILE,COURSE_CODE,COURSE_NAME,COMPLETION,CERT_NO,CERT_DATE`
-Example row: `SKL-2023-8841,PAWAR SURESH A,12-11-2002,9822012345,ELEC-101,Electrical Technician,Y,SKL-CERT-55102,20-06-2026`. `DOB` and `CERT_DATE` are `DD-MM-YYYY`; `COMPLETION` is `Y`/`N`. **No connector exists for SKL at start.**
+Example row: `SKL-2023-8841,BHAGWAT SHINDE,23-12-2004,7894561230,ELEC-101,Electrical Technician,Y,SKL-CERT-55102,20-06-2026`. `DOB` and `CERT_DATE` are `DD-MM-YYYY`; `COMPLETION` is `Y`/`N`. **No connector exists for SKL at start.**
 
 
 

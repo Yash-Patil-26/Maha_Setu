@@ -10,8 +10,8 @@ const STEPS = [
 ]
 
 const DEMO_IDENTITY = {
-  mobile: '9822012346',
-  dob: '2002-11-12',
+  mobile: '7894561230',
+  dob: '2004-12-23',
 }
 
 const SKL_CONFIG = {

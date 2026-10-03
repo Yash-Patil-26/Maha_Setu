@@ -57,30 +57,17 @@ def write_edu_db() -> None:
     EDU_DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     EDU_DB_PATH.unlink(missing_ok=True)
 
-    rows = [
-        (
-            "EDU/2022/00451",
-            "PATIL RAHUL S",
-            "04-03-2004",
-            "9876543210",
-            "PUN-ENG-014",
-            "BTECH-CSE",
-            3,
-            "A",
-            "10-07-2026",
-        ),
-        (
-            "EDU/2022/00452",
-            "PAWAR SURESH A",
-            "12-11-2002",
-            "9822012346",
-            "PUN-ENG-015",
-            "BTECH-CSE",
-            3,
-            "A",
-            "10-07-2026",
-        ),
-    ]
+    row = (
+        "EDU/2026/00501",
+        "BHAGWAT SHINDE",
+        "23-12-2004",
+        "7894561230",
+        "PUN-ENG-016",
+        "BTECH-CSE",
+        3,
+        "A",
+        "02-10-2026",
+    )
 
     with sqlite3.connect(EDU_DB_PATH) as connection:
         connection.execute(
@@ -113,24 +100,7 @@ def write_edu_db() -> None:
             )
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
-            rows[0],
-        )
-        connection.execute(
-            """
-            INSERT INTO STUD_MST (
-                STUD_ID,
-                STUD_NM,
-                DOB_STR,
-                MOB_NO,
-                INST_CD,
-                COURSE_CD,
-                YR_OF_STUDY,
-                ADM_STATUS,
-                LAST_UPD
-            )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """,
-            rows[1],
+            row,
         )
         connection.commit()
 
@@ -138,24 +108,14 @@ def write_edu_db() -> None:
 def seed_users(session) -> None:
     users = [
         User(
-            username="rahul.patil",
+            username="bhagwat",
             password_hash=password_hash(DEMO_PASSWORD),
             role="citizen",
             master_id="SETU-CIT-000001",
-            display_name="Rahul Patil",
-            full_name="Rahul Patil",
-            dob="2004-03-04",
-            mobile="9876543210",
-        ),
-        User(
-            username="suresh.pawar",
-            password_hash=password_hash(DEMO_PASSWORD),
-            role="citizen",
-            master_id="SETU-CIT-000002",
-            display_name="Suresh Pawar",
-            full_name="Suresh Pawar",
-            dob="2002-11-12",
-            mobile="9822012346",
+            display_name="Bhagwat Shinde",
+            full_name="Bhagwat Shinde",
+            dob="2004-12-23",
+            mobile="7894561230",
         ),
         User(
             username="officer",
@@ -403,9 +363,9 @@ def write_skl_csv() -> None:
     rows = [
         [
             "SKL-2023-8841",
-            "PAWAR SURESH A",
-            "12-11-2002",
-            "9822012346",
+            "BHAGWAT SHINDE",
+            "23-12-2004",
+            "7894561230",
             "ELEC-101",
             "Electrical Technician",
             "Y",
@@ -450,7 +410,10 @@ def seed() -> None:
     print(f"database={DB_PATH}")
     print(f"skl_csv={SKL_PATH}")
     print("seed reset complete")
-    print(f"demo password={DEMO_PASSWORD}")
+    print("demo credentials:")
+    print(f"  citizen = bhagwat / {DEMO_PASSWORD}")
+    print(f"  officer = officer / {OFFICER_PASSWORD}")
+    print(f"  admin   = admin / {ADMIN_PASSWORD}")
 
 
 def main() -> None:

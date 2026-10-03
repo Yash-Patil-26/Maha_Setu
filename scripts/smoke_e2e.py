@@ -25,6 +25,14 @@ POLL_INTERVAL = 0.2
 POLL_TIMEOUT = 5.0
 
 DEMO_PASSWORD = "Demo@123"
+OFFICER_PASSWORD = "officer123"
+ADMIN_PASSWORD = "admin123"
+
+DEMO_CREDENTIALS = {
+    "bhagwat": DEMO_PASSWORD,
+    "officer": OFFICER_PASSWORD,
+    "admin": ADMIN_PASSWORD,
+}
 
 RESULTS: list[tuple[str, bool, str]] = []
 
@@ -114,12 +122,19 @@ def _assert(condition: bool, message: str) -> None:
 
 
 def login(username: str) -> str:
+    password = DEMO_CREDENTIALS.get(username)
+
+    _assert(
+        password is not None,
+        f"No demo credential configured for {username}",
+    )
+
     body = _json_request(
         "POST",
         "/api/auth/login",
         payload={
             "username": username,
-            "password": DEMO_PASSWORD,
+            "password": password,
         },
     )
 
@@ -379,16 +394,16 @@ def sso_and_approve(
 
 
 def scenario_s1(
-    rahul_token: str,
+    citizen_token: str,
 ) -> dict:
-    grant_scholarship_consent(rahul_token)
+    grant_scholarship_consent(citizen_token)
 
-    created = create_scholarship_application(rahul_token)
+    created = create_scholarship_application(citizen_token)
 
     application_id = created["application_id"]
 
     detail = get_application(
-        rahul_token,
+        citizen_token,
         application_id,
     )
 
@@ -441,7 +456,7 @@ def scenario_s1(
 
 
 def scenario_s2(
-    rahul_token: str,
+    citizen_token: str,
     officer_token: str,
     s1_detail: dict,
 ) -> None:
@@ -461,7 +476,7 @@ def scenario_s2(
 
     deadline = time.monotonic() + POLL_TIMEOUT
     latest = get_application(
-        rahul_token,
+        citizen_token,
         application_id,
     )
 
@@ -471,7 +486,7 @@ def scenario_s2(
 
         time.sleep(POLL_INTERVAL)
         latest = get_application(
-            rahul_token,
+            citizen_token,
             application_id,
         )
 
@@ -494,7 +509,7 @@ def scenario_s2(
 
 
 def scenario_s3(
-    rahul_token: str,
+    citizen_token: str,
     admin_token: str,
 ) -> None:
     set_outage(
@@ -504,16 +519,16 @@ def scenario_s3(
     )
 
     try:
-        grant_scholarship_consent(rahul_token)
+        grant_scholarship_consent(citizen_token)
 
         created = create_scholarship_application(
-            rahul_token,
+            citizen_token,
         )
 
         application_id = created["application_id"]
 
         detail = get_application(
-            rahul_token,
+            citizen_token,
             application_id,
         )
 
@@ -567,7 +582,7 @@ def scenario_s3(
         )
 
         final = get_application(
-            rahul_token,
+            citizen_token,
             application_id,
         )
 
@@ -617,12 +632,12 @@ def scenario_s3(
 
 
 def scenario_s4(
-    suresh_token: str,
+    citizen_token: str,
     officer_token: str,
     admin_token: str,
 ) -> None:
     consent = grant_scholarship_consent(
-        suresh_token,
+        citizen_token,
     )
 
     consent_id = int(consent["id"])
@@ -635,13 +650,13 @@ def scenario_s4(
 
     try:
         created = create_scholarship_application(
-            suresh_token,
+            citizen_token,
         )
 
         application_id = created["application_id"]
 
         paused = get_application(
-            suresh_token,
+            citizen_token,
             application_id,
         )
 
@@ -658,7 +673,7 @@ def scenario_s4(
         )
 
         after_first_fetch = get_access_log(
-            suresh_token,
+            citizen_token,
             consent_id,
         )
 
@@ -686,7 +701,7 @@ def scenario_s4(
         revoked = _json_request(
             "POST",
             f"/api/consents/{consent_id}/revoke",
-            token=suresh_token,
+            token=citizen_token,
         )
 
         _assert(
@@ -706,7 +721,7 @@ def scenario_s4(
         )
 
         blocked = get_application(
-            suresh_token,
+            citizen_token,
             application_id,
         )
 
@@ -717,7 +732,7 @@ def scenario_s4(
         )
 
         after_denial = get_access_log(
-            suresh_token,
+            citizen_token,
             consent_id,
         )
 
@@ -742,7 +757,7 @@ def scenario_s4(
         )
 
         new_consent = grant_scholarship_consent(
-            suresh_token,
+            citizen_token,
         )
 
         _assert(
@@ -756,7 +771,7 @@ def scenario_s4(
         )
 
         recovered = get_application(
-            suresh_token,
+            citizen_token,
             application_id,
         )
 
@@ -778,7 +793,7 @@ def scenario_s4(
         )
 
         new_consent_logs = get_access_log(
-            suresh_token,
+            citizen_token,
             int(new_consent["id"]),
         )
 
@@ -800,11 +815,11 @@ def scenario_s4(
 
 def scenario_s5(
     admin_token: str,
-    suresh_token: str,
+    citizen_token: str,
 ) -> None:
     identity_sample = {
-        "mobile": "9822012346",
-        "dob": "2002-11-12",
+        "mobile": "7894561230",
+        "dob": "23-12-2004",
     }
 
     created = _json_request(
@@ -857,7 +872,7 @@ def scenario_s5(
     )
     _assert(
         sample.get("raw", {}).get("TRAINEE_ID") == "SKL-2023-8841",
-        "S5 sample did not return the seeded Suresh training record",
+        "S5 sample did not return the seeded Bhagwat training record",
     )
 
     suggested = _json_request(
@@ -946,7 +961,7 @@ def scenario_s5(
     consent = _json_request(
         "POST",
         "/api/consents",
-        token=suresh_token,
+        token=citizen_token,
         payload={
             "journey_id": "youth_enterprise_v1",
             "purpose": "youth_enterprise_eligibility",
@@ -965,7 +980,7 @@ def scenario_s5(
     created_application = _json_request(
         "POST",
         "/api/applications",
-        token=suresh_token,
+        token=citizen_token,
         payload={
             "journey_id": "youth_enterprise_v1",
         },
@@ -983,7 +998,7 @@ def scenario_s5(
     )
 
     detail = get_application(
-        suresh_token,
+        citizen_token,
         application_id,
     )
 
@@ -1023,8 +1038,7 @@ def main() -> int:
 
     try:
         admin_token = login("admin")
-        rahul_token = login("rahul.patil")
-        suresh_token = login("suresh.pawar")
+        citizen_token = login("bhagwat")
         officer_token = login("officer")
     except Exception as exc:
         print("BOOTSTRAP                    FAIL")
@@ -1042,7 +1056,7 @@ def main() -> int:
 
     print("S1 Happy path                 ", end="")
     try:
-        s1_detail = scenario_s1(rahul_token)
+        s1_detail = scenario_s1(citizen_token)
         RESULTS.append(("S1 Happy path", True, "PASS"))
         print("PASS")
     except Exception as exc:
@@ -1056,7 +1070,7 @@ def main() -> int:
         if s1_detail is None:
             raise SmokeError("depends on S1")
         scenario_s2(
-            rahul_token,
+            citizen_token,
             officer_token,
             s1_detail,
         )
@@ -1070,7 +1084,7 @@ def main() -> int:
     print("S3 Outage recovery            ", end="")
     try:
         scenario_s3(
-            rahul_token,
+            citizen_token,
             admin_token,
         )
         RESULTS.append(("S3 Outage recovery", True, "PASS"))
@@ -1083,7 +1097,7 @@ def main() -> int:
     print("S4 Consent revoke             ", end="")
     try:
         scenario_s4(
-            suresh_token,
+            citizen_token,
             officer_token,
             admin_token,
         )
@@ -1098,7 +1112,7 @@ def main() -> int:
     try:
         scenario_s5(
             admin_token,
-            suresh_token,
+            citizen_token,
         )
         RESULTS.append(("S5 Studio onboarding", True, "PASS"))
         print("PASS")

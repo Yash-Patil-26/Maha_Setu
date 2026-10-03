@@ -89,24 +89,24 @@ def test_skl_source_contract() -> None:
 
     assert len(rows) >= 1
 
-    suresh = next(
+    bhagwat = next(
         (
             row
             for row in rows
-            if row["MOBILE"] == "9822012346"
+            if row["MOBILE"] == "7894561230"
         ),
         None,
     )
 
-    assert suresh is not None
-    assert suresh["TRAINEE_ID"] == "SKL-2023-8841"
-    assert suresh["TRAINEE_NAME"] == "PAWAR SURESH A"
-    assert suresh["DOB"] == "12-11-2002"
-    assert suresh["COURSE_CODE"] == "ELEC-101"
-    assert suresh["COURSE_NAME"] == "Electrical Technician"
-    assert suresh["COMPLETION"] == "Y"
-    assert suresh["CERT_NO"] == "SKL-CERT-55102"
-    assert suresh["CERT_DATE"] == "20-06-2026"
+    assert bhagwat is not None
+    assert bhagwat["TRAINEE_ID"] == "SKL-2023-8841"
+    assert bhagwat["TRAINEE_NAME"] == "BHAGWAT SHINDE"
+    assert bhagwat["DOB"] == "23-12-2004"
+    assert bhagwat["COURSE_CODE"] == "ELEC-101"
+    assert bhagwat["COURSE_NAME"] == "Electrical Technician"
+    assert bhagwat["COMPLETION"] == "Y"
+    assert bhagwat["CERT_NO"] == "SKL-CERT-55102"
+    assert bhagwat["CERT_DATE"] == "20-06-2026"
 
 
 def test_skl_source_maps_to_training_record_contract() -> None:
@@ -116,8 +116,8 @@ def test_skl_source_maps_to_training_record_contract() -> None:
 
     assert canonical == {
         "trainee_id": "SKL-2023-8841",
-        "trainee_name": "Pawar Suresh A",
-        "dob": "2002-11-12",
+        "trainee_name": "Bhagwat Shinde",
+        "dob": "2004-12-23",
         "course_code": "ELEC-101",
         "course_name": "Electrical Technician",
         "completion_status": "COMPLETED",

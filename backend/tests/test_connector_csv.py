@@ -58,7 +58,7 @@ SKL_MAPPING = {
 }
 
 
-def test_skl_csv_connector_fetches_suresh() -> None:
+def test_skl_csv_connector_fetches_bhagwat() -> None:
     engine = create_engine("sqlite:///:memory:")
     Base.metadata.create_all(engine)
 
@@ -105,8 +105,8 @@ def test_skl_csv_connector_fetches_suresh() -> None:
         assert isinstance(connector, CsvConnector)
 
         result = connector.fetch(
-            mobile="9822012346",
-            dob="2002-11-12",
+            mobile="7894561230",
+            dob="2004-12-23",
             correlation_id="test-skl-001",
         )
 
@@ -115,8 +115,8 @@ def test_skl_csv_connector_fetches_suresh() -> None:
         assert result["external_id"] == "SKL-2023-8841"
         assert result["record"] == {
             "trainee_id": "SKL-2023-8841",
-            "trainee_name": "Pawar Suresh A",
-            "dob": "2002-11-12",
+            "trainee_name": "Bhagwat Shinde",
+            "dob": "2004-12-23",
             "course_code": "ELEC-101",
             "course_name": "Electrical Technician",
             "completion_status": "COMPLETED",

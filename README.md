@@ -503,16 +503,14 @@ Seeded demonstration accounts:
 
 | User           | Role    | Password   |
 | -------------- | ------- | ---------- |
-| `rahul.patil`  | Citizen | `Demo@123` |
-| `suresh.pawar` | Citizen | `Demo@123` |
-| `officer`     | Officer | `Demo@123` |
-| `admin`       | Admin   | `Demo@123` |
+| `bhagwat`      | Citizen | `Demo@123` |
+| `officer`      | Officer | `officer123` |
+| `admin`        | Admin   | `admin123` |
 
 Citizen master IDs:
 
 ```text
-Rahul  → SETU-CIT-000001
-Suresh → SETU-CIT-000002
+Bhagwat → SETU-CIT-000001
 ```
 
 These accounts are intended only for the local demonstration environment.

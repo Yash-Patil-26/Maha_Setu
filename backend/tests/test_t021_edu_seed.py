@@ -33,7 +33,7 @@ def test_edu_seed_creates_expected_legacy_source(tmp_path, monkeypatch) -> None:
             FROM STUD_MST
             WHERE MOB_NO = ? AND DOB_STR = ?
             """,
-            ("9876543210", "04-03-2004"),
+            ("7894561230", "23-12-2004"),
         ).fetchone()
 
     assert columns == [
@@ -49,13 +49,13 @@ def test_edu_seed_creates_expected_legacy_source(tmp_path, monkeypatch) -> None:
     ]
 
     assert row == (
-        "EDU/2022/00451",
-        "PATIL RAHUL S",
-        "04-03-2004",
-        "9876543210",
-        "PUN-ENG-014",
+        "EDU/2026/00501",
+        "BHAGWAT SHINDE",
+        "23-12-2004",
+        "7894561230",
+        "PUN-ENG-016",
         "BTECH-CSE",
         3,
         "A",
-        "10-07-2026",
+        "02-10-2026",
     )

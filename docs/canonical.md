@@ -139,17 +139,17 @@ Journey consent steps: J1 `["identity_lookup","income","caste_category","enrolme
 | SKL `COMPLETION` | completion_status | enum `Y→COMPLETED, N→IN_PROGRESS` |
 | SKL `CERT_NO` / `CERT_DATE` (DD-MM-YYYY) | certificate_no / certificate_date | strip / date `%d-%m-%Y` (blank → null) |
 
-## 8. Example (persona 1, Rahul Patil, all synthetic)
+## 8. Example (canonical demo persona, Bhagwat Shinde)
 
 ```json
 {
-  "citizen": {"master_id": "SETU-CIT-000001", "full_name": "Rahul Suresh Patil", "dob": "2004-03-04", "mobile": "9876543210"},
-  "income_certificate": {"cert_no": "MH-INC-2026-000123", "holder_name": "Patil Rahul Suresh", "annual_income_inr": 210000,
-    "issue_date": "2026-04-15", "valid_until": "2027-04-14", "issuing_authority": "Tahsildar, Haveli"},
-  "caste_certificate": {"cert_no": "MH-CST-2024-004417", "holder_name": "Patil Rahul Suresh", "category_code": "OBC",
-    "issue_date": "2024-08-02", "valid_until": null},
-  "enrolment": {"enrolment_id": "EDU/2022/00451", "student_name": "Patil Rahul S", "dob": "2004-03-04", "institution_code": "PUN-ENG-014",
-    "institution_name": null, "course_code": "BTECH-CSE", "year_of_study": 3, "status": "ACTIVE", "last_updated": "2026-07-10"}
+  "citizen": {"master_id": "SETU-CIT-000001", "full_name": "Bhagwat Shinde", "dob": "2004-12-23", "mobile": "7894561230"},
+  "income_certificate": {"cert_no": "MH-INC-2026-000501", "holder_name": "Bhagwat Shinde", "annual_income_inr": 180000,
+    "issue_date": "2026-10-02", "valid_until": "2027-10-01", "issuing_authority": "Tahsildar, Haveli"},
+  "caste_certificate": {"cert_no": "MH-CST-2026-000501", "holder_name": "Bhagwat Shinde", "category_code": "OBC",
+    "issue_date": "2026-10-02", "valid_until": null},
+  "enrolment": {"enrolment_id": "EDU/2026/00501", "student_name": "BHAGWAT SHINDE", "dob": "23-12-2004", "institution_code": "PUN-ENG-016",
+    "institution_name": null, "course_code": "BTECH-CSE", "year_of_study": 3, "status": "A", "last_updated": "02-10-2026"}
 }
 ```
 
