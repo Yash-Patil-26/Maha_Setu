@@ -5,7 +5,7 @@ import {
   getAuthUser,
   setAuthSession,
 } from '../auth/storage.js'
-import gatewayImage from '../assets/mahasetu-login-gateway.png'
+import gatewayImage from '../assets/mahasetu-login-gateway.jpg'
 
 const LOGIN_MODES = {
   citizen: {
