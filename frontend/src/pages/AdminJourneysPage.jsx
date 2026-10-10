@@ -586,9 +586,9 @@ function AdminJourneysPage() {
 
                     <span>
                       This view reflects the live service
-                      registry. The current backend does
-                      not expose journey creation or
-                      modification controls.
+                      registry. The current service does not expose
+                      journey creation or modification
+                      controls.
                     </span>
                   </div>
                 </>
